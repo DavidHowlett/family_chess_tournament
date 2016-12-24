@@ -24,7 +24,7 @@ gameState = [[char for char in line] for line in gameState]
 
 # ---------- write game state -----------
 handle = open('game state.txt','a')
-handle.write('-------- turn: {} --------\n'.format(turn+1))
+handle.write('\n-------- turn: {} --------\n'.format(turn+1))
 handle.write('to move: {}\n'.format('b' if player == 'w' else 'w'))
 moveDuration = time.perf_counter() - startTime
 handle.write('white time: {}\n'.format(whiteTime+moveDuration if player == 'w' else whiteTime))
