@@ -8,7 +8,7 @@ value = {
     'k': -1000, 'q': -9, 'r': -5, 'b': -3.2, 'n': -3, 'p': -1}
 
 
-def score(board:[[str]])->float:
+def score(board:[str])->float:
     'This takes a gameState object and returns the current score of white'
     _score = 0.0
     for row in board:
@@ -30,7 +30,6 @@ else:
     theirTime = whiteTime
 gameState = gameHistory[-9:-1]
 gameState.reverse()
-gameState = [[char for char in line] for line in gameState]
 
 # ---------- modify game state ----------
 
@@ -38,9 +37,9 @@ gameState = [[char for char in line] for line in gameState]
 runTime = time.perf_counter() - startTime
 toWrite = '\n-------- turn: {} --------\n'.format(turn+1)
 toWrite += 'to move: {}\n'.format('b' if player == 'w' else 'w')
-toWrite += 'white time: {}\n'.format(myTime-runTime if player == 'w' else theirTime)
-toWrite += 'black time: {}\n'.format(myTime-runTime if player == 'b' else theirTime)
-toWrite += '\n'.join(''.join(char for char in line) for line in gameState.__reversed__())+'\n'
+toWrite += 'white time: {:.6f}\n'.format(myTime-runTime if player == 'w' else theirTime)
+toWrite += 'black time: {:.6f}\n'.format(myTime-runTime if player == 'b' else theirTime)
+toWrite += '\n'.join(gameState.__reversed__())+'\n'
 open('game state.txt','a').write(toWrite)
 print(toWrite)
 print('score: {:.3f}'.format(score(gameState)))
