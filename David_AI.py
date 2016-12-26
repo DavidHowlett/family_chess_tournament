@@ -8,6 +8,7 @@ Not implemented yet:
 """
 import time
 startTime = time.perf_counter()
+
 PIECE_VALUE = {
     '.': 0,
     'K': 20, 'Q': 9, 'R': 5, 'B': 3.2, 'N': 3, 'P': 1,
@@ -24,6 +25,10 @@ PIECE_MOVE_DIRECTION = {
     'N': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
     'n': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
 }
+
+
+def pretty_print(_board):
+    print('\n'.join(_board.__reversed__()) + '\n')
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -105,53 +110,48 @@ def score(_board: [str])->float:
     return _score
 
 
-def smartScore(board: [str], _player_is_white: bool, depth: int)->[str]:
+def smart_score(board: [str], _player_is_white: bool, depth: int)->float:
     if depth == 1:
         if _player_is_white:
-            return max(score(_move) for _move in moves(board))
+            return max(score(_move) for _move in moves(board, _player_is_white))
         else:
-            return min(score(_move) for _move in moves(board))
+            return min(score(_move) for _move in moves(board, _player_is_white))
     else:
         if _player_is_white:
-            return max(smartScore(_move, not _player_is_white, depth - 1) for move in moves(board))
+            return max(smart_score(_move, not _player_is_white, depth - 1) for _move in moves(board, _player_is_white))
         else:
-            return max(smartScore(_move, not _player_is_white, depth - 1) for move in moves(board))
+            return max(smart_score(_move, not _player_is_white, depth - 1) for _move in moves(board, _player_is_white))
 
 
-# --------- read in game state ----------
-gameHistory = open('game state.txt').read().split('\n')
-turn = int(gameHistory[-13].split(' ')[2])
-player_is_white = gameHistory[-12][9] == 'w'
-whiteTime = float(gameHistory[-11][12:])
-blackTime = float(gameHistory[-10][12:])
-if player_is_white:
-    myTime = whiteTime + 2
-    theirTime = blackTime
-else:
-    myTime = blackTime + 2
-    theirTime = whiteTime
-gameState = gameHistory[-9:-1]
-gameState.reverse()
+def main():
+    # --------- read in game state ----------
+    game_history = open('game state.txt').read().split('\n')
+    game_state = game_history[-13:-5]
+    game_state.reverse()
+    turn = int(game_history[-15].split(' ')[2])
+    player_is_white = game_history[-3][9] == 'w'
+    white_time = float(game_history[-3][12:])
+    black_time = float(game_history[-2][12:])
+    if player_is_white:
+        my_time = white_time + 2
+        their_time = black_time
+    else:
+        my_time = black_time + 2
+        their_time = white_time
 
-# ---------- modify game state ----------
-gameState = explore(gameState, player_is_white, 3)
-'''
-i = 0
-for move1 in moves(gameState, player_is_white):
-    for move2 in moves(move1, not player_is_white):
-        for move3 in moves(move2, player_is_white):
-            score3 = score(move3)
-print(i)
-    #print('\n'.join(move3.__reversed__())+'\n')
-'''
-# ---------- write game state -----------
-runTime = time.perf_counter() - startTime
-toWrite = '\n-------- turn: {} --------\n'.format(turn+1)
-toWrite += 'to move: {}\n'.format('b' if player_is_white else 'w')
-toWrite += 'white time: {:.6f}\n'.format(myTime-runTime if player_is_white else theirTime)
-toWrite += 'black time: {:.6f}\n'.format(theirTime if player_is_white else myTime-runTime)
-toWrite += '\n'.join(gameState.__reversed__())+'\n'
-open('new game state.txt', 'a').write(toWrite)
-print(toWrite)
-print('score: {:.3f}'.format(score(gameState)))
-print('run time: {:.3f}ms'.format(runTime*1000))  # micheal take 5.7 seconds to plan 3 moves ahead from the start
+    # ---------- modify game state ----------
+    moves_with_scores = [(move, smart_score(move, player_is_white, 2)) for move in moves(game_state, player_is_white)]
+    moves_with_scores.sort(key = lambda x: x[1])
+    game_state = moves_with_scores[-1 if player_is_white else 0][0]
+
+    # ---------- write game state -----------
+    to_write = '\n-------- turn: {} --------\n\n'.format(turn+1)
+    to_write += '\n'.join(game_state.__reversed__())+'\n'
+    to_write += 'to move: {}\n'.format('b' if player_is_white else 'w')
+    open('game state.txt', 'a').write(to_write)
+    print(to_write)
+    print('score: {:.3f}'.format(score(game_state)))
+    # micheal take 5.7 seconds to plan 3 moves ahead from the start
+    print('run time: {:.3f}ms'.format((time.perf_counter() - startTime)*1000))
+
+main()
