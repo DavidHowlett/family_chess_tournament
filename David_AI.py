@@ -151,6 +151,6 @@ def main():
     to_write = '\n-------- turn: {} --------\n\n'.format(turn+1)
     to_write += '\n'.join(game_state.__reversed__())
     open('game state.txt', 'a').write(to_write)
-    print('predicted score: {:.3f}'.format(predicted_score))
+    #print('predicted score: {:.3f}'.format(predicted_score))
 
 main()
