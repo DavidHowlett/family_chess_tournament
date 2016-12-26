@@ -1,7 +1,5 @@
 -------- turn: 0 --------
-to move: w
-white time: 5.0
-black time: 5.0
+
 rnbqkbnr
 pppppppp
 ........
@@ -10,3 +8,7 @@ pppppppp
 ........
 PPPPPPPP
 RNBQKBNR
+
+to move: w
+white time: 5.0
+black time: 5.0

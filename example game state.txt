@@ -1,7 +1,5 @@
 -------- turn: 0 --------
-to move: w
-white time: 5.0
-black time: 5.0
+
 rnbqkbnr
 pppppppp
 ........
@@ -11,10 +9,12 @@ pppppppp
 PPPPPPPP
 RNBQKBNR
 
--------- turn: 1 --------
-to move: b
-white time: 5.3
+to move: w
+white time: 5.0
 black time: 5.0
+
+-------- turn: 1 --------
+
 rnbqkbnr
 pppppppp
 ........
@@ -24,10 +24,12 @@ pppppppp
 PPPP.PPP
 RNBQKBNR
 
--------- turn: 2 --------
-to move: w
+to move: b
 white time: 5.3
-black time: 5.5
+black time: 5.0
+
+-------- turn: 2 --------
+
 rnbqkbnr
 pppp.ppp
 ........
@@ -37,10 +39,12 @@ pppp.ppp
 PPPP.PPP
 RNBQKBNR
 
--------- turn: 3 --------
-to move: b
-white time: 4.5
+to move: w
+white time: 5.3
 black time: 5.5
+
+-------- turn: 3 --------
+
 rnbqkbnr
 pppp.ppp
 ........
@@ -49,3 +53,7 @@ pppp.ppp
 .....Q..
 PPPP.PPP
 RNB.KBNR
+
+to move: b
+white time: 4.5
+black time: 5.5
