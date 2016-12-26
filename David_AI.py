@@ -7,7 +7,6 @@ Not implemented yet:
 
 """
 import time
-startTime = time.perf_counter()
 
 PIECE_VALUE = {
     '.': 0,
@@ -140,18 +139,18 @@ def main():
         their_time = white_time
 
     # ---------- modify game state ----------
-    moves_with_scores = [(_move, smart_score(_move, player_is_white, 2)) for _move in moves(game_state, player_is_white)]
-    moves_with_scores.sort(key=lambda x: x[1])
-    game_state = moves_with_scores[-1 if player_is_white else 0][0]
+    if my_time < 10:
+        depth = 2
+    else:
+        depth = 3
+    moves_with_scores = [(_move, smart_score(_move, player_is_white, depth))
+                         for _move in moves(game_state, player_is_white)]
+    game_state, predicted_score = (max if player_is_white else min)(moves_with_scores, key=lambda x: x[1])
 
     # ---------- write game state -----------
     to_write = '\n-------- turn: {} --------\n\n'.format(turn+1)
-    to_write += '\n'.join(game_state.__reversed__())+'\n\n'
-    to_write += 'to move: {}\n'.format('b' if player_is_white else 'w')
+    to_write += '\n'.join(game_state.__reversed__())
     open('game state.txt', 'a').write(to_write)
-    print(to_write)
-    print('score: {:.3f}'.format(score(game_state)))
-    # micheal take 5.7 seconds to plan 3 moves ahead from the start
-    print('run time: {:.3f}ms'.format((time.perf_counter() - startTime)*1000))
+    print('predicted score: {:.3f}'.format(predicted_score))
 
 main()
