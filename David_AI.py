@@ -129,7 +129,7 @@ def main():
     game_state = game_history[-14:-6]
     game_state.reverse()
     turn = int(game_history[-16].split(' ')[2])
-    player_is_white = game_history[-4][9] == 'w'
+    player_is_white = game_history[-5][9] == 'w'
     white_time = float(game_history[-4][12:])
     black_time = float(game_history[-3][12:])
     if player_is_white:

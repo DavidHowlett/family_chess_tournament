@@ -1,4 +1,5 @@
-from subprocess import call
+import time
+import subprocess
 
 playerA = 'David_AI.py'
 playerB = 'David_AI.py'
@@ -20,11 +21,13 @@ black time: 5.0
 
 ''')
 
-for i in range(10):
+for i in range(3):
     for player in [playerA, playerB]:
-        call(["python3", player])
+        startTime = time.perf_counter()
+        subprocess.run(["python3", player])
         with open('game state.txt', 'a') as gameState:
             gameState.write('white time: {:.6f}\n'.format(5.5))
             gameState.write('black time: {:.6f}\n'.format(5.5))
             gameState.write('\n')
+        time.sleep(1)
 
