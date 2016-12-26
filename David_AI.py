@@ -126,12 +126,12 @@ def smart_score(board: [str], _player_is_white: bool, depth: int)->float:
 def main():
     # --------- read in game state ----------
     game_history = open('game state.txt').read().split('\n')
-    game_state = game_history[-13:-5]
+    game_state = game_history[-14:-6]
     game_state.reverse()
-    turn = int(game_history[-15].split(' ')[2])
-    player_is_white = game_history[-3][9] == 'w'
-    white_time = float(game_history[-3][12:])
-    black_time = float(game_history[-2][12:])
+    turn = int(game_history[-16].split(' ')[2])
+    player_is_white = game_history[-4][9] == 'w'
+    white_time = float(game_history[-4][12:])
+    black_time = float(game_history[-3][12:])
     if player_is_white:
         my_time = white_time + 2
         their_time = black_time
@@ -140,13 +140,13 @@ def main():
         their_time = white_time
 
     # ---------- modify game state ----------
-    moves_with_scores = [(move, smart_score(move, player_is_white, 2)) for move in moves(game_state, player_is_white)]
-    moves_with_scores.sort(key = lambda x: x[1])
+    moves_with_scores = [(_move, smart_score(_move, player_is_white, 2)) for _move in moves(game_state, player_is_white)]
+    moves_with_scores.sort(key=lambda x: x[1])
     game_state = moves_with_scores[-1 if player_is_white else 0][0]
 
     # ---------- write game state -----------
     to_write = '\n-------- turn: {} --------\n\n'.format(turn+1)
-    to_write += '\n'.join(game_state.__reversed__())+'\n'
+    to_write += '\n'.join(game_state.__reversed__())+'\n\n'
     to_write += 'to move: {}\n'.format('b' if player_is_white else 'w')
     open('game state.txt', 'a').write(to_write)
     print(to_write)

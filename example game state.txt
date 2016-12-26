@@ -57,3 +57,4 @@ RNB.KBNR
 to move: b
 white time: 4.5
 black time: 5.5
+
