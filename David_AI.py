@@ -1,11 +1,20 @@
 """This was written by David for fun on 24th - 25th December 2016
 Micheal is not allowed to read this file."""
 import time
+import itertools
 startTime = time.perf_counter()
-value = {
+PIECE_VALUE = {
     '.': 0,
     'K': 20, 'Q': 9, 'R': 5, 'B': 3.2, 'N': 3, 'P': 1,
     'k': -20, 'q': -9, 'r': -5, 'b': -3.2, 'n': -3, 'p': -1}
+PIECE_MOVE_DIRECTION = {
+    'Q': ((1,0), (1,1), (0,1), (-1,1), (-1,0), (-1,-1), (0,-1), (1,-1)),
+    'q': ((1,0), (0,1), (-1,0), (0,-1), (1,1), (1,-1), (-1,1), (-1,-1)),
+    'R': ((1,0), (0,1), (-1,0), (0,-1)),
+    'r': ((1,0), (0,1), (-1,0), (0,-1)),
+    'B': ((1,1), (1,-1), (-1,1), (-1,-1)),
+    'b': ((1,1), (1,-1), (-1,1), (-1,-1)),
+}
 
 
 def score(board: [str])->float:
@@ -13,7 +22,7 @@ def score(board: [str])->float:
     _score = 0.0
     for row in board:
         for square in row:
-            _score += value[square]
+            _score += PIECE_VALUE[square]
     return _score
 
 
@@ -43,43 +52,9 @@ def moves(board: [str], _player: str)->[[str]]:
     for x in range(8):
         for y in range(8):
             piece = board[y][x]
-            if piece == 'R' and _player == 'w' or piece == 'r' and _player == 'b':  # rook
-                for xd, yd in ((1,0), (0,1), (-1,0), (0,-1)):
-                    for i in range(1, 8):
-                        x2 = x+i*xd
-                        y2 = y+i*yd
-                        if not (0<=x2<=7 and 0<=y2<=7):
-                            # then it is a move off the board
-                            break
-                        target_piece = board[y2][x2]
-                        if (target_piece.isupper() and _player == 'w') or (target_piece.islower() and _player == 'b'):
-                            # then it is taking it's own piece
-                            break
-                        if (target_piece.isupper() and _player == 'b') or (target_piece.islower() and _player == 'w'):
-                            # then it is taking an opponent's piece
-                            _moves.append(move(board, y, x, y2, x2))
-                            break
-                        _moves.append(move(board, y, x, y2, x2))
-            if piece == 'B' and _player == 'w' or piece == 'b' and _player == 'b':  # bishop
-                for xd, yd in ((1,1), (1,-1), (-1,1), (-1,-1)):
-                    for i in range(1, 8):
-                        x2 = x+i*xd
-                        y2 = y+i*yd
-                        if not (0<=x2<=7 and 0<=y2<=7):
-                            # then it is a move off the board
-                            break
-                        target_piece = board[y2][x2]
-                        if (target_piece.isupper() and _player == 'w') or (target_piece.islower() and _player == 'b'):
-                            # then it is taking it's own piece
-                            break
-                        if (target_piece.isupper() and _player == 'b') or (target_piece.islower() and _player == 'w'):
-                            # then it is taking an opponent's piece
-                            _moves.append(move(board, y, x, y2, x2))
-                            break
-                        _moves.append(move(board, y, x, y2, x2))
-            if piece == 'Q' and _player == 'w' or piece == 'q' and _player == 'b':  # bishop
-                for xd, yd in ((1,0), (0,1), (-1,0), (0,-1), (1,1), (1,-1), (-1,1), (-1,-1)):
-                    for i in range(1, 8):
+            if piece in 'QRB' and _player == 'w' or piece in 'qrb' and _player == 'b':
+                for xd, yd in PIECE_MOVE_DIRECTION[piece]:
+                    for i in range(1, 100):
                         x2 = x+i*xd
                         y2 = y+i*yd
                         if not (0<=x2<=7 and 0<=y2<=7):
