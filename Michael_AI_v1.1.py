@@ -13,6 +13,7 @@ def f1(a,b,c):
     g=-900
     h='I lose, you win'
     k=f2(a,b)/10
+    m=0
     while(d<7):
         d+=1
         e=-1
@@ -23,40 +24,46 @@ def f1(a,b,c):
                 j=copy.deepcopy(a)
                 if(f[1]=='p'):
                     i=f3(j,b,c,d,e)
+                    m+=i[2]
                     if(i[0]>g):
                         g=i[0]
                         h=i[1]
                     continue
                 if(f[1]=='n'):
                     i=f4(a,b,c,d,e)
+                    m+=i[2]
                     if(i[0]>g):
                         g=i[0]
                         h=i[1]
                     continue
                 if(f[1]=='b'):
                     i=f5(a,b,c,d,e)
+                    m+=i[2]
                     if(i[0]>g):
                         g=i[0]
                         h=i[1]
                     continue
                 if(f[1]=='r'):
                     i=f6(a,b,c,d,e)
+                    m+=i[2]
                     if(i[0]>g):
                         g=i[0]
                         h=i[1]
                     continue
                 if(f[1]=='q'):
                     i=f7(a,b,c,d,e)
+                    m+=i[2]
                     if(i[0]>g):
                         g=i[0]
                         h=i[1]
                     continue
                 if(f[1]=='k'):
                     i=f8(a,b,c,d,e)
+                    m+=i[2]
                     if(i[0]>g):
                         g=i[0]
                         h=i[1]
-    return [k-g,h]
+    return [k-m-g,h]
 def f2(a,b):
     c=-1
     f=0
@@ -113,6 +120,7 @@ def f3(a,b,c,d,e):
     g=-900
     h='I lose, you win'
     i=[-1000,'error']
+    m=0
     if(b==0):
         if(a[d+1][e]==[3,'_']):
             f=copy.deepcopy(a)
@@ -122,6 +130,7 @@ def f3(a,b,c,d,e):
                 f[d+1][e]=[0,'p']
             f[d][e]=[3,'_']
             i=f1(f,b,c)
+            m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d+1,e]]
@@ -131,6 +140,7 @@ def f3(a,b,c,d,e):
                     f[d+2][e]=[0,'p']
                     f[d][e]=[3,'_']
                     i=f1(f,b,c)
+                    m+=0.01
                     if(i[0]>g):
                         g=i[0]
                         h=[[d,e],[d+2,e]]
@@ -143,6 +153,7 @@ def f3(a,b,c,d,e):
                     f[d+1][e+1]=[0,'p']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
                 if(i[0]>g):
                     g=i[0]
                     h=[[d,e],[d+1,e+1]]
@@ -155,6 +166,7 @@ def f3(a,b,c,d,e):
                     f[d+1][e-1]=[0,'p']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
                 if(i[0]>g):
                     g=i[0]
                     h=[[d,e],[d+1,e-1]]
@@ -167,6 +179,7 @@ def f3(a,b,c,d,e):
                 f[d-1][e]=[1,'p']
             f[d][e]=[3,'_']
             i=f1(f,b,c)
+            m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d-1,e]]
@@ -176,6 +189,7 @@ def f3(a,b,c,d,e):
                     f[d-2][e]=[1,'p']
                     f[d][e]=[3,'_']
                     i=f1(f,b,c)
+                    m+=0.01
                     if(i[0]>g):
                         g=i[0]
                         h=[[d,e],[d-2,e]]
@@ -188,6 +202,7 @@ def f3(a,b,c,d,e):
                     f[d-1][e+1]=[1,'p']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
                 if(i[0]>g):
                     g=i[0]
                     h=[[d,e],[d-1,e+1]]
@@ -200,14 +215,16 @@ def f3(a,b,c,d,e):
                     f[d-1][e-1]=[1,'p']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
                 if(i[0]>g):
                     g=i[0]
                     h=[[d,e],[d-1,e-1]]
-    return [g,h]
+    return [g,h,m]
 def f4(a,b,c,d,e):
     g=-900
     h='I lose, you win'
     i=[-1000,'error']
+    m=0
     if(d>0):
         if(e>1):
             if(a[d-1][e-2][0]!=b):
@@ -215,6 +232,7 @@ def f4(a,b,c,d,e):
                 f[d-1][e-2]=[b,'n']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d-1,e-2]]
@@ -224,6 +242,7 @@ def f4(a,b,c,d,e):
                 f[d-2][e-1]=[b,'n']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d-2,e-1]]
@@ -233,6 +252,7 @@ def f4(a,b,c,d,e):
                 f[d-2][e+1]=[b,'n']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d-2,e+1]]
@@ -242,6 +262,7 @@ def f4(a,b,c,d,e):
                 f[d-1][e+2]=[b,'n']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d-1,e+2]]
@@ -252,6 +273,7 @@ def f4(a,b,c,d,e):
                 f[d+1][e-2]=[b,'n']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d+1,e-2]]
@@ -261,6 +283,7 @@ def f4(a,b,c,d,e):
                 f[d+2][e-1]=[b,'n']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d+2,e-1]]
@@ -270,6 +293,7 @@ def f4(a,b,c,d,e):
                 f[d+2][e+1]=[b,'n']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d+2,e+1]]
@@ -279,15 +303,17 @@ def f4(a,b,c,d,e):
                 f[d+1][e+2]=[b,'n']
                 f[d][e]=[3,'_']
                 i=f1(f,b,c)
+                m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d+1,e+2]]
-    return [g,h]
+    return [g,h,m]
 def f5(a,b,c,d,e):
     g=-900
     h='I lose, you win'
     i=[-1000,'error']
     f=1
+    m=0
     while(d+f<8 and e+f<8):
         if(a[d+f][e+f][0]==b):
             break
@@ -295,6 +321,7 @@ def f5(a,b,c,d,e):
         j[d+f][e+f]=[b,'b']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d+f,e+f]]
@@ -309,6 +336,7 @@ def f5(a,b,c,d,e):
         j[d-f][e+f]=[b,'b']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d-f,e+f]]
@@ -323,6 +351,7 @@ def f5(a,b,c,d,e):
         j[d-f][e-f]=[b,'b']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d-f,e-f]]
@@ -337,14 +366,16 @@ def f5(a,b,c,d,e):
         j[d+f][e-f]=[b,'b']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d+f,e-f]]
         if(a[d+f][e-f][0]!=3):
             break
         f+=1
-    return [g,h]
+    return [g,h,m]
 def f6(a,b,c,d,e):
+    m=0
     g=-900
     h='I lose, you win'
     i=[-1000,'error']
@@ -356,6 +387,7 @@ def f6(a,b,c,d,e):
         j[d+f][e]=[b,'r']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d+f,e]]
@@ -370,6 +402,7 @@ def f6(a,b,c,d,e):
         j[d][e+f]=[b,'r']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d,e+f]]
@@ -384,6 +417,7 @@ def f6(a,b,c,d,e):
         j[d-f][e]=[b,'r']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d-f,e]]
@@ -398,18 +432,20 @@ def f6(a,b,c,d,e):
         j[d][e-f]=[b,'r']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d,e-f]]
         if(a[d][e-f][0]!=3):
             break
         f+=1
-    return [g,h]
+    return [g,h,m]
 def f7(a,b,c,d,e):
     g=-900
     h='I lose, you win'
     i=[-1000,'error']
     f=1
+    m=0
     while(d+f<8):
         if(a[d+f][e][0]==b):
             break
@@ -417,6 +453,7 @@ def f7(a,b,c,d,e):
         j[d+f][e]=[b,'q']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d+f,e]]
@@ -431,6 +468,7 @@ def f7(a,b,c,d,e):
         j[d][e+f]=[b,'q']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d,e+f]]
@@ -445,6 +483,7 @@ def f7(a,b,c,d,e):
         j[d-f][e]=[b,'q']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d-f,e]]
@@ -459,6 +498,7 @@ def f7(a,b,c,d,e):
         j[d][e-f]=[b,'q']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d,e-f]]
@@ -473,6 +513,7 @@ def f7(a,b,c,d,e):
         j[d+f][e+f]=[b,'q']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d+f,e+f]]
@@ -487,6 +528,7 @@ def f7(a,b,c,d,e):
         j[d-f][e+f]=[b,'q']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d-f,e+f]]
@@ -501,6 +543,7 @@ def f7(a,b,c,d,e):
         j[d-f][e-f]=[b,'q']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d-f,e-f]]
@@ -515,24 +558,27 @@ def f7(a,b,c,d,e):
         j[d+f][e-f]=[b,'q']
         j[d][e]=[3,'_']
         i=f1(j,b,c)
+        m+=0.01
         if(i[0]>g):
             g=i[0]
             h=[[d,e],[d+f,e-f]]
         if(a[d+f][e-f][0]!=3):
             break
         f+=1
-    return [g,h]
+    return [g,h,m]
 def f8(a,b,c,d,e):
     g=-900
     h='I lose, you win'
     i=[-1000,'error']
     f=copy.deepcopy(a)
+    m=0
     if(d<7):
         if(f[d+1][e][0]!=b):
             f=copy.deepcopy(a)
             f[d][e]=[3,'_']
             f[d+1][e]=[b,'k']
             i=f1(f,b,c)
+            m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d+1,e]]
@@ -542,6 +588,7 @@ def f8(a,b,c,d,e):
                 f[d][e]=[3,'_']
                 f[d+1][e+1]=[b,'k']
                 i=f1(f,b,c)
+                m+=0.01
                 if(i[0]>g):
                     g=i[0]
                     h=[[d,e],[d+1,e+1]]
@@ -551,6 +598,7 @@ def f8(a,b,c,d,e):
                 f[d][e]=[3,'_']
                 f[d+1][e-1]=[b,'k']
                 i=f1(f,b,c)
+                m+=0.01
                 if(i[0]>g):
                     g=i[0]
                     h=[[d,e],[d+1,e-1]]
@@ -560,6 +608,7 @@ def f8(a,b,c,d,e):
             f[d][e]=[3,'_']
             f[d-1][e]=[b,'k']
             i=f1(f,b,c)
+            m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d-1,e]]
@@ -568,6 +617,7 @@ def f8(a,b,c,d,e):
             f[d][e]=[3,'_']
             f[d-1][e+1]=[b,'k']
             i=f1(f,b,c)
+            m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d-1,e+1]]
@@ -576,6 +626,7 @@ def f8(a,b,c,d,e):
             f[d][e]=[3,'_']
             f[d-1][e-1]=[b,'k']
             i=f1(f,b,c)
+            m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d-1,e-1]]
@@ -585,6 +636,7 @@ def f8(a,b,c,d,e):
             f[d][e]=[3,'_']
             f[d][e-1]=[b,'k']
             i=f1(f,b,c)
+            m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d,e-1]]
@@ -594,10 +646,11 @@ def f8(a,b,c,d,e):
             f[d][e]=[3,'_']
             f[d][e+1]=[b,'k']
             i=f1(f,b,c)
+            m+=0.01
             if(i[0]>g):
                 g=i[0]
                 h=[[d,e],[d,e+1]]
-    return [g,h]
+    return [g,h,m]
 def f9(a):
     #print(a)
     b=-1
@@ -701,7 +754,7 @@ while(d<7):
     d+=1
     e.append(b[(-9*d)+c-10:(-9*d)+c-2])
 c=e
-#print(c)
+print(c)
 d=8
 f=[]
 while(d>0):

@@ -5,7 +5,7 @@ initialTime = 5
 timePerMove = 1
 
 playerA = ['w', 5.0, ('python3', 'David_AI.py')]
-playerB = ['b', 5.0, ('python3', 'Michael_AI_v1.0.py')]
+playerB = ['b', 5.0, ('python3', 'Michael_AI_v1.1.py')]
 
 open('game state.txt', 'w').write('''-------- turn: 0 --------
 
@@ -24,10 +24,12 @@ black time: {}
 
 '''.format(playerA[1], playerB[1]))
 
-for i in range(100):
+for i in range(1):
     for colour, timeRemaining, AI in [playerA, playerB]:
         startTime = time.perf_counter()
-        subprocess.run(AI)
+        if subprocess.run(AI).returncode:
+            print('{} stopped the game'.format(AI[1]))
+            exit()
         runTime = time.perf_counter() - startTime
         if colour == 'w':
             playerA[1] = timeRemaining + timePerMove - runTime

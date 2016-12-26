@@ -10,8 +10,8 @@ import time
 
 PIECE_VALUE = {
     '.': 0,
-    'K': 20, 'Q': 9, 'R': 5, 'B': 3.2, 'N': 3, 'P': 1,
-    'k': -20, 'q': -9, 'r': -5, 'b': -3.2, 'n': -3, 'p': -1}
+    'K': 20, 'Q': 9, 'R': 5, 'B': 3.2, 'N': 3, 'P': 0.9,
+    'k': -20, 'q': -9, 'r': -5, 'b': -3.2, 'n': -3, 'p': -0.9}
 PIECE_MOVE_DIRECTION = {
     'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
     'k': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
@@ -104,22 +104,32 @@ def score(_board: [str])->float:
     """This takes a gameState object and returns the current score of white"""
     _score = 0.0
     for row in _board:
-        for square in row:
-            _score += PIECE_VALUE[square]
+        for piece in row:
+            _score += PIECE_VALUE[piece]
     return _score
 
 
 def smart_score(board: [str], _player_is_white: bool, depth: int)->float:
+    _moves = moves(board, _player_is_white)
+    if not _moves:
+        # if there are no possible moves then it is a draw
+        return 0
     if depth == 1:
         if _player_is_white:
-            return max(score(_move) for _move in moves(board, _player_is_white))
+            return max(score(_move) for _move in _moves)
         else:
-            return min(score(_move) for _move in moves(board, _player_is_white))
+            return min(score(_move) for _move in _moves)
     else:
         if _player_is_white:
-            return max(smart_score(_move, not _player_is_white, depth - 1) for _move in moves(board, _player_is_white))
+
+            foo = [(smart_score(_move, not _player_is_white, depth - 1), _move) for _move in _moves]
+            if board == ['RNBQKBNR', '..PPPPPP', '........', '.P......',
+                         '........', '........', '.ppppppp','rnbqkbnr']:
+                print('error found')
+
+            return max(x[0] for x in foo)
         else:
-            return max(smart_score(_move, not _player_is_white, depth - 1) for _move in moves(board, _player_is_white))
+            return max(smart_score(_move, not _player_is_white, depth - 1) for _move in _moves)
 
 
 def main():
@@ -139,18 +149,22 @@ def main():
         their_time = white_time
 
     # ---------- modify game state ----------
-    if my_time < 10:
-        depth = 2
-    else:
-        depth = 3
-    moves_with_scores = [(_move, smart_score(_move, player_is_white, depth))
-                         for _move in moves(game_state, player_is_white)]
+    possible_moves = moves(game_state, player_is_white)
+    if not possible_moves:
+        print('The game is a draw')
+        exit(1)
+    # if my_time < 10:
+    depth = 2
+    # else:
+    #    depth = 3
+    moves_with_scores = [(_move, smart_score(_move, not player_is_white, depth))
+                         for _move in possible_moves]
     game_state, predicted_score = (max if player_is_white else min)(moves_with_scores, key=lambda x: x[1])
+    print('predicted score: {:.3f}'.format(predicted_score))
 
     # ---------- write game state -----------
     to_write = '\n-------- turn: {} --------\n\n'.format(turn+1)
     to_write += '\n'.join(game_state.__reversed__())
     open('game state.txt', 'a').write(to_write)
-    #print('predicted score: {:.3f}'.format(predicted_score))
 
 main()
