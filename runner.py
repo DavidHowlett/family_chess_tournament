@@ -5,8 +5,8 @@ import subprocess
 initialTime = 5
 timePerMove = 1
 
-playerA = ['w', 5.0, 'David_AI.py']
-playerB = ['b', 5.0, 'Michael_AI_v1.1.py']
+playerA = ['w', initialTime, 'David_AI.py']
+playerB = ['b', initialTime, 'Michael_AI_v1.1.py']
 
 if os.name == 'posix':
     python = 'python3'
@@ -36,7 +36,7 @@ for i in range(100):
     colour, timeRemaining, AI = player
     startTime = time.perf_counter()
     if subprocess.run((python, AI)).returncode:
-        print('{} stopped the game'.format(AI[1]))
+        print('{} stopped the game'.format(AI))
         exit()
     runTime = time.perf_counter() - startTime
     if colour == 'w':
@@ -51,5 +51,13 @@ for i in range(100):
         gameState.write('white time: {:.6f}\n'.format(playerA[1]))
         gameState.write('black time: {:.6f}\n'.format(playerB[1]))
         gameState.write('\n')
+        if 'k' not in board:
+            gameState.write('White won!\n')
+            print('White won in {} moves'.format(i+1))
+            exit()
+        if 'K' not in board:
+            gameState.write('Black won!\n')
+            print('Black won in {} moves'.format(i+1))
+            exit()
 
 
