@@ -112,9 +112,9 @@ def f2(a,b):
                 continue
             if(e[1]=='k'):
                 if(e[0]==b):
-                    f+=1000000
+                    f+=60
                 else:
-                    f+=-1000000
+                    f+=-60
     return -f
 def f3(a,b,c,d,e):
     g=-900
