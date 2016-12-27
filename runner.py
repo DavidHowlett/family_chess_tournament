@@ -40,6 +40,7 @@ for i in range(1):
             gameState.write('white time: {:.6f}\n'.format(playerA[1]))
             gameState.write('black time: {:.6f}\n'.format(playerB[1]))
             gameState.write('\n')
-        print(open('game state.txt').read().split('\n\n\n')[-1])
+        # print(open('game state.txt').read().split('\n\n\n')[-1])
+        print(open('game state.txt').read()[-127:-44])
         print('run time: {:.3f} seconds'.format(runTime))
 

@@ -1,5 +1,15 @@
-"""This was written by David for fun on 24th - 25th December 2016
-Micheal is not allowed to read this file.
+"""This was written by David for fun on 24th - 27th December 2016
+Micheal and Robert not allowed to read this file until the competition is over.
+This program implements a tree search of possible future moves.
+The main data structures are:
+    - board: this is a [str] representing a 2D board
+    - state: a list representing a node in a the search tree. It contains a board and some metadata.
+
+A board can be scored with the score function.
+
+The score of a state can be simply calculated by passing its associated board to the score function. To get a more
+accurate score of a position it is necessary to explore the children of the state.
+
 
 Not implemented yet:
     - castling
@@ -85,7 +95,7 @@ def moves(board: [str], _player_is_white: bool)->[[str]]:
                     if y == 1 if _player_is_white else y == 6:
                         y2 = y + 2 if _player_is_white else y - 2
                         if board[y2][x] == '.':
-                            pawn_moves.append((y2, x))
+                            _moves.append(move(board, y, x, y2, x))
                 for y2, x2 in pawn_moves:
                     after_pawn_move = move(board, y, x, y2, x2)
                     if y2 == 7 if _player_is_white else y2 == 0:
@@ -103,9 +113,15 @@ def moves(board: [str], _player_is_white: bool)->[[str]]:
 def score(_board: [str])->float:
     """This takes a gameState object and returns the current score of white"""
     _score = 0.0
-    for row in _board:
-        for piece in row:
+    for y in range(8):
+        line = _board[y]
+        for x in range(8):
+            piece = line[x]
             _score += PIECE_VALUE[piece]
+            if piece == 'P':
+                _score += 0.1*y
+            elif piece == 'p':
+                _score += 0.1*(y-7)
     return _score
 
 
@@ -121,13 +137,7 @@ def smart_score(board: [str], _player_is_white: bool, depth: int)->float:
             return min(score(_move) for _move in _moves)
     else:
         if _player_is_white:
-
-            foo = [(smart_score(_move, not _player_is_white, depth - 1), _move) for _move in _moves]
-            if board == ['RNBQKBNR', '..PPPPPP', '........', '.P......',
-                         '........', '........', '.ppppppp','rnbqkbnr']:
-                print('error found')
-
-            return max(x[0] for x in foo)
+            return max(smart_score(_move, not _player_is_white, depth - 1) for _move in _moves)
         else:
             return max(smart_score(_move, not _player_is_white, depth - 1) for _move in _moves)
 
@@ -135,8 +145,8 @@ def smart_score(board: [str], _player_is_white: bool, depth: int)->float:
 def main():
     # --------- read in game state ----------
     game_history = open('game state.txt').read().split('\n')
-    game_state = game_history[-14:-6]
-    game_state.reverse()
+    initial_board = game_history[-14:-6]
+    initial_board.reverse()
     turn = int(game_history[-16].split(' ')[2])
     player_is_white = game_history[-5][9] == 'w'
     white_time = float(game_history[-4][12:])
@@ -147,9 +157,27 @@ def main():
     else:
         my_time = black_time + 2
         their_time = white_time
+    # Vector = List[float]
+    # initial_state = [initial_board]
 
     # ---------- modify game state ----------
-    possible_moves = moves(game_state, player_is_white)
+    '''
+    original_game_state = {
+        'board': initial_state, 'white': player_is_white, 'move_no': 0,
+        'score': score(initial_state), 'priority': 100,
+        'parent': None, 'children': None}
+    childless_states = [original_game_state]
+    for i in range(10):
+        childless_states.sort(key=lambda x: x['priority'])
+        for state in childless_states[-1000:]:
+            children = []
+            for move in moves(state['board']):
+                children.append(State(move, state))
+            state['children'] = children
+            childless_states.append(children)
+    '''
+    # ----------- proven method
+    possible_moves = moves(initial_board, player_is_white)
     if not possible_moves:
         print('The game is a draw')
         exit(1)
@@ -157,8 +185,10 @@ def main():
     depth = 2
     # else:
     #    depth = 3
-    moves_with_scores = [(_move, smart_score(_move, not player_is_white, depth))
-                         for _move in possible_moves]
+    moves_with_scores =[]
+    for _move in possible_moves:
+        _score = smart_score(_move, not player_is_white, depth)
+        moves_with_scores.append((_move, _score))
     game_state, predicted_score = (max if player_is_white else min)(moves_with_scores, key=lambda x: x[1])
     print('predicted score: {:.3f}'.format(predicted_score))
 
