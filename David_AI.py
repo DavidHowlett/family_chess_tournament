@@ -15,15 +15,7 @@ Not implemented yet:
     - castling
     - en passant
 
-I use the time to calculate and score the first 3 moves as a benchmark for my algorithm.
-
-search strategy             scoring                         time taken
-----------------------------------------------------------------------
-recursive explore calls     sum pieces & pawn position      0.340
-recursive explore calls     sum pieces                      0.207
-
 """
-import time
 
 PIECE_VALUE = {
     '.': 0,
@@ -117,7 +109,7 @@ def moves(board: [str], _player_is_white: bool)->[[str]]:
     return _moves
 
 
-def score(_board: [str])->float:
+def simple_score(_board: [str])->float:
     """This takes a gameState object and returns the current score of white"""
     _score = 0.0
     for row in _board:
@@ -126,7 +118,22 @@ def score(_board: [str])->float:
     return _score
 
 
-def smart_score(board: [str], _player_is_white: bool, depth: int)->float:
+def fancy_score(_board: [str])->float:
+    """This takes a gameState object and returns the current score of white"""
+    _score = 0.0
+    for y in range(8):
+        line = _board[y]
+        for x in range(8):
+            piece = line[x]
+            _score += PIECE_VALUE[piece]
+            if piece == 'P':
+                _score += 0.1 * y
+            elif piece == 'p':
+                _score += 0.1 * (y - 7)
+    return _score
+
+
+def recursive_score(board: [str], _player_is_white: bool, depth: int)->float:
     _moves = moves(board, _player_is_white)
     if not _moves:
         # if there are no possible moves then it is a draw
@@ -138,9 +145,26 @@ def smart_score(board: [str], _player_is_white: bool, depth: int)->float:
             return min(score(_move) for _move in _moves)
     else:
         if _player_is_white:
-            return max(smart_score(_move, not _player_is_white, depth - 1) for _move in _moves)
+            return max(recursive_score(_move, not _player_is_white, depth - 1) for _move in _moves)
         else:
-            return max(smart_score(_move, not _player_is_white, depth - 1) for _move in _moves)
+            return max(recursive_score(_move, not _player_is_white, depth - 1) for _move in _moves)
+
+
+def calculate_tree(state, depth):
+    """recursively calculates children of the given state """
+    children = []
+    child_is_white = not state[1]
+    child_move_no = state[3]+1
+    depth -= 1
+    for board in moves(state[0], state[1]):
+        child = [board, child_is_white, score(board), child_move_no, state, None]
+        if depth:
+            calculate_tree(child, depth)
+        children.append(child)
+    # set the children of the current state to be the newly generated list
+    state[5] = children
+    state[2] = (max if state[1] else min)(children, key=lambda s: s[2])
+    return state
 
 
 def main():
@@ -158,44 +182,48 @@ def main():
     else:
         my_time = black_time + 2
         their_time = white_time
-    # Vector = List[float]
-    # initial_state = [initial_board]
-
+    # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
+    initial_state = [initial_board, player_is_white, score(initial_board), 0, None, None]
     # ---------- modify game state ----------
-    '''
-    original_game_state = {
-        'board': initial_state, 'white': player_is_white, 'move_no': 0,
-        'score': score(initial_state), 'priority': 100,
-        'parent': None, 'children': None}
-    childless_states = [original_game_state]
-    for i in range(10):
-        childless_states.sort(key=lambda x: x['priority'])
-        for state in childless_states[-1000:]:
-            children = []
-            for move in moves(state['board']):
-                children.append(State(move, state))
-            state['children'] = children
-            childless_states.append(children)
-    '''
-    # ----------- proven method
-    possible_moves = moves(initial_board, player_is_white)
-    if not possible_moves:
-        print('The game is a draw')
-        exit(1)
-    # if my_time < 10:
-    depth = 2
-    # else:
-    #    depth = 3
-    moves_with_scores =[]
-    for _move in possible_moves:
-        _score = smart_score(_move, not player_is_white, depth)
-        moves_with_scores.append((_move, _score))
-    game_state, predicted_score = (max if player_is_white else min)(moves_with_scores, key=lambda x: x[1])
-    print('predicted score: {:.3f}'.format(predicted_score))
+    if buildTree:
+        calculate_tree(initial_state, global_depth)
+        # add further exploration of the promising parts of the tree here
+
+        # after the tree is fully calculated the below line selects the best move
+        final_state = (max if player_is_white else min)(initial_state[5], key=lambda s: s[2])
+        final_board = final_state[0]
+    else:
+        possible_moves = moves(initial_board, player_is_white)
+        if not possible_moves:
+            print('The game is a draw')
+            exit(1)
+        moves_with_scores =[]
+        for _move in possible_moves:
+            _score = recursive_score(_move, not player_is_white, global_depth-1)
+            moves_with_scores.append((_move, _score))
+        final_board, predicted_score = (max if player_is_white else min)(moves_with_scores, key=lambda x: x[1])
+        print('predicted score: {:.3f}'.format(predicted_score))
 
     # ---------- write game state -----------
     to_write = '\n-------- turn: {} --------\n\n'.format(turn+1)
-    to_write += '\n'.join(game_state.__reversed__())
+    to_write += '\n'.join(final_board.__reversed__())
     open('game state.txt', 'a').write(to_write)
 
+# below are the settings for the algorithm
+buildTree = True
+global_depth = 3
+score = simple_score
+# score = fancy_score
+'''
+I use the time to calculate and score the first 4 moves as a benchmark for my algorithm.
+To get reliable figures wait for the CPU usage to fall below 10%
+
+buildTree   score           depth   time taken
+----------------------------------------------------------------------
+None        None            0       0.094 # everything other then search & scoring
+False       fancy_score     4       5.969
+False       simple_score    4       2.936
+True        simple_score    4       3.687
+True        simple_score    3       0.328
+'''
 main()
