@@ -24,7 +24,7 @@ black time: {}
 
 '''.format(playerA[1], playerB[1]))
 
-for i in range(1):
+for i in range(3):
     for colour, timeRemaining, AI in [playerA, playerB]:
         startTime = time.perf_counter()
         if subprocess.run(AI).returncode:
@@ -41,6 +41,6 @@ for i in range(1):
             gameState.write('black time: {:.6f}\n'.format(playerB[1]))
             gameState.write('\n')
         # print(open('game state.txt').read().split('\n\n\n')[-1])
-        print(open('game state.txt').read()[-127:-44])
-        print('run time: {:.3f} seconds'.format(runTime))
+        print(open('game state.txt').read()[-127:-56])
+        print('run time: {:.3f} seconds\n'.format(runTime))
 

@@ -15,6 +15,13 @@ Not implemented yet:
     - castling
     - en passant
 
+I use the time to calculate and score the first 3 moves as a benchmark for my algorithm.
+
+search strategy             scoring                         time taken
+----------------------------------------------------------------------
+recursive explore calls     sum pieces & pawn position      0.340
+recursive explore calls     sum pieces                      0.207
+
 """
 import time
 
@@ -113,15 +120,9 @@ def moves(board: [str], _player_is_white: bool)->[[str]]:
 def score(_board: [str])->float:
     """This takes a gameState object and returns the current score of white"""
     _score = 0.0
-    for y in range(8):
-        line = _board[y]
-        for x in range(8):
-            piece = line[x]
+    for row in _board:
+        for piece in row:
             _score += PIECE_VALUE[piece]
-            if piece == 'P':
-                _score += 0.1*y
-            elif piece == 'p':
-                _score += 0.1*(y-7)
     return _score
 
 
