@@ -79,6 +79,71 @@ def move_set(move_dirs, move_dist):
         return new_states
     return piece_moves
 
+
+def move_pawn(move_dir):
+    def pawn_moves(state, piece_name, player):
+        # Returns the list of moves for pawns
+        current_piece = state[piece_name]
+        current_position = current_piece['posn']
+        new_states = []
+
+        # Check player
+        if player != current_piece['player']:
+            return []
+
+        # Can move up, if nothing is in the way.
+        position = (current_position[0] + move_dir, current_position[1])
+        # Check for bad collisions
+        is_blocked = position not in board or any(i_piece['posn'] == position for i_piece in state.values())
+        if not is_blocked:
+            new_piece = current_piece.copy()
+            new_piece.update({'posn': position})
+            new_state = state.copy()
+            new_state.update({piece_name: new_piece})
+            new_states.append(new_state)
+
+            # if on first row, can move twice
+            if current_position[0] == 1 or current_position[0] == board_size - 2:
+                position = (position[0] + move_dir, position[1])
+                # Check for bad collisions
+                is_blocked = position not in board or any(i_piece['posn'] == position for i_piece in state.values())
+                if not is_blocked:
+                    new_piece = current_piece.copy()
+                    new_piece.update({'posn': position})
+                    new_state = state.copy()
+                    new_state.update({piece_name: new_piece})
+                    new_states.append(new_state)
+
+        # Can take diagonally.
+        for position in [(current_position[0] + move_dir, current_position[1] - 1),
+                         (current_position[0] + move_dir, current_position[1] + 1)]:
+            # Must move into hostile piece
+            if not any(i_piece['posn'] == position and i_piece['player'] != player for i_piece in state.values()):
+                continue
+
+            #print('Good Position found')
+            new_piece = current_piece.copy()
+            new_piece.update({'posn': position})
+            new_state = state.copy()
+
+            # Check for captures
+            did_capture = False
+            for piece_name2, piece2 in list(new_state.items()):
+                if piece2['posn'] == position and piece2['player'] != player:
+                    did_capture = True
+                    del new_state[piece_name2]
+            if not did_capture:
+                print("Bad pawn capture")
+                sys.exit(1)
+
+            new_state.update({piece_name: new_piece})
+            new_states.append(new_state)
+
+        # TODO check for queening
+
+        return new_states
+    return pawn_moves
+
 knight_dirs = [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)]
 bish_dirs = [(1, 1), (-1, -1), (-1, 1), (1, -1)]
 rook_dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
@@ -87,20 +152,34 @@ royal_dirs = rook_dirs + bish_dirs
 
 def get_value(base_val):
     def piece_value(posn):
+        # TODO: upgrade value function
         return base_val
     return piece_value
 
+# TODO: implement different pawn values
+
+
 piece_library = {
+    'p': {'symbol': 'p',
+          'player': 1,
+          'moves': move_pawn(1),
+          'value': get_value(1),
+          },
+    'P': {'symbol': 'P',
+          'player': 0,
+          'moves': move_pawn(-1),
+          'value': get_value(1),
+          },
     'n': {'symbol': 'n',
           'player': 1,
           'moves': move_set(knight_dirs, 1),
           'value': get_value(3),
           },
     'N': {'symbol': 'N',
-           'player': 0,
-           'moves': move_set(knight_dirs, 1),
-           'value': get_value(3),
-           },
+          'player': 0,
+          'moves': move_set(knight_dirs, 1),
+          'value': get_value(3),
+          },
     'b': {'symbol': 'b',
           'player': 1,
           'moves': move_set(bish_dirs, 999),
@@ -158,9 +237,10 @@ if to_move_text == 'to move: w':
 elif to_move_text == 'to move: b':
     start_player = 1
 else:
+    print('Could not read player to move.')
     sys.exit(1)
 
-board_text = in_text[-12:-4]
+board_text = in_text[-4-board_size:-4]
 
 
 def construct_piece(in_char, row, col):
@@ -184,7 +264,7 @@ for row in range(0, board_size, 1):
 def search(depth, old_state, player):
     # This function returns the best possible next game state for the player after searching to depth
     # generate list of game states
-    new_states = [state for piece in old_state for state in old_state[piece]['moves'](old_state, piece, player)]
+    new_states = [state for i_piece in old_state for state in old_state[i_piece]['moves'](old_state, i_piece, player)]
 
     if len(new_states) == 0:
         raise StalemateException
@@ -201,8 +281,10 @@ def search(depth, old_state, player):
 def evaluate(depth, old_state, player):
     # This function returns the value of a particular game state
 
+    # TODO: implement forking on capture
+
     # Check for loss condition, then recurse if necessary.
-    if sum([piece['player'] == player and piece['symbol'].lower() == 'k' for piece in old_state.values()]) == 0:
+    if not any([piece['player'] == player and piece['symbol'].lower() == 'k' for piece in old_state.values()]):
         value = -float('inf')
     elif depth == 0:
         value = sum([piece['value'](piece['posn']) * (1 - 2 * (piece['player'] != player)) for piece in old_state.values()])
