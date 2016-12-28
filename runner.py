@@ -22,8 +22,7 @@ black = {'time remaining': initialTime, 'AI': Micheal_AI}
 def print_state(_turn, board, run_time):
     print('----- move {} -----'.format(_turn))
     print('\n'.join(''.join(piece for piece in row)for row in board.__reversed__()) + '\n')
-    print('run time: {:.3f} seconds'.format(run_time))
-    #print('\n\nto move: {}\n'.format('w' if i % 2 else 'b'))
+    print('{} took: {:.3f} seconds'.format('white' if _turn%2 else 'black', run_time))
     print('white time: {:.6f}'.format(white['time remaining']))
     print('black time: {:.6f}'.format(black['time remaining']))
     print('score: {}'.format(int(David_AI.simple_score(board))))
