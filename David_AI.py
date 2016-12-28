@@ -130,23 +130,6 @@ def fancy_score(_board: [str])->float:
     return _score
 
 
-def recursive_score(board: [str], _player_is_white: bool, depth: int)->float:
-    _moves = moves(board, _player_is_white)
-    if not _moves:
-        # if there are no possible moves then it is a draw
-        return 0
-    if depth == 1:
-        if _player_is_white:
-            return max(score(_move) for _move in _moves)
-        else:
-            return min(score(_move) for _move in _moves)
-    else:
-        if _player_is_white:
-            return max(recursive_score(_move, not _player_is_white, depth - 1) for _move in _moves)
-        else:
-            return max(recursive_score(_move, not _player_is_white, depth - 1) for _move in _moves)
-
-
 def calculate_tree(state, depth):
     """recursively calculates children of the given state """
     children = []
@@ -179,33 +162,20 @@ def main(history, white_time, black_time):
         their_time = white_time
     # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
     initial_state = [history[-1], player_is_white, score(history[-1]), 0, None, None]
-    if buildTree:
-        calculate_tree(initial_state, global_depth)
-        # add further exploration of the promising parts of the tree here
+    calculate_tree(initial_state, global_depth)
+    # add further exploration of the promising parts of the tree here
 
-        # after the tree is fully calculated the below line selects the best move
-        possible_moves = initial_state[5]
-        if not possible_moves:
-            print('The game finished with stalemate')
-            exit(1)
-        final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
-        final_board = final_state[0]
-        predicted_score = initial_state[2]
-    else:
-        possible_moves = moves(history[-1], player_is_white)
-        if not possible_moves:
-            print('The game finished with stalemate')
-            exit(1)
-        moves_with_scores =[]
-        for _move in possible_moves:
-            _score = recursive_score(_move, not player_is_white, global_depth-1)
-            moves_with_scores.append((_move, _score))
-        final_board, predicted_score = (max if player_is_white else min)(moves_with_scores, key=lambda x: x[1])
-
+    # after the tree is fully calculated the below line selects the best move
+    possible_moves = initial_state[5]
+    if not possible_moves:
+        print('The game finished with stalemate')
+        exit(1)
+    final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
+    final_board = final_state[0]
+    predicted_score = initial_state[2]
     return [[piece for piece in line] for line in final_board]
 
 # below are the settings for the algorithm
-buildTree = True
 global_depth = 3
 score = simple_score
 # score = fancy_score
