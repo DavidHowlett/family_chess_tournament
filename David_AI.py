@@ -52,7 +52,8 @@ def move(board: [str], y1, x1, y2, x2)-> [str]:
 
 
 def moves(board: [str], _player_is_white: bool)->[[str]]:
-    """This generates a list of all possible game states after one move"""
+    """This generates a list of all possible game states after one move.
+    Preferred moves should be later in the returned list."""
     _moves = []
     for x in range(8):
         for y in range(8):
@@ -163,7 +164,11 @@ def calculate_tree(state, depth):
         children.append(child)
     # set the children of the current state to be the newly generated list
     state[5] = children
-    state[2] = (max if state[1] else min)(children, key=lambda s: s[2])
+    if children:
+        state[2] = (max if state[1] else min)(child[2] for child in children)
+    else:
+        # if there are no valid moves then it is a draw
+        state[2] = 0
     return state
 
 
@@ -190,21 +195,26 @@ def main():
         # add further exploration of the promising parts of the tree here
 
         # after the tree is fully calculated the below line selects the best move
-        final_state = (max if player_is_white else min)(initial_state[5], key=lambda s: s[2])
+        possible_moves = initial_state[5]
+        if not possible_moves:
+            print('The game finished with stalemate')
+            exit(1)
+        final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
         final_board = final_state[0]
+        predicted_score = initial_state[2]
     else:
         possible_moves = moves(initial_board, player_is_white)
         if not possible_moves:
-            print('The game is a draw')
+            print('The game finished with stalemate')
             exit(1)
         moves_with_scores =[]
         for _move in possible_moves:
             _score = recursive_score(_move, not player_is_white, global_depth-1)
             moves_with_scores.append((_move, _score))
         final_board, predicted_score = (max if player_is_white else min)(moves_with_scores, key=lambda x: x[1])
-        print('predicted score: {:.3f}'.format(predicted_score))
 
     # ---------- write game state -----------
+    print('predicted score: {:.3f}'.format(predicted_score))
     to_write = '\n-------- turn: {} --------\n\n'.format(turn+1)
     to_write += '\n'.join(final_board.__reversed__())
     open('game state.txt', 'a').write(to_write)
@@ -224,6 +234,7 @@ None        None            0       0.094 # everything other then search & scori
 False       fancy_score     4       5.969
 False       simple_score    4       2.936
 True        simple_score    4       3.687
+True        simple_score    5       92.041
 True        simple_score    3       0.328
 '''
 main()
