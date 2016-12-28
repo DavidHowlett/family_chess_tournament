@@ -35,10 +35,6 @@ PIECE_MOVE_DIRECTION = {
 }
 
 
-def pretty_print(_board):
-    print('\n'.join(_board.__reversed__()) + '\n')
-
-
 def move(board: [str], y1, x1, y2, x2)-> [str]:
     """returns a board with a move made"""
     board = board.copy()
@@ -172,24 +168,17 @@ def calculate_tree(state, depth):
     return state
 
 
-def main():
-    # --------- read in game state ----------
-    game_history = open('game state.txt').read().split('\n')
-    initial_board = game_history[-14:-6]
-    initial_board.reverse()
-    turn = int(game_history[-16].split(' ')[2])
-    player_is_white = game_history[-5][9] == 'w'
-    white_time = float(game_history[-4][12:])
-    black_time = float(game_history[-3][12:])
+def main(history, white_time, black_time):
+    history = [[''.join(row) for row in board] for board in history]
+    player_is_white = len(history) % 2 == 1
     if player_is_white:
-        my_time = white_time + 2
+        my_time = white_time
         their_time = black_time
     else:
-        my_time = black_time + 2
+        my_time = black_time
         their_time = white_time
     # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
-    initial_state = [initial_board, player_is_white, score(initial_board), 0, None, None]
-    # ---------- modify game state ----------
+    initial_state = [history[-1], player_is_white, score(history[-1]), 0, None, None]
     if buildTree:
         calculate_tree(initial_state, global_depth)
         # add further exploration of the promising parts of the tree here
@@ -203,7 +192,7 @@ def main():
         final_board = final_state[0]
         predicted_score = initial_state[2]
     else:
-        possible_moves = moves(initial_board, player_is_white)
+        possible_moves = moves(history[-1], player_is_white)
         if not possible_moves:
             print('The game finished with stalemate')
             exit(1)
@@ -213,11 +202,7 @@ def main():
             moves_with_scores.append((_move, _score))
         final_board, predicted_score = (max if player_is_white else min)(moves_with_scores, key=lambda x: x[1])
 
-    # ---------- write game state -----------
-    print('predicted score: {:.3f}'.format(predicted_score))
-    to_write = '\n-------- turn: {} --------\n\n'.format(turn+1)
-    to_write += '\n'.join(final_board.__reversed__())
-    open('game state.txt', 'a').write(to_write)
+    return [[piece for piece in line] for line in final_board]
 
 # below are the settings for the algorithm
 buildTree = True
@@ -237,4 +222,4 @@ True        simple_score    4       3.687
 True        simple_score    5       92.041
 True        simple_score    3       0.328
 '''
-main()
+

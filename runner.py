@@ -1,22 +1,12 @@
 import time
+import copy
 import os
-import subprocess
+import David_AI
 
 initialTime = 5
 timePerMove = 1
-
-white = {'time remaining': initialTime, 'AI': 'David_AI.py'}
-black = {'time remaining': initialTime, 'AI': 'David_AI_old.py'}
-
-if os.name == 'posix':
-    python = 'python3'
-else:
-    python = 'python'
-print(os.name)
-
-open('game state.txt', 'w').write(
-    '''-------- turn: 0 --------
-
+turnsToPlayFor = 20
+initialBoard = '''
 rnbqkbnr
 pppppppp
 ........
@@ -24,37 +14,42 @@ pppppppp
 ........
 ........
 PPPPPPPP
-RNBQKBNR
+RNBQKBNR'''
+white = {'time remaining': initialTime, 'AI': David_AI.main}
+black = {'time remaining': initialTime, 'AI': David_AI.main}
 
-to move: w
-white time: {}
-black time: {}
 
-'''.format(initialTime, initialTime))
+def print_state(_turn, board, run_time):
+    print('----- move {} -----'.format(_turn))
+    print('\n'.join(''.join(piece for piece in row)for row in board.__reversed__()) + '\n')
+    print('run time: {:.3f} seconds'.format(run_time))
+    #print('\n\nto move: {}\n'.format('w' if i % 2 else 'b'))
+    print('white time: {:.6f}'.format(white['time remaining']))
+    print('black time: {:.6f}'.format(black['time remaining']))
+    print('score: {}'.format(int(David_AI.simple_score(board))))
+    print()
 
-for i in range(100):
-    player = black if i % 2 else white
-    startTime = time.perf_counter()
-    if subprocess.run((python, player['AI'])).returncode:
-        print('{} stopped the game'.format(player['AI']))
-        exit()
-    runTime = time.perf_counter() - startTime
-    player['time remaining'] = player['time remaining'] + timePerMove - runTime
-    board = open('game state.txt').read().split('\n\n\n')[-1].split('\n\n')[-1]
-    print(board)
-    print('run time: {:.3f} seconds\n'.format(runTime))
-    with open('game state.txt', 'a') as gameState:
-        gameState.write('\n\nto move: {}\n'.format('w' if i % 2 else 'b'))
-        gameState.write('white time: {:.6f}\n'.format(white['time remaining']))
-        gameState.write('black time: {:.6f}\n'.format(black['time remaining']))
-        gameState.write('\n')
-        if 'k' not in board:
-            gameState.write('White won!\n')
-            print('White won in {} moves'.format(i+1))
+
+def main():
+    history = [[[piece for piece in line] for line in initialBoard.split()]]
+    history[0].reverse()
+    for turn in range(1, 1+turnsToPlayFor):
+        player = white if turn % 2 else black
+        startTime = time.perf_counter()
+        try:
+            chosenMove = player['AI'](copy.deepcopy(history), white['time remaining'], black['time remaining'])
+        except ZeroDivisionError:  # catch stalemate here
+            pass
+        runTime = time.perf_counter() - startTime
+        history.append(chosenMove)
+        player['time remaining'] = player['time remaining'] + timePerMove - runTime
+        print_state(turn, chosenMove, runTime)
+        if not any(any(piece == 'k' for piece in row) for row in chosenMove):
+            print('White won in {} moves'.format(turn))
             exit()
-        if 'K' not in board:
-            gameState.write('Black won!\n')
-            print('Black won in {} moves'.format(i+1))
+        if not any(any(piece == 'K' for piece in row) for row in chosenMove):
+            print('Black won in {} moves'.format(turn))
             exit()
-print('Draw due to running out of time')
+    print('Draw due to running out of time')
 
+main()
