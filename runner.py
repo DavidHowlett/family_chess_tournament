@@ -6,7 +6,7 @@ initialTime = 5
 timePerMove = 1
 
 playerA = ['w', initialTime, 'David_AI.py']
-playerB = ['b', initialTime, 'Michael_AI_v1.1.py']
+playerB = ['b', initialTime, 'David_AI_old.py']
 
 if os.name == 'posix':
     python = 'python3'
@@ -59,5 +59,5 @@ for i in range(100):
             gameState.write('Black won!\n')
             print('Black won in {} moves'.format(i+1))
             exit()
-
+print('Draw due to running out of time')
 
