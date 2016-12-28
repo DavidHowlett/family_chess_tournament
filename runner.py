@@ -1,11 +1,11 @@
 import time
 import copy
-import os
 import David_AI
+import Michael_AI_v1_1 as Micheal_AI
 
 initialTime = 5
 timePerMove = 1
-turnsToPlayFor = 20
+turnsToPlayFor = 200
 initialBoard = '''
 rnbqkbnr
 pppppppp
@@ -15,8 +15,8 @@ pppppppp
 ........
 PPPPPPPP
 RNBQKBNR'''
-white = {'time remaining': initialTime, 'AI': David_AI.main}
-black = {'time remaining': initialTime, 'AI': David_AI.main}
+white = {'time remaining': initialTime, 'AI': David_AI}
+black = {'time remaining': initialTime, 'AI': Micheal_AI}
 
 
 def print_state(_turn, board, run_time):
@@ -37,7 +37,7 @@ def main():
         player = white if turn % 2 else black
         startTime = time.perf_counter()
         try:
-            chosenMove = player['AI'](copy.deepcopy(history), white['time remaining'], black['time remaining'])
+            chosenMove = player['AI'].main(copy.deepcopy(history), white['time remaining'], black['time remaining'])
         except ZeroDivisionError:  # catch stalemate here
             pass
         runTime = time.perf_counter() - startTime
