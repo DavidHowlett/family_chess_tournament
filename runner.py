@@ -1,5 +1,6 @@
 import time
 import copy
+import shared
 import David_AI
 import Michael_AI_v1_1 as Michael_AI
 import Robert_AI
@@ -17,15 +18,15 @@ pppppppp
 PPPPPPPP
 RNBQKBNR'''
 white = {'time remaining': initialTime, 'AI': David_AI}
-black = {'time remaining': initialTime, 'AI': Micheal_AI}
+black = {'time remaining': initialTime, 'AI': Michael_AI}
 
 
 def print_state(_turn, board, run_time):
     print('----- move {} -----'.format(_turn))
-    print('\n'.join(''.join(piece for piece in row)for row in board.__reversed__()) + '\n')
+    print('\n'.join(' '.join(piece for piece in row)for row in board.__reversed__()) + '\n')
     print('{} took: {:.3f} seconds'.format('white' if _turn%2 else 'black', run_time))
-    print('white time: {:.6f}'.format(white['time remaining']))
-    print('black time: {:.6f}'.format(black['time remaining']))
+    print('white time: {:.3f}'.format(white['time remaining']))
+    print('black time: {:.3f}'.format(black['time remaining']))
     print('score: {}'.format(int(David_AI.simple_score(board))))
     print()
 
@@ -46,10 +47,12 @@ def main():
         print_state(turn, chosenMove, runTime)
         if not any(any(piece == 'k' for piece in row) for row in chosenMove):
             print('White won in {} moves'.format(turn))
-            exit()
+            return
         if not any(any(piece == 'K' for piece in row) for row in chosenMove):
             print('Black won in {} moves'.format(turn))
-            exit()
+            return
     print('Draw due to running out of time')
 
+game_start_time = time.perf_counter()
 main()
+print('The game took {:.3f} seconds'.format(time.perf_counter()-game_start_time))

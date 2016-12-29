@@ -4,9 +4,6 @@ and to see who can produce the best chess AI.
 Mum will play the AIs we write to see if she can beat them.
 
 # Rules
-The AI will work by reading in a file called “game state.txt”
-looking at the last game state then appending a new game state to the file.
-The programs of the players will be run alternately.
 
 A player loses if:
 - They make an illegal move
