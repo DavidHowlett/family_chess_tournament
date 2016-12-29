@@ -15,19 +15,7 @@
 
 import sys
 import time
-
-startTime = time.process_time()
-
-# Define global rules
-board_size = 8
-board = [(row, col) for row in range(0, board_size, 1) for col in range(0, board_size, 1)]
-
-
-class StalemateException(Exception):
-    pass
-
-# Define piece movement functions
-# They return a list of valid states
+from shared import StalemateException
 
 
 def move_set(move_dirs, move_dist):
@@ -144,11 +132,10 @@ def move_pawn(move_dir):
         return new_states
     return pawn_moves
 
-knight_dirs = [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)]
-bish_dirs = [(1, 1), (-1, -1), (-1, 1), (1, -1)]
-rook_dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-royal_dirs = rook_dirs + bish_dirs
 
+
+# Define piece movement functions
+# They return a list of valid states
 
 def get_value(base_val):
     def piece_value(posn):
@@ -158,6 +145,47 @@ def get_value(base_val):
 
 # TODO: implement different pawn values
 
+def search(depth, old_state, player):
+    # This function returns the best possible next game state for the player after searching to depth
+    # generate list of game states
+    new_states = [state for i_piece in old_state for state in old_state[i_piece]['moves'](old_state, i_piece, player)]
+
+    if len(new_states) == 0:
+        raise StalemateException
+
+    # valuate over them
+    values = [
+        -evaluate(depth - 1, state, 1-player)
+        for state in new_states
+        ]
+    best_state = new_states[values.index(max(values))]
+    return best_state
+
+
+def evaluate(depth, old_state, player):
+    # This function returns the value of a particular game state
+
+    # TODO: implement forking on capture
+
+    # Check for loss condition, then recurse if necessary.
+    if not any([piece['player'] == player and piece['symbol'].lower() == 'k' for piece in old_state.values()]):
+        value = -float('inf')
+    elif depth == 0:
+        value = sum([piece['value'](piece['posn']) * (1 - 2 * (piece['player'] != player)) for piece in old_state.values()])
+    else:
+        # Value of this state is equal to the value of the next one.
+        try:
+            next_state = search(depth, old_state, player)
+            value = -evaluate(depth - 1, next_state, 1 - player)
+        except StalemateException:
+            value = 0
+
+    return value
+
+knight_dirs = [(-2, -1), (-2, 1), (-1, -2), (-1, 2), (1, -2), (1, 2), (2, -1), (2, 1)]
+bish_dirs = [(1, 1), (-1, -1), (-1, 1), (1, -1)]
+rook_dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+royal_dirs = rook_dirs + bish_dirs
 
 piece_library = {
     'p': {'symbol': 'p',
@@ -223,105 +251,54 @@ piece_library = {
     '.': {},
 }
 
-# Load initial game state
-infile = open('game state.txt', 'r')
-# infile = open('example game state.txt', 'r')
-in_text_raw = infile.read()
-in_text = [s.strip() for s in in_text_raw.splitlines()]
-
-black_time_text = in_text[-1]
-white_time_text = in_text[-2]
-to_move_text = in_text[-3]
-if to_move_text == 'to move: w':
-    start_player = 0
-elif to_move_text == 'to move: b':
-    start_player = 1
-else:
-    print('Could not read player to move.')
-    sys.exit(1)
-
-board_text = in_text[-4-board_size:-4]
-
 
 def construct_piece(in_char, row, col):
+    """ Converts from characters in a list of strings to piece dicts."""
     if in_char == '.':
         return None
     properties = piece_library[in_char]
     properties.update({'posn': (row, col),
-                       #'ID': properties['symbol'] + str(row) + str(col),
+                       # 'ID': properties['symbol'] + str(row) + str(col),
                        })
     return properties.copy()
 
-start_state = {}
-for row in range(0, board_size, 1):
-    for col in range(0, board_size, 1):
-        symbol = board_text[row][col]
-        if symbol == '.':
-            continue
-        start_state.update({symbol + str(row) + str(col): construct_piece(symbol, row, col)})
+# Define global rules
+board_size = 8
+board = [(row, col) for row in range(0, board_size, 1) for col in range(0, board_size, 1)]
 
 
-def search(depth, old_state, player):
-    # This function returns the best possible next game state for the player after searching to depth
-    # generate list of game states
-    new_states = [state for i_piece in old_state for state in old_state[i_piece]['moves'](old_state, i_piece, player)]
+def main(history, white_time, black_time):
+    startTime = time.process_time()
 
-    if len(new_states) == 0:
-        raise StalemateException
+    start_player = (len(history) - 1) % 2
 
-    # valuate over them
-    values = [
-        -evaluate(depth - 1, state, 1-player)
-        for state in new_states
-        ]
-    best_state = new_states[values.index(max(values))]
-    return best_state
+    # Load initial game state
+    board_text = history[-1]
 
+    start_state = {}
+    for row in range(0, board_size, 1):
+        for col in range(0, board_size, 1):
+            symbol = board_text[row][col]
+            if symbol == '.':
+                continue
+            start_state.update({symbol + str(row) + str(col): construct_piece(symbol, row, col)})
 
-def evaluate(depth, old_state, player):
-    # This function returns the value of a particular game state
+    prelimTime = time.process_time() - startTime
 
-    # TODO: implement forking on capture
+    new_state = search(2, start_state, start_player)
+    print(new_state.values())
+    coreTime = time.process_time() - startTime
 
-    # Check for loss condition, then recurse if necessary.
-    if not any([piece['player'] == player and piece['symbol'].lower() == 'k' for piece in old_state.values()]):
-        value = -float('inf')
-    elif depth == 0:
-        value = sum([piece['value'](piece['posn']) * (1 - 2 * (piece['player'] != player)) for piece in old_state.values()])
-    else:
-        # Value of this state is equal to the value of the next one.
-        try:
-            next_state = search(depth, old_state, player)
-            value = -evaluate(depth - 1, next_state, 1 - player)
-        except StalemateException:
-            value = 0
+    # Unparse
+    new_board_text = [['.' for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
+    for piece in new_state.values():
+        new_board_text[piece['posn'][0]][piece['posn'][1]] = piece['symbol']
+    print(new_board_text)
 
-    return value
+    return new_board_text
 
-prelimTime = time.process_time() - startTime
+    endTime = time.process_time() - startTime
 
-new_state = search(2, start_state, start_player)
-print(new_state.values())
-coreTime = time.process_time() - startTime
-
-# Unparse
-new_board_text = [['.' for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
-for piece in new_state.values():
-    new_board_text[piece['posn'][0]][piece['posn'][1]] = piece['symbol']
-print(new_board_text)
-new_board_text = '\n'.join([''.join(row) for row in new_board_text])
-print(new_board_text)
-
-open('game state.txt', 'w').write('''-------- turn: 0 --------
-
-{}
-
-'''.format(new_board_text)
-)
-
-endTime = time.process_time() - startTime
-
-print(prelimTime)
-print(coreTime)
-print(endTime)
-sys.exit(0)
+    print(prelimTime)
+    print(coreTime)
+    print(endTime)
