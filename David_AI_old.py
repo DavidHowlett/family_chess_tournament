@@ -16,6 +16,7 @@ Not implemented yet:
     - en passant
 
 """
+from shared import StalemateException, ThreeFoldRepetition
 
 PIECE_VALUE = {
     '.': 0,
@@ -33,10 +34,6 @@ PIECE_MOVE_DIRECTION = {
     'N': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
     'n': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
 }
-
-
-def pretty_print(_board):
-    print('\n'.join(_board.__reversed__()) + '\n')
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -134,23 +131,6 @@ def fancy_score(_board: [str])->float:
     return _score
 
 
-def recursive_score(board: [str], _player_is_white: bool, depth: int)->float:
-    _moves = moves(board, _player_is_white)
-    if not _moves:
-        # if there are no possible moves then it is a draw
-        return 0
-    if depth == 1:
-        if _player_is_white:
-            return max(score(_move) for _move in _moves)
-        else:
-            return min(score(_move) for _move in _moves)
-    else:
-        if _player_is_white:
-            return max(recursive_score(_move, not _player_is_white, depth - 1) for _move in _moves)
-        else:
-            return max(recursive_score(_move, not _player_is_white, depth - 1) for _move in _moves)
-
-
 def calculate_tree(state, depth):
     """recursively calculates children of the given state """
     children = []
@@ -172,61 +152,48 @@ def calculate_tree(state, depth):
     return state
 
 
-def main():
-    # --------- read in game state ----------
-    game_history = open('game state.txt').read().split('\n')
-    initial_board = game_history[-14:-6]
-    initial_board.reverse()
-    turn = int(game_history[-16].split(' ')[2])
-    player_is_white = game_history[-5][9] == 'w'
-    white_time = float(game_history[-4][12:])
-    black_time = float(game_history[-3][12:])
+def main(history, white_time, black_time):
+    history = [[''.join(row) for row in board] for board in history]
+    player_is_white = len(history) % 2 == 1
     if player_is_white:
-        my_time = white_time + 2
+        my_time = white_time
         their_time = black_time
     else:
-        my_time = black_time + 2
+        my_time = black_time
         their_time = white_time
+
     # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
-    initial_state = [initial_board, player_is_white, score(initial_board), 0, None, None]
-    # ---------- modify game state ----------
-    if buildTree:
-        calculate_tree(initial_state, global_depth)
-        # add further exploration of the promising parts of the tree here
-
-        # after the tree is fully calculated the below line selects the best move
-        possible_moves = initial_state[5]
-        if not possible_moves:
-            print('The game finished with stalemate')
-            exit(1)
-        final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
-        final_board = final_state[0]
-        predicted_score = initial_state[2]
+    initial_score = score(history[-1])
+    my_score = initial_score if player_is_white else -initial_score
+    initial_state = [history[-1], player_is_white, initial_score, 0, None, None]
+    calculate_tree(initial_state, global_depth)
+    possible_moves = initial_state[5]
+    if not possible_moves:
+        raise StalemateException
+    if my_score < 0.5:
+        # if I am losing and in a loop then call a draw
+        if len(history) > 9 and history[-1] == history[-5] == history[-9]:
+            raise ThreeFoldRepetition
     else:
-        possible_moves = moves(initial_board, player_is_white)
-        if not possible_moves:
-            print('The game finished with stalemate')
-            exit(1)
-        moves_with_scores =[]
-        for _move in possible_moves:
-            _score = recursive_score(_move, not player_is_white, global_depth-1)
-            moves_with_scores.append((_move, _score))
-        final_board, predicted_score = (max if player_is_white else min)(moves_with_scores, key=lambda x: x[1])
+        # If I am drawing or winning then avoid previous game states
+        for state in possible_moves:
+            if state[0] in history:
+                state[1] = -3 if player_is_white else 3
 
-    # ---------- write game state -----------
-    print('predicted score: {:.3f}'.format(predicted_score))
-    to_write = '\n-------- turn: {} --------\n\n'.format(turn+1)
-    to_write += '\n'.join(final_board.__reversed__())
-    open('game state.txt', 'a').write(to_write)
+    # add further exploration of the promising parts of the tree here
+
+    final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
+    final_board = final_state[0]
+    predicted_score = initial_state[2]
+    return [[piece for piece in line] for line in final_board]
 
 # below are the settings for the algorithm
-buildTree = True
 global_depth = 3
 score = simple_score
 # score = fancy_score
 '''
 I use the time to calculate and score the first 4 moves as a benchmark for my algorithm.
-To get reliable figures wait for the CPU usage to fall below 10%
+To get reliable figures wait for the CPU usage to fall below 10% before starting
 
 buildTree   score           depth   time taken
 ----------------------------------------------------------------------
@@ -237,4 +204,3 @@ True        simple_score    4       3.687
 True        simple_score    5       92.041
 True        simple_score    3       0.328
 '''
-main()

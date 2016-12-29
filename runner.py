@@ -2,6 +2,7 @@ import time
 import copy
 import shared
 import David_AI
+import David_AI_old
 import Michael_AI_v1_1 as Michael_AI
 import Robert_AI
 
@@ -18,7 +19,7 @@ pppppppp
 PPPPPPPP
 RNBQKBNR'''
 white = {'time remaining': initialTime, 'AI': David_AI}
-black = {'time remaining': initialTime, 'AI': Michael_AI}
+black = {'time remaining': initialTime, 'AI': David_AI}
 
 
 def print_state(_turn, board, run_time):
@@ -39,8 +40,12 @@ def main():
         startTime = time.perf_counter()
         try:
             chosenMove = player['AI'].main(copy.deepcopy(history), white['time remaining'], black['time remaining'])
-        except ZeroDivisionError:  # catch stalemate here
-            pass
+        except shared.StalemateException:
+            print('Draw due to there being no valid moves')
+            return
+        except shared.ThreeFoldRepetition:
+            print('{} called a draw with the threefold repetition rule'.format('White' if turn % 2 else 'Black'))
+            return
         runTime = time.perf_counter() - startTime
         history.append(chosenMove)
         player['time remaining'] = player['time remaining'] + timePerMove - runTime

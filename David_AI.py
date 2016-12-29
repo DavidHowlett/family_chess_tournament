@@ -16,6 +16,7 @@ Not implemented yet:
     - en passant
 
 """
+from shared import StalemateException, ThreeFoldRepetition
 
 PIECE_VALUE = {
     '.': 0,
@@ -160,16 +161,27 @@ def main(history, white_time, black_time):
     else:
         my_time = black_time
         their_time = white_time
-    # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
-    initial_state = [history[-1], player_is_white, score(history[-1]), 0, None, None]
-    calculate_tree(initial_state, global_depth)
-    # add further exploration of the promising parts of the tree here
 
-    # after the tree is fully calculated the below line selects the best move
+    # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
+    initial_score = score(history[-1])
+    my_score = initial_score if player_is_white else -initial_score
+    initial_state = [history[-1], player_is_white, initial_score, 0, None, None]
+    calculate_tree(initial_state, global_depth)
     possible_moves = initial_state[5]
     if not possible_moves:
-        print('The game finished with stalemate')
-        exit(1)
+        raise StalemateException
+    if my_score < 0.5:
+        # if I am losing and in a loop then call a draw
+        if len(history) > 9 and history[-1] == history[-5] == history[-9]:
+            raise ThreeFoldRepetition
+    else:
+        # If I am drawing or winning then avoid previous game states
+        for state in possible_moves:
+            if state[0] in history:
+                state[1] = -3 if player_is_white else 3
+
+    # add further exploration of the promising parts of the tree here
+
     final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
     final_board = final_state[0]
     predicted_score = initial_state[2]
@@ -181,7 +193,7 @@ score = simple_score
 # score = fancy_score
 '''
 I use the time to calculate and score the first 4 moves as a benchmark for my algorithm.
-To get reliable figures wait for the CPU usage to fall below 10%
+To get reliable figures wait for the CPU usage to fall below 10% before starting
 
 buildTree   score           depth   time taken
 ----------------------------------------------------------------------
@@ -192,4 +204,3 @@ True        simple_score    4       3.687
 True        simple_score    5       92.041
 True        simple_score    3       0.328
 '''
-
