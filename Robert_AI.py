@@ -158,8 +158,8 @@ def pawn_value(base_val, move_dir):
     diversion_factor = 1 / 100000
 
     value_matrix = [[(1 - diversion_factor * (col - (board_size - 1) / 2) ** 2) *
-                     (2 + move_dir * (row + 1)/board_size) for col in range(0, board_size, 1)] for row in
-                        range(0, board_size, 1)]
+                     (2 + move_dir * (row + 1)/board_size) for col in range(0, board_size, 1)]
+                    for row in range(0, board_size, 1)]
     # Normalise value matrix
     error = sum([sum(row) for row in value_matrix]) / board_size ** 2
     value_matrix = [[element * error for element in row] for row in value_matrix]
@@ -178,15 +178,17 @@ def search(depth, old_state, player):
         raise StalemateException
 
     # valuate over them
+    new_depth = depth
+    new_depth[0] += 1
     values = [
-        -evaluate(depth - 1, state, 1-player)
+        -evaluate(new_depth, state, 1-player, len(state) != len(old_state))
         for state in new_states
         ]
     best_state = new_states[values.index(max(values))]
     return best_state
 
 
-def evaluate(depth, old_state, player):
+def evaluate(depth, old_state, player, force_search):
     # This function returns the value of a particular game state
 
     # TODO: implement forking on capture
@@ -194,13 +196,15 @@ def evaluate(depth, old_state, player):
     # Check for loss condition, then recurse if necessary.
     if not any([piece['player'] == player and piece['symbol'].lower() == 'k' for piece in old_state.values()]):
         value = -float('inf')
-    elif depth == 0:
+    elif (depth[0] >= depth[1] and not force_search) or depth[0] >= depth[2]:
         value = sum([piece['value'](piece['posn']) * (1 - 2 * (piece['player'] != player)) for piece in old_state.values()])
     else:
         # Value of this state is equal to the value of the next one.
         try:
             next_state = search(depth, old_state, player)
-            value = -evaluate(depth - 1, next_state, 1 - player)
+            new_depth = depth
+            new_depth[0] += 1
+            value = -evaluate(new_depth, next_state, 1 - player, len(next_state) != len(old_state))
         except StalemateException:
             value = 0
 
@@ -301,7 +305,9 @@ def main(history, white_time, black_time):
                 continue
             start_state.update({symbol + str(row) + str(col): construct_piece(symbol, row, col)})
 
-    new_state = search(2, start_state, start_player)
+    depth = [0, 2, 5]
+    # [Current depth, max depth if no exchanges, max depth if exchanging
+    new_state = search(depth, start_state, start_player)
 
     # Unparse
     new_board_text = [['.' for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
