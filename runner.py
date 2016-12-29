@@ -1,7 +1,8 @@
 import time
 import copy
 import David_AI
-import Michael_AI_v1_1 as Micheal_AI
+import Michael_AI_v1_1 as Michael_AI
+import Robert_AI
 
 initialTime = 5
 timePerMove = 1
