@@ -145,16 +145,28 @@ def get_value(base_val, value_matrix):
     value_matrix = [[element * error for element in row] for row in value_matrix]
 
     def piece_value(posn):
-        # TODO: upgrade value function
         return base_val * value_matrix[posn[0]][posn[1]]
     return piece_value
 
-diversion_factor = 1/100
+diversion_factor = 1/100000
 default_posn_values = [[(1 - diversion_factor * (col - (board_size-1)/2) ** 2) * (1 - diversion_factor * (row - (board_size-1)/2) ** 2) for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
 flat_posn_values = [[1 for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
 
 
-# TODO: implement different pawn values
+def pawn_value(base_val, move_dir):
+    #Pawns use a different value system, they prefer to move up if possible.
+    diversion_factor = 1 / 100000
+
+    value_matrix = [[(1 - diversion_factor * (col - (board_size - 1) / 2) ** 2) *
+                     (2 + move_dir * (row + 1)/board_size) for col in range(0, board_size, 1)] for row in
+                        range(0, board_size, 1)]
+    # Normalise value matrix
+    error = sum([sum(row) for row in value_matrix]) / board_size ** 2
+    value_matrix = [[element * error for element in row] for row in value_matrix]
+
+    def piece_value(posn):
+        return base_val * value_matrix[posn[0]][posn[1]]
+    return piece_value
 
 
 def search(depth, old_state, player):
@@ -203,12 +215,12 @@ piece_library = {
     'p': {'symbol': 'p',
           'player': 1,
           'moves': move_pawn(-1),
-          'value': get_value(1, default_posn_values),
+          'value': pawn_value(1, -1),
           },
     'P': {'symbol': 'P',
           'player': 0,
           'moves': move_pawn(1),
-          'value': get_value(1, default_posn_values),
+          'value': pawn_value(1, 1),
           },
     'n': {'symbol': 'n',
           'player': 1,
@@ -276,8 +288,6 @@ def construct_piece(in_char, row, col):
 
 
 def main(history, white_time, black_time):
-    startTime = time.process_time()
-
     start_player = (len(history) - 1) % 2
 
     # Load initial game state
@@ -291,7 +301,7 @@ def main(history, white_time, black_time):
                 continue
             start_state.update({symbol + str(row) + str(col): construct_piece(symbol, row, col)})
 
-    new_state = search(1, start_state, start_player)
+    new_state = search(2, start_state, start_player)
 
     # Unparse
     new_board_text = [['.' for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
