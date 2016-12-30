@@ -20,8 +20,8 @@ from shared import StalemateException, ThreeFoldRepetition
 
 PIECE_VALUE = {
     '.': 0,
-    'K': 20, 'Q': 9, 'R': 5, 'B': 3.2, 'N': 3, 'P': 0.9,
-    'k': -20, 'q': -9, 'r': -5, 'b': -3.2, 'n': -3, 'p': -0.9}
+    'K': 20, 'Q': 9, 'R': 5, 'B': 3.2, 'N': 3, 'P': 1,
+    'k': -20, 'q': -9, 'r': -5, 'b': -3.2, 'n': -3, 'p': -1}
 PIECE_MOVE_DIRECTION = {
     'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
     'k': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
@@ -112,8 +112,8 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
                             after_pawn_replacement = after_pawn_move.copy()
                             line = after_pawn_replacement[y2]
-                            after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
-                            _moves.append((move(board, y, x, y2, x),
+                            after_pawn_replacement[y2] = line[:x] + replacement_piece + line[x + 1:]
+                            _moves.append((after_pawn_replacement,
                                           PIECE_VALUE[replacement_piece] - 1))  # assume pawn value of 1
                     else:
                         _moves.append((move(board, y, x, y2, x), 0))
@@ -165,10 +165,10 @@ def calculate_tree(state, depth):
     state[5] = children
     if children:
         if depth:
-            # then derive the score from the score of the children
-            state[2] = (max if state[1] else min)(child[2] for child in children)
+            # then set the score to be the (score diff + score) of the best child
+            state[2] = (max if state[1] else min)(child[6]+child[2] for child in children)
         else:
-            # then derive the score from the score diff of the children
+            # then set the score to be the score diff of the best child
             state[2] = (max if state[1] else min)(child[6] for child in children)
     else:
         # if there are no valid moves then it is a stalemate (StalemateException)
@@ -181,9 +181,9 @@ def main(history, white_time, black_time):
     leafCount = 0
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
-    # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
     initial_score = score(history[-1])
     my_score = initial_score if player_is_white else -initial_score
+    # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
     initial_state = [history[-1], player_is_white, initial_score, 0, None, None]
     calculate_tree(initial_state, global_depth)
     possible_moves = initial_state[5]
@@ -197,7 +197,7 @@ def main(history, white_time, black_time):
         # If I am drawing or winning then avoid previous game states
         for state in possible_moves:
             if state[0] in history:
-                state[1] = -3 if player_is_white else 3
+                state[2] = -3 if player_is_white else 3
 
     # add further exploration of the promising parts of the tree here
 
@@ -230,9 +230,4 @@ True        simple_score    3       0.132
 True        simple_score    4       3.213
 True        simple_score    5       80.615
 
-Todo debug move count
-
-leaves for depth 3 search of first move in the game: 8902
-7754 move 2 if white moves forwards
-8457 move 2 if black moves forwards
 '''
