@@ -5,10 +5,11 @@ import David_AI
 import David_AI_old
 import Michael_AI_v1_1 as Michael_AI
 import Robert_AI
+import no_move_AI
 
 initialTime = 5
 timePerMove = 1
-turnsToPlayFor = 2
+turnsToPlayFor = 200
 initialBoard = '''
 r n b q k b n r
 p p p p p p p p
@@ -18,7 +19,7 @@ p p p p p p p p
 . . . . . . . .
 P P P P P P P P
 R N B Q K B N R'''
-white = {'time remaining': initialTime, 'AI': David_AI}
+white = {'time remaining': initialTime, 'AI': Michael_AI}
 black = {'time remaining': initialTime, 'AI': David_AI}
 
 
