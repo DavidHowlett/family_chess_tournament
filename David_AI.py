@@ -150,11 +150,13 @@ def calculate_tree(state, depth):
     state['children'] = children
     if children:
         if depth:
-            # then set the score to be the (score diff + score) of the best child
-            state['score'] = (max if state['white'] else min)(child['diff']+child['score'] for child in children)
+            # then set the score to be the (score diff + score) of the best child (discounted for being in the future)
+            state['score'] = discountRate * (
+                max if state['white'] else min)(child['diff']+child['score'] for child in children)
         else:
-            # then set the score to be the score diff of the best child
-            state['score'] = (max if state['white'] else min)(child['diff'] for child in children)
+            # then set the score to be the score diff of the best child (discounted for being in the future)
+            state['score'] = discountRate * (
+                max if state['white'] else min)(child['diff'] for child in children)
     else:
         # if there are no valid moves then it is a stalemate (StalemateException)
         state['score'] = 0
@@ -194,6 +196,7 @@ def main(history, white_time, black_time):
     return [[piece for piece in line] for line in final_state['board']]
 
 global_depth = 3
+discountRate = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
 leafCount = 0
 
 '''
