@@ -19,7 +19,7 @@ p p p p p p p p
 . . . . . . . .
 P P P P P P P P
 R N B Q K B N R'''
-white = {'time remaining': initialTime, 'AI': Michael_AI}
+white = {'time remaining': initialTime, 'AI': Robert_AI}
 black = {'time remaining': initialTime, 'AI': David_AI}
 
 

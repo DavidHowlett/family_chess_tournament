@@ -18,10 +18,6 @@ Not implemented yet:
 """
 from shared import StalemateException, ThreeFoldRepetition
 
-PIECE_VALUE = {
-    '.': 0,
-    'K': 20, 'Q': 9, 'R': 5, 'B': 3.2, 'N': 3, 'P': 1,
-    'k': -20, 'q': -9, 'r': -5, 'b': -3.2, 'n': -3, 'p': -1}
 PIECE_MOVE_DIRECTION = {
     'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
     'k': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
@@ -34,6 +30,19 @@ PIECE_MOVE_DIRECTION = {
     'N': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
     'n': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
 }
+
+PIECE_VALUE = {
+    '.': 0,
+    'K': 20, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 0.7,
+    'k': -20, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -0.7}
+
+# for most pieces there is a small advantage to being in the centre
+POSITION_VALUE = [[0.04 * (1 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
+# pawns are more valuable in the centre but more importantly they become much more valuable when they are close to being
+# turned into queens
+# calculating the below formula takes 861 ns but lookup in a 2D table only takes 73 ns.
+# This is the reason for pre-calculation
+PAWN_POSITION_VALUE = [[0.003 * (10 + x - x * x / 6.9) * (y+2) ** 2 for x in range(8)] for y in range(8)]
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -52,6 +61,7 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
     """This generates a list of all possible game states after one move.
     Preferred moves should be later in the returned list."""
     _moves = []
+    position_multipler = 1 if _player_is_white else -1
     for x in range(8):
         for y in range(8):
             piece = board[y][x]
@@ -66,10 +76,13 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                         target_piece = board[y2][x2]
                         if target_piece == '.':
                             # then it is moving into an empty square
-                            _moves.append((move(board, y, x, y2, x2), 0))
+                            _moves.append((move(board, y, x, y2, x2),
+                                           position_multipler * (POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x])))
                         elif target_piece.islower() if _player_is_white else target_piece.isupper():
                             # then it is taking an opponent's piece
-                            _moves.append((move(board, y, x, y2, x2), -PIECE_VALUE[target_piece]))
+                            _moves.append((move(board, y, x, y2, x2),
+                                           position_multipler * (2*POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x]) -
+                                           PIECE_VALUE[target_piece]))
                             break
                         else:
                             # then it is taking it's own piece
@@ -94,30 +107,36 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                                     line = after_pawn_replacement[y2]
                                     after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
                                     _moves.append(
-                                        (after_pawn_replacement, PIECE_VALUE[replacement_piece] -
-                                         PIECE_VALUE[target_piece] - PIECE_VALUE[piece]))
+                                        (after_pawn_replacement, position_multipler *
+                                         (2 * POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x]) +
+                                         PIECE_VALUE[replacement_piece] - PIECE_VALUE[target_piece] -
+                                         PIECE_VALUE[piece]))
                             else:
-                                _moves.append((after_pawn_move, -PIECE_VALUE[target_piece]))
+                                _moves.append(
+                                    (after_pawn_move, position_multipler *
+                                     (2 * POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x]) - PIECE_VALUE[target_piece]))
                 # check if pawn can move forwards 1
                 if board[y2][x] == '.':
-                    # check if pawn can move forwards 2
-                    if y == 1 if _player_is_white else y == 6:
-                        _moves.append((move(board, y, x, y2, x), 0))
-                        y2 = y + 2 if _player_is_white else y - 2
-                        if board[y2][x] == '.':
-                            _moves.append((move(board, y, x, y2, x), 0))
                     # check if pawn can be promoted
-                    elif y2 == 7 if _player_is_white else y2 == 0:
+                    if y2 == 7 if _player_is_white else y2 == 0:
                         after_pawn_move = move(board, y, x, y2, x)
-                        # add each possible promotion to move list
+                        # add each possible promotion to _moves
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
                             after_pawn_replacement = after_pawn_move.copy()
                             line = after_pawn_replacement[y2]
                             after_pawn_replacement[y2] = line[:x] + replacement_piece + line[x + 1:]
                             _moves.append((after_pawn_replacement,
-                                           PIECE_VALUE[replacement_piece] - PIECE_VALUE[piece]))
+                                           position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
                     else:
-                        _moves.append((move(board, y, x, y2, x), 0))
+                        _moves.append((move(board, y, x, y2, x),
+                                       position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
+                    # check if pawn can move forwards 2
+                    if y == 1 if _player_is_white else y == 6:
+                        y2 = y + 2 if _player_is_white else y - 2
+                        if board[y2][x] == '.':
+                            _moves.append((move(board, y, x, y2, x),
+                                           position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
+
     return _moves
 
 
@@ -151,11 +170,11 @@ def calculate_tree(state, depth):
     if children:
         if depth:
             # then set the score to be the (score diff + score) of the best child (discounted for being in the future)
-            state['score'] = discountRate * (
+            state['score'] = DISCOUNT_RATE * (
                 max if state['white'] else min)(child['diff']+child['score'] for child in children)
         else:
             # then set the score to be the score diff of the best child (discounted for being in the future)
-            state['score'] = discountRate * (
+            state['score'] = DISCOUNT_RATE * (
                 max if state['white'] else min)(child['diff'] for child in children)
     else:
         # if there are no valid moves then it is a stalemate (StalemateException)
@@ -196,7 +215,7 @@ def main(history, white_time, black_time):
     return [[piece for piece in line] for line in final_state['board']]
 
 global_depth = 3
-discountRate = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
+DISCOUNT_RATE = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
 leafCount = 0
 
 '''
@@ -222,5 +241,9 @@ after switching to using dicts for states (for ease of programming)
 True        NA              3       0.059
 True        NA              4       1.562
 True        NA              5       44.370
+after adding POSITION_VALUE, PAWN_POSITION_VALUE and DISCOUNT_RATE
+True        NA              3       0.155
+True        NA              4       2.101
+True        NA              5       48.476
 
 '''
