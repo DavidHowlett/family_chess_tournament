@@ -48,7 +48,7 @@ def move(board: [str], y1, x1, y2, x2)-> [str]:
     return board
 
 
-def moves(board: [str], _player_is_white: bool)->[[str]]:
+def moves(board: [str], _player_is_white: bool)->[([str], float)]:
     """This generates a list of all possible game states after one move.
     Preferred moves should be later in the returned list."""
     _moves = []
@@ -64,46 +64,59 @@ def moves(board: [str], _player_is_white: bool)->[[str]]:
                             # then it is a move off the board
                             break
                         target_piece = board[y2][x2]
-                        if target_piece.isupper() if _player_is_white else target_piece.islower():
+                        if target_piece == '.':
+                            # then it is moving into an empty square
+                            _moves.append((move(board, y, x, y2, x2), 0))
+                        elif target_piece.islower() if _player_is_white else target_piece.isupper():
+                            # then it is taking an opponent's piece
+                            _moves.append((move(board, y, x, y2, x2), -PIECE_VALUE[target_piece]))
+                            break
+                        else:
                             # then it is taking it's own piece
                             break
-                        if target_piece.islower() if _player_is_white else target_piece.isupper():
-                            # then it is taking an opponent's piece
-                            _moves.append(move(board, y, x, y2, x2))
-                            break
-                        _moves.append(move(board, y, x, y2, x2))
                         if piece in 'KkNn':
                             break
 
             # pawns are weird
             if piece == 'P' if _player_is_white else piece == 'p':
-                pawn_moves = []
                 y2 = y+1 if _player_is_white else y-1
+                # check if a take is possible
                 for x2 in (x - 1, x + 1):
                     if 0 <= x2 <= 7:
-                        if board[y2][x2].islower() if _player_is_white else board[y2][x2].isupper():
+                        target_piece = board[y2][x2]
+                        if target_piece.islower() if _player_is_white else target_piece.isupper():
                             # then a take is possible
-                            pawn_moves.append((y2, x2))
-                # move forward by 1
+                            after_pawn_move = move(board, y, x, y2, x2)
+                            if y2 == 7 if _player_is_white else y2 == 0:
+                                # then the end of the board has been reached and promotion is needed
+                                for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
+                                    after_pawn_replacement = after_pawn_move.copy()
+                                    line = after_pawn_replacement[y2]
+                                    after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
+                                    _moves.append((after_pawn_replacement,
+                                                  PIECE_VALUE[replacement_piece] - PIECE_VALUE[target_piece] - 1))
+                            else:
+                                _moves.append((after_pawn_move, -PIECE_VALUE[target_piece]))
+                # check if pawn can move forwards 1
                 if board[y2][x] == '.':
-                    # then the move is into an empty square
-                    pawn_moves.append((y2, x))
-                    # move forward by 2
+                    # check if pawn can move forwards 2
                     if y == 1 if _player_is_white else y == 6:
+                        _moves.append((move(board, y, x, y2, x), 0))
                         y2 = y + 2 if _player_is_white else y - 2
                         if board[y2][x] == '.':
-                            _moves.append(move(board, y, x, y2, x))
-                for y2, x2 in pawn_moves:
-                    after_pawn_move = move(board, y, x, y2, x2)
-                    if y2 == 7 if _player_is_white else y2 == 0:
-                        # then the end of the board has been reached and promotion is needed
+                            _moves.append((move(board, y, x, y2, x), 0))
+                    # check if pawn can be promoted
+                    elif y2 == 7 if _player_is_white else y2 == 0:
+                        after_pawn_move = move(board, y, x, y2, x)
+                        # add each possible promotion to move list
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
-                            after_pawn_replacement = board.copy()
+                            after_pawn_replacement = after_pawn_move.copy()
                             line = after_pawn_replacement[y2]
                             after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
-                            _moves.append(after_pawn_replacement)
+                            _moves.append((move(board, y, x, y2, x),
+                                          PIECE_VALUE[replacement_piece] - 1))  # assume pawn value of 1
                     else:
-                        _moves.append(after_pawn_move)
+                        _moves.append((move(board, y, x, y2, x), 0))
     return _moves
 
 
@@ -133,35 +146,41 @@ def fancy_score(_board: [str])->float:
 
 def calculate_tree(state, depth):
     """recursively calculates children of the given state """
+    global leafCount
     children = []
     child_is_white = not state[1]
     child_move_no = state[3]+1
     depth -= 1
-    for board in moves(state[0], state[1]):
-        child = [board, child_is_white, score(board), child_move_no, state, None]
-        if depth:
+    if depth:
+        for board, score_diff in moves(state[0], state[1]):
+            child = [board, child_is_white, None, child_move_no, state, None, score_diff]
             calculate_tree(child, depth)
-        children.append(child)
+            children.append(child)
+    else:
+        for board, score_diff in moves(state[0], state[1]):
+            leafCount += 1
+            child = [board, child_is_white, None, child_move_no, state, None, score_diff]
+            children.append(child)
     # set the children of the current state to be the newly generated list
     state[5] = children
     if children:
-        state[2] = (max if state[1] else min)(child[2] for child in children)
+        if depth:
+            # then derive the score from the score of the children
+            state[2] = (max if state[1] else min)(child[2] for child in children)
+        else:
+            # then derive the score from the score diff of the children
+            state[2] = (max if state[1] else min)(child[6] for child in children)
     else:
-        # if there are no valid moves then it is a draw
+        # if there are no valid moves then it is a stalemate (StalemateException)
         state[2] = 0
     return state
 
 
 def main(history, white_time, black_time):
+    global leafCount
+    leafCount = 0
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
-    if player_is_white:
-        my_time = white_time
-        their_time = black_time
-    else:
-        my_time = black_time
-        their_time = white_time
-
     # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
     initial_score = score(history[-1])
     my_score = initial_score if player_is_white else -initial_score
@@ -170,7 +189,7 @@ def main(history, white_time, black_time):
     possible_moves = initial_state[5]
     if not possible_moves:
         raise StalemateException
-    if my_score < 0.5:
+    if my_score < -0.5:
         # if I am losing and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:
             raise ThreeFoldRepetition
@@ -184,12 +203,15 @@ def main(history, white_time, black_time):
 
     final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
     final_board = final_state[0]
+    print(leafCount)
     return [[piece for piece in line] for line in final_board]
 
 # below are the settings for the algorithm
 global_depth = 3
 score = simple_score
 # score = fancy_score
+leafCount = 0
+
 '''
 I use the time to calculate and score the first moves as a benchmark for my algorithm.
 To get reliable figures wait for the CPU usage to fall below 10% before starting
@@ -208,11 +230,9 @@ True        simple_score    3       0.132
 True        simple_score    4       3.213
 True        simple_score    5       80.615
 
+Todo debug move count
 
-Profiler results for David vs David for 6 turns:
-total: 3.896 seconds
-calculate tree: 0.191 seconds
-simple score: 1.993
-moves: 1.588
-move: 0.573
+leaves for depth 3 search of first move in the game: 8902
+7754 move 2 if white moves forwards
+8457 move 2 if black moves forwards
 '''

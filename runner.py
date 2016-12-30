@@ -8,7 +8,7 @@ import Robert_AI
 
 initialTime = 5
 timePerMove = 1
-turnsToPlayFor = 10
+turnsToPlayFor = 2
 initialBoard = '''
 r n b q k b n r
 p p p p p p p p
