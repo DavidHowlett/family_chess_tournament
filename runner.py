@@ -10,14 +10,14 @@ initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 10
 initialBoard = '''
-rnbqkbnr
-pppppppp
-........
-........
-........
-........
-PPPPPPPP
-RNBQKBNR'''
+r n b q k b n r
+p p p p p p p p
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+P P P P P P P P
+R N B Q K B N R'''
 white = {'time remaining': initialTime, 'AI': David_AI}
 black = {'time remaining': initialTime, 'AI': David_AI}
 
@@ -33,7 +33,7 @@ def print_state(_turn, board, run_time):
 
 
 def main():
-    history = [[[piece for piece in line] for line in initialBoard.split()]]
+    history = [[[piece for piece in line] for line in initialBoard.replace(' ', '').split()]]
     history[0].reverse()
     for turn in range(1, 1+turnsToPlayFor):
         player = white if turn % 2 else black
