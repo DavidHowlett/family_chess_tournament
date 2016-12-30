@@ -108,7 +108,7 @@ def moves(board: [str], _player_is_white: bool)->[[str]]:
 
 
 def simple_score(_board: [str])->float:
-    """This takes a gameState object and returns the current score of white"""
+    """This takes a board and returns the current score of white"""
     _score = 0.0
     for row in _board:
         for piece in row:
@@ -117,7 +117,7 @@ def simple_score(_board: [str])->float:
 
 
 def fancy_score(_board: [str])->float:
-    """This takes a gameState object and returns the current score of white"""
+    """This takes a board and returns the current score of white"""
     _score = 0.0
     for y in range(8):
         line = _board[y]
@@ -184,7 +184,6 @@ def main(history, white_time, black_time):
 
     final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
     final_board = final_state[0]
-    predicted_score = initial_state[2]
     return [[piece for piece in line] for line in final_board]
 
 # below are the settings for the algorithm
@@ -192,7 +191,7 @@ global_depth = 3
 score = simple_score
 # score = fancy_score
 '''
-I use the time to calculate and score the first 4 moves as a benchmark for my algorithm.
+I use the time to calculate and score the first moves as a benchmark for my algorithm.
 To get reliable figures wait for the CPU usage to fall below 10% before starting
 
 buildTree   score           depth   time taken
@@ -203,4 +202,17 @@ False       simple_score    4       2.936
 True        simple_score    4       3.687
 True        simple_score    5       92.041
 True        simple_score    3       0.328
+after switching to runner calling main:
+True        simple_score    2       0.020
+True        simple_score    3       0.132
+True        simple_score    4       3.213
+True        simple_score    5       80.615
+
+
+Profiler results for David vs David for 6 turns:
+total: 3.896 seconds
+calculate tree: 0.191 seconds
+simple score: 1.993
+moves: 1.588
+move: 0.573
 '''

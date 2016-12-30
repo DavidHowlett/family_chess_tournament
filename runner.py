@@ -8,7 +8,7 @@ import Robert_AI
 
 initialTime = 5
 timePerMove = 1
-turnsToPlayFor = 200
+turnsToPlayFor = 10
 initialBoard = '''
 rnbqkbnr
 pppppppp
@@ -19,7 +19,7 @@ pppppppp
 PPPPPPPP
 RNBQKBNR'''
 white = {'time remaining': initialTime, 'AI': David_AI}
-black = {'time remaining': initialTime, 'AI': David_AI_old}
+black = {'time remaining': initialTime, 'AI': David_AI}
 
 
 def print_state(_turn, board, run_time):
