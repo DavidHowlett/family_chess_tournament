@@ -129,21 +129,6 @@ def simple_score(_board: [str])->float:
     return _score
 
 
-def fancy_score(_board: [str])->float:
-    """This takes a board and returns the current score of white"""
-    _score = 0.0
-    for y in range(8):
-        line = _board[y]
-        for x in range(8):
-            piece = line[x]
-            _score += PIECE_VALUE[piece]
-            if piece == 'P':
-                _score += 0.1 * y
-            elif piece == 'p':
-                _score += 0.1 * (y - 7)
-    return _score
-
-
 def calculate_tree(state, depth):
     """recursively calculates children of the given state """
     global leafCount
@@ -181,15 +166,15 @@ def main(history, white_time, black_time):
     leafCount = 0
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
-    initial_score = score(history[-1])
-    my_score = initial_score if player_is_white else -initial_score
+    initial_score = simple_score(history[-1])
+    my_simple_score = initial_score if player_is_white else -initial_score
     # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
     initial_state = [history[-1], player_is_white, initial_score, 0, None, None]
     calculate_tree(initial_state, global_depth)
     possible_moves = initial_state[5]
     if not possible_moves:
         raise StalemateException
-    if my_score < -0.5:
+    if my_simple_score < -0.5:
         # if I am losing and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:
             raise ThreeFoldRepetition
@@ -208,7 +193,6 @@ def main(history, white_time, black_time):
 
 # below are the settings for the algorithm
 global_depth = 3
-score = simple_score
 # score = fancy_score
 leafCount = 0
 
