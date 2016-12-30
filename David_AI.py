@@ -133,31 +133,30 @@ def calculate_tree(state, depth):
     """recursively calculates children of the given state """
     global leafCount
     children = []
-    child_is_white = not state[1]
-    child_move_no = state[3]+1
+    child_is_white = not state['white']
     depth -= 1
     if depth:
-        for board, score_diff in moves(state[0], state[1]):
-            child = [board, child_is_white, None, child_move_no, state, None, score_diff]
+        for board, score_diff in moves(state['board'], state['white']):
+            child = {'board': board, 'white': child_is_white, 'diff': score_diff}
             calculate_tree(child, depth)
             children.append(child)
     else:
-        for board, score_diff in moves(state[0], state[1]):
+        for board, score_diff in moves(state['board'], state['white']):
             leafCount += 1
-            child = [board, child_is_white, None, child_move_no, state, None, score_diff]
+            child = {'board': board, 'white': child_is_white, 'diff': score_diff}  # ToDo optimise this line
             children.append(child)
     # set the children of the current state to be the newly generated list
-    state[5] = children
+    state['children'] = children
     if children:
         if depth:
             # then set the score to be the (score diff + score) of the best child
-            state[2] = (max if state[1] else min)(child[6]+child[2] for child in children)
+            state['score'] = (max if state['white'] else min)(child['diff']+child['score'] for child in children)
         else:
             # then set the score to be the score diff of the best child
-            state[2] = (max if state[1] else min)(child[6] for child in children)
+            state['score'] = (max if state['white'] else min)(child['diff'] for child in children)
     else:
         # if there are no valid moves then it is a stalemate (StalemateException)
-        state[2] = 0
+        state['score'] = 0
     return state
 
 
@@ -169,9 +168,9 @@ def main(history, white_time, black_time):
     initial_score = simple_score(history[-1])
     my_simple_score = initial_score if player_is_white else -initial_score
     # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
-    initial_state = [history[-1], player_is_white, initial_score, 0, None, None]
+    initial_state = {'board': history[-1], 'white': player_is_white}
     calculate_tree(initial_state, global_depth)
-    possible_moves = initial_state[5]
+    possible_moves = initial_state['children']
     if not possible_moves:
         raise StalemateException
     if my_simple_score < -0.5:
@@ -181,15 +180,14 @@ def main(history, white_time, black_time):
     else:
         # If I am drawing or winning then avoid previous game states
         for state in possible_moves:
-            if state[0] in history:
-                state[2] = -3 if player_is_white else 3
+            if state['board'] in history:
+                state['score'] = -3 if player_is_white else 3
 
     # add further exploration of the promising parts of the tree here
 
-    final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
-    final_board = final_state[0]
+    final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['score'])
     print(leafCount)
-    return [[piece for piece in line] for line in final_board]
+    return [[piece for piece in line] for line in final_state['board']]
 
 # below are the settings for the algorithm
 global_depth = 3
@@ -208,10 +206,13 @@ False       simple_score    4       2.936
 True        simple_score    4       3.687
 True        simple_score    5       92.041
 True        simple_score    3       0.328
-after switching to runner calling main:
+after switching to runner calling main
 True        simple_score    2       0.020
 True        simple_score    3       0.132
 True        simple_score    4       3.213
 True        simple_score    5       80.615
-
+after switching to incremental scoring (for efficiency)
+True        NA              3       0.060
+after switching to using dicts for states (for ease of programming)
+True        NA              3       0.078
 '''
