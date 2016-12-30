@@ -93,8 +93,9 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                                     after_pawn_replacement = after_pawn_move.copy()
                                     line = after_pawn_replacement[y2]
                                     after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
-                                    _moves.append((after_pawn_replacement,
-                                                  PIECE_VALUE[replacement_piece] - PIECE_VALUE[target_piece] - 1))
+                                    _moves.append(
+                                        (after_pawn_replacement, PIECE_VALUE[replacement_piece] -
+                                         PIECE_VALUE[target_piece] - PIECE_VALUE[piece]))
                             else:
                                 _moves.append((after_pawn_move, -PIECE_VALUE[target_piece]))
                 # check if pawn can move forwards 1
@@ -114,7 +115,7 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                             line = after_pawn_replacement[y2]
                             after_pawn_replacement[y2] = line[:x] + replacement_piece + line[x + 1:]
                             _moves.append((after_pawn_replacement,
-                                          PIECE_VALUE[replacement_piece] - 1))  # assume pawn value of 1
+                                           PIECE_VALUE[replacement_piece] - PIECE_VALUE[piece]))
                     else:
                         _moves.append((move(board, y, x, y2, x), 0))
     return _moves
@@ -185,13 +186,14 @@ def main(history, white_time, black_time):
 
     # add further exploration of the promising parts of the tree here
 
-    final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['score'])
+    if global_depth > 1:
+        final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'] + s['score'])
+    elif global_depth == 1:
+        final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'])
     print(leafCount)
     return [[piece for piece in line] for line in final_state['board']]
 
-# below are the settings for the algorithm
 global_depth = 3
-# score = fancy_score
 leafCount = 0
 
 '''
@@ -214,5 +216,8 @@ True        simple_score    5       80.615
 after switching to incremental scoring (for efficiency)
 True        NA              3       0.060
 after switching to using dicts for states (for ease of programming)
-True        NA              3       0.078
+True        NA              3       0.059
+True        NA              4       1.562
+True        NA              5       44.370
+
 '''
