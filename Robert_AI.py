@@ -17,8 +17,14 @@ import sys
 import time
 from shared import StalemateException
 
+# Define global rules
+board_size = 8
+board = [(row, col) for row in range(0, board_size, 1) for col in range(0, board_size, 1)]
+
 
 def move_set(move_dirs, move_dist):
+    """Define piece movement functions
+        They return a list of valid states"""
     def piece_moves(state, piece_name, player):
         # Returns the list of moves
         current_piece = state[piece_name]
@@ -133,20 +139,39 @@ def move_pawn(move_dir):
     return pawn_moves
 
 
+def get_value(base_val, value_matrix):
+    # Normalise value matrix
+    error = sum([sum(row) for row in value_matrix]) / board_size ** 2
+    value_matrix = [[element * error for element in row] for row in value_matrix]
 
-# Define piece movement functions
-# They return a list of valid states
-
-def get_value(base_val):
     def piece_value(posn):
-        # TODO: upgrade value function
-        return base_val
+        return base_val * value_matrix[posn[0]][posn[1]]
     return piece_value
 
-# TODO: implement different pawn values
+diversion_factor = 1/100000
+default_posn_values = [[(1 - diversion_factor * (col - (board_size-1)/2) ** 2) * (1 - diversion_factor * (row - (board_size-1)/2) ** 2) for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
+flat_posn_values = [[1 for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
+
+
+def pawn_value(base_val, move_dir):
+    #Pawns use a different value system, they prefer to move up if possible.
+    diversion_factor = 1 / 100000
+
+    value_matrix = [[(1 - diversion_factor * (col - (board_size - 1) / 2) ** 2) *
+                     (2 + move_dir * (row + 1)/board_size) for col in range(0, board_size, 1)]
+                    for row in range(0, board_size, 1)]
+    # Normalise value matrix
+    error = sum([sum(row) for row in value_matrix]) / board_size ** 2
+    value_matrix = [[element * error for element in row] for row in value_matrix]
+
+    def piece_value(posn):
+        return base_val * value_matrix[posn[0]][posn[1]]
+    return piece_value
+
 
 def search(depth, old_state, player):
-    # This function returns the best possible next game state for the player after searching to depth
+    # This function returns the best possible next game state for the player after searching to depth and the value for
+    # that player.
     # generate list of game states
     new_states = [state for i_piece in old_state for state in old_state[i_piece]['moves'](old_state, i_piece, player)]
 
@@ -154,29 +179,29 @@ def search(depth, old_state, player):
         raise StalemateException
 
     # valuate over them
+    new_depth = list(depth)
+    new_depth[0] += 1
     values = [
-        -evaluate(depth - 1, state, 1-player)
+        -evaluate(new_depth, state, 1-player, len(state) != len(old_state))
         for state in new_states
         ]
-    best_state = new_states[values.index(max(values))]
-    return best_state
+    best_value = max(values)
+    best_state = new_states[values.index(best_value)]
+    return best_state, best_value
 
 
-def evaluate(depth, old_state, player):
+def evaluate(depth, old_state, player, force_search):
     # This function returns the value of a particular game state
-
-    # TODO: implement forking on capture
 
     # Check for loss condition, then recurse if necessary.
     if not any([piece['player'] == player and piece['symbol'].lower() == 'k' for piece in old_state.values()]):
         value = -float('inf')
-    elif depth == 0:
+    elif (depth[0] >= depth[1] and not force_search) or depth[0] >= depth[2]:
         value = sum([piece['value'](piece['posn']) * (1 - 2 * (piece['player'] != player)) for piece in old_state.values()])
     else:
         # Value of this state is equal to the value of the next one.
         try:
-            next_state = search(depth, old_state, player)
-            value = -evaluate(depth - 1, next_state, 1 - player)
+            (next_state, value) = search(depth, old_state, player)
         except StalemateException:
             value = 0
 
@@ -190,63 +215,63 @@ royal_dirs = rook_dirs + bish_dirs
 piece_library = {
     'p': {'symbol': 'p',
           'player': 1,
-          'moves': move_pawn(1),
-          'value': get_value(1),
+          'moves': move_pawn(-1),
+          'value': pawn_value(1, -1),
           },
     'P': {'symbol': 'P',
           'player': 0,
-          'moves': move_pawn(-1),
-          'value': get_value(1),
+          'moves': move_pawn(1),
+          'value': pawn_value(1, 1),
           },
     'n': {'symbol': 'n',
           'player': 1,
           'moves': move_set(knight_dirs, 1),
-          'value': get_value(3),
+          'value': get_value(3, default_posn_values),
           },
     'N': {'symbol': 'N',
           'player': 0,
           'moves': move_set(knight_dirs, 1),
-          'value': get_value(3),
+          'value': get_value(3, default_posn_values),
           },
     'b': {'symbol': 'b',
           'player': 1,
           'moves': move_set(bish_dirs, 999),
-          'value': get_value(3.5),
+          'value': get_value(3.5, default_posn_values),
           },
     'B': {'symbol': 'B',
           'player': 0,
           'moves': move_set(bish_dirs, 999),
-          'value': get_value(3.5),
+          'value': get_value(3.5, default_posn_values),
           },
     'r': {'symbol': 'r',
           'player': 1,
           'moves': move_set(rook_dirs, 999),
-          'value': get_value(5),
+          'value': get_value(5, default_posn_values),
           },
     'R': {'symbol': 'R',
           'player': 0,
           'moves': move_set(rook_dirs, 999),
-          'value': get_value(5),
+          'value': get_value(5, default_posn_values),
           },
     'q': {'symbol': 'q',
           'player': 1,
           'moves': move_set(royal_dirs, 999),
-          'value': get_value(9),
+          'value': get_value(9, default_posn_values),
           },
     'Q': {'symbol': 'Q',
           'player': 0,
           'moves': move_set(royal_dirs, 999),
-          'value': get_value(9),
+          'value': get_value(9, default_posn_values),
           },
     'k': {'symbol': 'k',
           'player': 1,
           'moves': move_set(royal_dirs, 1),
-          'value': get_value(999),
+          'value': get_value(999, default_posn_values),
           },
     'K': {'symbol': 'K',
           'player': 0,
           'moves': move_set(royal_dirs, 1),
-          'value': get_value(999),
+          'value': get_value(999, flat_posn_values),
           },
     '.': {},
 }
@@ -262,14 +287,8 @@ def construct_piece(in_char, row, col):
                        })
     return properties.copy()
 
-# Define global rules
-board_size = 8
-board = [(row, col) for row in range(0, board_size, 1) for col in range(0, board_size, 1)]
-
 
 def main(history, white_time, black_time):
-    startTime = time.process_time()
-
     start_player = (len(history) - 1) % 2
 
     # Load initial game state
@@ -283,22 +302,13 @@ def main(history, white_time, black_time):
                 continue
             start_state.update({symbol + str(row) + str(col): construct_piece(symbol, row, col)})
 
-    prelimTime = time.process_time() - startTime
-
-    new_state = search(2, start_state, start_player)
-    print(new_state.values())
-    coreTime = time.process_time() - startTime
+    depth = [0, 2, 4]
+    # [Current depth, max depth if no exchanges, max depth if exchanging
+    (new_state, score) = search(depth, start_state, start_player)
 
     # Unparse
     new_board_text = [['.' for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
     for piece in new_state.values():
         new_board_text[piece['posn'][0]][piece['posn'][1]] = piece['symbol']
-    print(new_board_text)
 
     return new_board_text
-
-    endTime = time.process_time() - startTime
-
-    print(prelimTime)
-    print(coreTime)
-    print(endTime)
