@@ -22,14 +22,19 @@ P P P P P P P P
 R N B Q K B N R'''
 
 
-def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining):
-    print('----- move {} -----'.format(_turn))
-    print('\n'.join(' '.join(piece for piece in row)for row in board.__reversed__()) + '\n')
-    print('{} took: {:.3f} seconds'.format('white' if _turn % 2 else 'black', run_time))
-    print('white time: {:.3f}'.format(white_time_remaining))
-    print('black time: {:.3f}'.format(black_time_remaining))
-    print('score: {}'.format(int(David_AI_v2.simple_score(board))))
-    print()
+def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining, minimise):
+    if minimise:
+        print('{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}\t'.format(
+            _turn, int(David_AI_v2.simple_score(board)), 'white' if _turn % 2 else 'black', run_time,
+            white_time_remaining, black_time_remaining))
+    else:
+        print('----- move {} -----'.format(_turn))
+        print('\n'.join(' '.join(piece for piece in row)for row in board.__reversed__()) + '\n')
+        print('{} took: {:.3f} seconds'.format('white' if _turn % 2 else 'black', run_time))
+        print('white time: {:.3f}'.format(white_time_remaining))
+        print('black time: {:.3f}'.format(black_time_remaining))
+        print('score: {}'.format(int(David_AI_v2.simple_score(board))))
+        print()
 
 
 def match(whiteAI, blackAI):
@@ -53,7 +58,7 @@ def match(whiteAI, blackAI):
             white_time_remaining = white_time_remaining + timePerMove - run_time
         else:
             black_time_remaining = white_time_remaining + timePerMove - run_time
-        print_state(turn, chosen_move, run_time, white_time_remaining, black_time_remaining)
+        print_state(turn, chosen_move, run_time, white_time_remaining, black_time_remaining, False)
         if white_time_remaining < 0:
             print('Black won due to white running out of time')
             return 0
@@ -69,7 +74,7 @@ def match(whiteAI, blackAI):
     print('Draw due to running out of time')
 
 game_start_time = time.perf_counter()
-match(David_AI_v2, Robert_AI)
+match(Robert_AI, David_AI_v2)
 print('The game took {:.3f} seconds'.format(time.perf_counter()-game_start_time))
 
 competitors = [
@@ -77,5 +82,6 @@ competitors = [
     David_AI_v1,
     Michael_AI_v1_0,
     Michael_AI_v1_1,
-    Robert_AI
+    Robert_AI,
+    no_move_AI
 ]
