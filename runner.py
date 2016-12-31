@@ -1,8 +1,8 @@
 import time
 import copy
 import shared
-import David_AI
-import David_AI_old
+import David_AI_v2
+import David_AI_v1
 import Michael_AI_v1_1 as Michael_AI
 import Robert_AI
 import no_move_AI
@@ -19,28 +19,27 @@ p p p p p p p p
 . . . . . . . .
 P P P P P P P P
 R N B Q K B N R'''
-white = {'time remaining': initialTime, 'AI': Robert_AI}
-black = {'time remaining': initialTime, 'AI': David_AI}
 
 
-def print_state(_turn, board, run_time):
+def print_state(_turn, board, run_time, whiteTimeRemaining, blackTimeRemaining):
     print('----- move {} -----'.format(_turn))
     print('\n'.join(' '.join(piece for piece in row)for row in board.__reversed__()) + '\n')
     print('{} took: {:.3f} seconds'.format('white' if _turn % 2 else 'black', run_time))
-    print('white time: {:.3f}'.format(white['time remaining']))
-    print('black time: {:.3f}'.format(black['time remaining']))
-    print('score: {}'.format(int(David_AI.simple_score(board))))
+    print('white time: {:.3f}'.format(whiteTimeRemaining))
+    print('black time: {:.3f}'.format(blackTimeRemaining))
+    print('score: {}'.format(int(David_AI_v2.simple_score(board))))
     print()
 
 
-def main():
+def match(whiteAI, blackAI):
+    whiteTimeRemaining = blackTimeRemaining = initialTime
     history = [[[piece for piece in line] for line in initialBoard.replace(' ', '').split()]]
     history[0].reverse()
     for turn in range(1, 1+turnsToPlayFor):
-        player = white if turn % 2 else black
         start_time = time.perf_counter()
         try:
-            chosen_move = player['AI'].main(copy.deepcopy(history), white['time remaining'], black['time remaining'])
+            chosen_move = (whiteAI if turn % 2 else blackAI)\
+                .main(copy.deepcopy(history), whiteTimeRemaining, blackTimeRemaining)
         except shared.StalemateException:
             print('Draw due to there being no valid moves')
             return
@@ -49,12 +48,15 @@ def main():
             return
         run_time = time.perf_counter() - start_time
         history.append(chosen_move)
-        player['time remaining'] = player['time remaining'] + timePerMove - run_time
-        print_state(turn, chosen_move, run_time)
-        if white['time remaining'] < 0:
+        if turn % 2:
+            whiteTimeRemaining = whiteTimeRemaining + timePerMove - run_time
+        else:
+            blackTimeRemaining = whiteTimeRemaining + timePerMove - run_time
+        print_state(turn, chosen_move, run_time, whiteTimeRemaining, blackTimeRemaining)
+        if whiteTimeRemaining < 0:
             print('Black won due to white running out of time')
             return
-        if black['time remaining'] < 0:
+        if blackTimeRemaining < 0:
             print('White won due to black running out of time')
             return
         if not any(any(piece == 'k' for piece in row) for row in chosen_move):
@@ -66,5 +68,5 @@ def main():
     print('Draw due to running out of time')
 
 game_start_time = time.perf_counter()
-main()
+match(David_AI_v2, Robert_AI)
 print('The game took {:.3f} seconds'.format(time.perf_counter()-game_start_time))
