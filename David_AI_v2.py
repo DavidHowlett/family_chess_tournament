@@ -151,7 +151,6 @@ def simple_score(_board: [str])->float:
 
 def calculate_tree(state, depth):
     """recursively calculates children of the given state """
-    global leafCount
     children = []
     child_is_white = not state['white']
     depth -= 1
@@ -162,7 +161,6 @@ def calculate_tree(state, depth):
             children.append(child)
     else:
         for board, score_diff in moves(state['board'], state['white']):
-            leafCount += 1
             child = {'board': board, 'white': child_is_white, 'diff': score_diff}  # ToDo optimise this line
             children.append(child)
     # set the children of the current state to be the newly generated list
@@ -183,8 +181,6 @@ def calculate_tree(state, depth):
 
 
 def main(history, white_time, black_time):
-    global leafCount
-    leafCount = 0
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
     initial_score = simple_score(history[-1])
@@ -211,12 +207,10 @@ def main(history, white_time, black_time):
         final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'] + s['score'])
     elif global_depth == 1:
         final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'])
-    print(leafCount)
     return [[piece for piece in line] for line in final_state['board']]
 
 global_depth = 3
 DISCOUNT_RATE = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
-leafCount = 0
 
 '''
 I use the time to calculate and score the first moves as a benchmark for my algorithm.
