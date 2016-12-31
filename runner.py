@@ -57,7 +57,7 @@ def match(whiteAI, blackAI):
         if turn % 2:
             white_time_remaining = white_time_remaining + timePerMove - run_time
         else:
-            black_time_remaining = white_time_remaining + timePerMove - run_time
+            black_time_remaining = black_time_remaining + timePerMove - run_time
         print_state(turn, chosen_move, run_time, white_time_remaining, black_time_remaining, False)
         if white_time_remaining < 0:
             print('Black won due to white running out of time')
@@ -72,9 +72,10 @@ def match(whiteAI, blackAI):
             print('White won in {} moves'.format(turn))
             return 1
     print('Draw due to running out of time')
+    return 0.5
 
 game_start_time = time.perf_counter()
-match(Robert_AI, David_AI_v2)
+match(no_move_AI, David_AI_v2)
 print('The game took {:.3f} seconds'.format(time.perf_counter()-game_start_time))
 
 competitors = [
