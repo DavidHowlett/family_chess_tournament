@@ -30,12 +30,16 @@ PIECE_MOVE_DIRECTION = {
     'N': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
     'n': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
 }
-
 PIECE_VALUE = {
     '.': 0,
-    'K': 20, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 0.7,
-    'k': -20, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -0.7}
+    'K': 1000, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 0.7,
+    'k': -1000, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -0.7}
+'''The further into the future a take is, the less certain it is to be a good idea
+The discount rate combines with the very high value of the king to value king takes
+earlier strongly over piece takes later'''
+DISCOUNT_RATE = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
 
+assert PIECE_VALUE['K'] > DISCOUNT_RATE*PIECE_VALUE['Q'] + DISCOUNT_RATE**2*PIECE_VALUE['K']
 # for most pieces there is a small advantage to being in the centre
 POSITION_VALUE = [[0.04 * (1 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
 # pawns are more valuable in the centre but more importantly they become much more valuable when they are close to being
@@ -210,7 +214,6 @@ def main(history, white_time, black_time):
     return [[piece for piece in line] for line in final_state['board']]
 
 global_depth = 3
-DISCOUNT_RATE = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
 
 '''
 I use the time to calculate and score the first moves as a benchmark for my algorithm.
