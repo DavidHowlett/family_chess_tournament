@@ -49,7 +49,7 @@ def move_set(move_dirs, move_dist):
                 if is_blocked:
                     break
 
-                #print('Good Position found')
+                # Good position found
                 new_piece = current_piece.copy()
                 new_piece.update({'posn': position})
                 new_state = state.copy()
@@ -67,8 +67,6 @@ def move_set(move_dirs, move_dist):
                 # Checks if next posn valid i.e if movement blocked by capture
                 if did_capture:
                     break
-                # look at next position
-                position = (position[0] + move_dir[0], position[1] + move_dir[1])
 
         return new_states
     return piece_moves
@@ -115,7 +113,7 @@ def move_pawn(move_dir):
             if not any(i_piece['posn'] == position and i_piece['player'] != player for i_piece in state.values()):
                 continue
 
-            #print('Good Position found')
+            # Good position found
 
             # Check for Queening
             if position[0] in (0, 7):
@@ -154,12 +152,14 @@ def get_value(base_val, value_matrix):
     return piece_value
 
 diversion_factor = 1/100000
-default_posn_values = [[(1 - diversion_factor * (col - (board_size-1)/2) ** 2) * (1 - diversion_factor * (row - (board_size-1)/2) ** 2) for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
+default_posn_values = [[(1 - diversion_factor * (col - (board_size-1)/2) ** 2)
+                        * (1 - diversion_factor * (row - (board_size-1)/2) ** 2)
+                        for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
 flat_posn_values = [[1 for col in range(0, board_size, 1)] for row in range(0, board_size, 1)]
 
 
 def pawn_value(base_val, move_dir):
-    #Pawns use a different value system, they prefer to move up if possible.
+    # Pawns use a different value system, they prefer to move up if possible.
     diversion_factor = 1 / 100000
 
     value_matrix = [[(1 - diversion_factor * (col - (board_size - 1) / 2) ** 2) *
@@ -202,7 +202,8 @@ def evaluate(depth, old_state, player, force_search):
     if not any([piece['player'] == player and piece['symbol'].lower() == 'k' for piece in old_state.values()]):
         value = -float('inf')
     elif (depth[0] >= depth[1] and not force_search) or depth[0] >= depth[2]:
-        value = sum([piece['value'](piece['posn']) * (1 - 2 * (piece['player'] != player)) for piece in old_state.values()])
+        value = sum([piece['value'](piece['posn']) * (1 - 2 * (piece['player'] != player))
+                     for piece in old_state.values()])
     else:
         # Value of this state is equal to the value of the next one.
         try:
