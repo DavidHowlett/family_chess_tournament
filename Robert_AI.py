@@ -116,8 +116,15 @@ def move_pawn(move_dir):
                 continue
 
             #print('Good Position found')
-            new_piece = current_piece.copy()
-            new_piece.update({'posn': position})
+
+            # Check for Queening
+            if position[0] in (0, 7):
+                # Check for Queening
+                new_piece = construct_piece('q' if player else 'Q', position[0], position[1])
+            else:
+                new_piece = current_piece.copy()
+                new_piece.update({'posn': position})
+
             new_state = state.copy()
 
             # Check for captures
@@ -132,8 +139,6 @@ def move_pawn(move_dir):
 
             new_state.update({piece_name: new_piece})
             new_states.append(new_state)
-
-        # TODO check for queening
 
         return new_states
     return pawn_moves
