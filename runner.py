@@ -8,6 +8,7 @@ import Michael_AI_v1_1
 import Michael_AI_v1_0
 import Robert_AI
 import no_move_AI
+import random_AI
 
 initialTime = 5
 timePerMove = 1
@@ -20,6 +21,7 @@ Michael_AI_v1_1.__name = 'Michael_AI_v1_1'
 Michael_AI_v1_0.__name = 'Michael_AI_v1_0'
 Robert_AI.__name = 'Robert_AI'
 no_move_AI.__name = 'no_move_AI'
+random_AI.__name = 'random_AI'
 
 
 initialBoard = '''
@@ -107,7 +109,8 @@ competitors = [
     Michael_AI_v1_1,
     Michael_AI_v1_0,
     Robert_AI,
-    no_move_AI
+    no_move_AI,
+    random_AI
 ]
 tournamentResults = [('white', 'black', 'result', 'explanation')]
 for AI in competitors:
@@ -128,7 +131,7 @@ for whitePlayer in competitors:
 print('\nAll the matches played in the tournament are shown below')
 
 for result in tournamentResults:
-    print(''.join('{:<12}'.format(r) for r in result), sep='\t')
+    print(''.join('{:<16}'.format(r) for r in result), sep='\t')
 
 print('\nThe tournament took: {:.3f} seconds'.format(time.perf_counter()-tournamentStartTime))
 print('Each of the {} competitors has played {} games\n'.format(
