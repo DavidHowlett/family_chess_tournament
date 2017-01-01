@@ -19,14 +19,6 @@ Michael_AI_v1_0.__name = 'Michael_AI_v1_0'
 Robert_AI.__name = 'Robert_AI'
 no_move_AI.__name = 'no_move_AI'
 
-competitors = [
-    David_AI_v2,
-    David_AI_v1,
-    Michael_AI_v1_1,
-    Michael_AI_v1_0,
-    Robert_AI,
-    no_move_AI
-]
 
 initialBoard = '''
 r n b q k b n r
@@ -38,8 +30,20 @@ p p p p p p p p
 P P P P P P P P
 R N B Q K B N R'''
 
+"""
+initialBoard = '''
+. . . . . . . r
+p . . . . . . p
+. . . . . k p .
+. . . p p . P .
+. . . . Q p . .
+b q . P . K . P
+. . . . . . . .
+R . . . . . . .'''
+"""
 
-def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining, minimise):
+
+def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining):
     if minimise:
         print('{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}\t'.format(
             _turn, int(David_AI_v2.simple_score(board)), 'white' if _turn % 2 else 'black', run_time,
@@ -78,7 +82,7 @@ def match(whiteAI, blackAI):
             white_time_remaining = white_time_remaining + timePerMove - run_time
         else:
             black_time_remaining = black_time_remaining + timePerMove - run_time
-        print_state(turn, chosen_move, run_time, white_time_remaining, black_time_remaining, True)
+        print_state(turn, chosen_move, run_time, white_time_remaining, black_time_remaining)
         if white_time_remaining < 0:
             print('Black won due to white running out of time')
             print('The game took {:.3f} seconds'.format(time.perf_counter() - game_start_time))
@@ -87,21 +91,39 @@ def match(whiteAI, blackAI):
             print('White won due to black running out of time')
             print('The game took {:.3f} seconds'.format(time.perf_counter() - game_start_time))
             return 1
+        if 'P' in chosen_move[7]:
+            print('Black won because white made and illigal move')
+            print('The game took {:.3f} seconds'.format(time.perf_counter() - game_start_time))
+            return 0
+        if 'p' in chosen_move[0]:
+            print('White won because black failed to promote the pawn')
+            print('The game took {:.3f} seconds'.format(time.perf_counter() - game_start_time))
+            return 1
         if not any(any(piece == 'K' for piece in row) for row in chosen_move):
-            print('Black won in {} moves'.format(turn))
+            print('Black won by taking the king')
             print('The game took {:.3f} seconds'.format(time.perf_counter() - game_start_time))
             return 0
         if not any(any(piece == 'k' for piece in row) for row in chosen_move):
-            print('White won in {} moves'.format(turn))
+            print('White won in by taking the king')
             print('The game took {:.3f} seconds'.format(time.perf_counter() - game_start_time))
             return 1
     print('Draw due to reaching {} turns'.format(turnsToPlayFor))
     print('The game took {:.3f} seconds'.format(time.perf_counter() - game_start_time))
     return 0.5
 
-#
-# match(no_move_AI, David_AI_v2)
-#
+minimise = False
+
+match(no_move_AI, David_AI_v2)
+exit()
+
+competitors = [
+    # David_AI_v2,
+    # David_AI_v1,
+    Michael_AI_v1_1,
+    # Michael_AI_v1_0,
+    Robert_AI,
+    # no_move_AI
+]
 
 for AI in competitors:
     AI.tournamentScore = 0
@@ -115,5 +137,10 @@ for whitePlayer in competitors:
         whitePlayer.tournamentScore += result
         blackPlayer.tournamentScore += (1-result)
 
+print('\nEach of the {} competitors has played {} games\n'.format(
+    len(competitors), 2*len(competitors)-2))
+
+competitors.sort(key=lambda c: c.tournamentScore, reverse=True)
 for AI in competitors:
-    print('{} score is {}'.format(AI.__name, AI.tournamentScore))
+    print('{} score is {}/{}'.format(
+        AI.__name, AI.tournamentScore, 2*len(competitors)-2))
