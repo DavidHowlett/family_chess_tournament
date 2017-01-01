@@ -42,11 +42,13 @@ DISCOUNT_RATE = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
 assert PIECE_VALUE['K'] > DISCOUNT_RATE*PIECE_VALUE['Q'] + DISCOUNT_RATE**2*PIECE_VALUE['K']
 # for most pieces there is a small advantage to being in the centre
 POSITION_VALUE = [[0.04 * (1 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
+#  print('\n'.join(' '.join('{:.2f}'.format(POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 # pawns are more valuable in the centre but more importantly they become much more valuable when they are close to being
 # turned into queens
 # calculating the below formula takes 861 ns but lookup in a 2D table only takes 73 ns.
 # This is the reason for pre-calculation
-PAWN_POSITION_VALUE = [[0.003 * (10 + x - x * x / 6.9) * (y+2) ** 2 for x in range(8)] for y in range(8)]
+PAWN_POSITION_VALUE = [[0.006 * (10 + x - x * x / 6.9) * (y+2) ** 2 for x in range(8)] for y in range(8)]
+#  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -244,5 +246,8 @@ after adding POSITION_VALUE, PAWN_POSITION_VALUE and DISCOUNT_RATE
 True        NA              3       0.155
 True        NA              4       2.101
 True        NA              5       48.476
-
+after adding max_depth and min_depth
+min_depth   max_depth   time taken
+------------------------------------
+3           3           0.153
 '''
