@@ -1,6 +1,7 @@
 import time
 import copy
 import shared
+import David_AI_v3
 import David_AI_v2
 import David_AI_v1
 import Michael_AI_v1_1
@@ -12,6 +13,7 @@ initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 200
 
+David_AI_v3.__name = 'David_AI_v3'
 David_AI_v2.__name = 'David_AI_v2'
 David_AI_v1.__name = 'David_AI_v1'
 Michael_AI_v1_1.__name = 'Michael_AI_v1_1'
@@ -113,7 +115,7 @@ def match(whiteAI, blackAI):
 
 minimise = False
 
-match(no_move_AI, David_AI_v2)
+match(David_AI_v3, David_AI_v2)
 exit()
 
 competitors = [
