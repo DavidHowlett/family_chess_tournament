@@ -190,6 +190,12 @@ def calculate_tree(state, move_num):
 def main(history, white_time, black_time):
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
+    if len(history) == 1:
+        board = move(history[-1], 1, 4, 3, 4)
+        return [[piece for piece in line] for line in board]
+    if len(history) == 2:
+        board = move(history[-1], 6, 4, 4, 4)
+        return [[piece for piece in line] for line in board]
     initial_score = simple_score(history[-1])
     my_simple_score = initial_score if player_is_white else -initial_score
     # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
