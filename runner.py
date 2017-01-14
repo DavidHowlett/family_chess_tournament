@@ -34,18 +34,6 @@ p p p p p p p p
 P P P P P P P P
 R N B Q K B N R'''
 
-"""
-initialBoard = '''
-. . . . . . . r
-p . . . . . . p
-. . . . . k p .
-. . . p p . P .
-. . . . Q p . .
-b q . P . K . P
-. . . . . . . .
-R . . . . . . .'''
-"""
-
 
 def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining):
     if minimise:
