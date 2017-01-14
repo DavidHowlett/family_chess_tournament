@@ -99,8 +99,8 @@ def match(whiteAI, blackAI):
 
 minimise = False
 
-# match(David_AI_v3, David_AI_v2)
-# exit()
+#match(David_AI_v3, no_move_AI)
+#exit()
 
 competitors = [
     David_AI_v3,
@@ -109,8 +109,9 @@ competitors = [
     Michael_AI_v1_1,
     Michael_AI_v1_0,
     Robert_AI,
-    no_move_AI,
     random_AI
+    # no_move_AI,
+
 ]
 tournamentResults = [('white', 'black', 'result', 'explanation')]
 for AI in competitors:
