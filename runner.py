@@ -4,6 +4,7 @@ import shared
 import David_AI_v3
 import David_AI_v2
 import David_AI_v1
+import Michael_AI_v1_2
 import Michael_AI_v1_1
 import Michael_AI_v1_0
 import Robert_AI
@@ -17,6 +18,7 @@ turnsToPlayFor = 150
 David_AI_v3.__name = 'David_AI_v3'
 David_AI_v2.__name = 'David_AI_v2'
 David_AI_v1.__name = 'David_AI_v1'
+Michael_AI_v1_2.__name = 'Michael_AI_v1_2'
 Michael_AI_v1_1.__name = 'Michael_AI_v1_1'
 Michael_AI_v1_0.__name = 'Michael_AI_v1_0'
 Robert_AI.__name = 'Robert_AI'
@@ -61,9 +63,11 @@ def match(whiteAI, blackAI):
             chosen_move = (whiteAI if turn % 2 else blackAI)\
                 .main(copy.deepcopy(history), white_time_remaining, black_time_remaining)
         except shared.StalemateException:
-            return 0.5, 'Draw due to there being no valid moves'
+            return 0.5, 'Draw due to stalemate'
         except shared.ThreeFoldRepetition:
             return 0.5, '{} called a draw with the threefold repetition rule'.format('White' if turn % 2 else 'Black')
+        except shared.FiftyMoveException:
+            return 0.5, '{} called a draw with the 50 move rule'.format('White' if turn % 2 else 'Black')
         run_time = time.process_time() - start_time
         history.append(chosen_move)
         if turn % 2:
@@ -94,6 +98,7 @@ competitors = [
     David_AI_v3,
     David_AI_v2,
     David_AI_v1,
+    Michael_AI_v1_2,
     Michael_AI_v1_1,
     Michael_AI_v1_0,
     Robert_AI,
