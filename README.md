@@ -1,9 +1,9 @@
 # Family AI chess tournament
 
 Christmas 2016 the 3 Howlett brothers competed to see who could produce the best chess AI. 
-We agreed to not use 
+We agreed to build our AI's without looking at any of the existing literature or code on the subject.
 David, Robert and Micheal all produced functional chess AI's in python.
-David's AI was winning by the end of the christmas holidays.
+David's AI was winning by the end of the christmas holidays. 
 
 # How to play
 
