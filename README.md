@@ -8,6 +8,7 @@ David's AI was winning by the end of the christmas holidays.
 # How to play
 
 - Clone the repo
+- run runner.py and see how it works
 - Add your own AI file
 - Tweak the runner to run your file with the others.
 - Check that your AI can play games without crashing anything
@@ -22,7 +23,7 @@ Using other people's chess code is not allowed. You must write your own AI.
 Using libraries that are not chess specific are allowed. For example TensorFlow is ok.
 
 Each player gets 5 seconds initially and gets 1 additional second to make each move. 
-This ensures that all games finish in sensible amounts of time.
+This ensures that all games finish quickly.
 
 The rules differ slightly from standard chess.
 
@@ -34,10 +35,9 @@ A player loses if:
 Currently the runner will call a draw after 150 moves to prevent infinite games. 
 This maximum may be increased in future. 
 
-If a player wants to call a draw they should raise one of the exceptions in the shared file. 
+If a player wants to call a draw they should raise one of the exceptions in shared.py 
 Please only call draws when it is legal to do so.
 
-# To do
+# ToDo
 
-Make the runner remember the results of matches between AI's with particular hashes. 
-This should save time when re running the tournament after changing only one AI.
+Make the runner remember the results of matches between AI's with particular hashes to save time when rerunning the tournament.
