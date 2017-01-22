@@ -1,5 +1,4 @@
-"""This was written by David for fun on 24th - 27th December 2016
-Micheal and Robert not allowed to read this file until the competition is over.
+"""This was written by David for fun
 This program implements a tree search of possible future moves.
 The main data structures are:
     - board: this is a [str] representing a 2D board
@@ -10,12 +9,12 @@ A board can be scored with the score function.
 The score of a state can be simply calculated by passing its associated board to the score function. To get a more
 accurate score of a position it is necessary to explore the children of the state.
 
-
 Not implemented yet:
     - castling
     - en passant
 
 """
+import time
 from shared import StalemateException, ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
@@ -41,7 +40,7 @@ DISCOUNT_RATE = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
 
 assert PIECE_VALUE['K'] > DISCOUNT_RATE*PIECE_VALUE['Q'] + DISCOUNT_RATE**2*PIECE_VALUE['K']
 # for most pieces there is a small advantage to being in the centre
-POSITION_VALUE = [[0.04 * (1 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
+POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
 #  print('\n'.join(' '.join('{:.2f}'.format(POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 # pawns are more valuable in the centre but more importantly they become much more valuable when they are close to being
 # turned into queens
@@ -155,16 +154,15 @@ def simple_score(_board: [str])->float:
     return _score
 
 
-def calculate_tree(state, move_num):
+def calculate_tree(state, depth):
     """recursively calculates children of the given state """
     children = []
     child_is_white = not state['white']
-    move_num += 1
-    # search to a depth of min_depth normally but up to max_depth if pieces are being taken
-    if move_num < min_depth or move_num < max_depth and (state['diff'] > 0.9 or state['diff'] < -0.9):
+    depth -= 1
+    if depth:
         for board, score_diff in moves(state['board'], state['white']):
             child = {'board': board, 'white': child_is_white, 'diff': score_diff}
-            calculate_tree(child, move_num)
+            calculate_tree(child, depth)
             children.append(child)
     else:
         for board, score_diff in moves(state['board'], state['white']):
@@ -173,7 +171,7 @@ def calculate_tree(state, move_num):
     # set the children of the current state to be the newly generated list
     state['children'] = children
     if children:
-        if 'score' in children[0]:
+        if depth:
             # then set the score to be the (score diff + score) of the best child (discounted for being in the future)
             state['score'] = DISCOUNT_RATE * (
                 max if state['white'] else min)(child['diff']+child['score'] for child in children)
@@ -190,17 +188,11 @@ def calculate_tree(state, move_num):
 def main(history, white_time, black_time):
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
-    if len(history) == 1:
-        board = move(history[-1], 1, 4, 3, 4)
-        return [[piece for piece in line] for line in board]
-    if len(history) == 2:
-        board = move(history[-1], 6, 4, 4, 4)
-        return [[piece for piece in line] for line in board]
     initial_score = simple_score(history[-1])
     my_simple_score = initial_score if player_is_white else -initial_score
     # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
-    initial_state = {'board': history[-1], 'white': player_is_white, 'diff': 0}
-    calculate_tree(initial_state, 0)
+    initial_state = {'board': history[-1], 'white': player_is_white}
+    calculate_tree(initial_state, global_depth)
     possible_moves = initial_state['children']
     if not possible_moves:
         raise StalemateException
@@ -216,14 +208,13 @@ def main(history, white_time, black_time):
 
     # add further exploration of the promising parts of the tree here
 
-    if min_depth > 1:
+    if global_depth > 1:
         final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'] + s['score'])
-    elif min_depth == 1:
+    elif global_depth == 1:
         final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'])
     return [[piece for piece in line] for line in final_state['board']]
 
-min_depth = 3
-max_depth = 3
+global_depth = 4
 
 '''
 I use the time to calculate and score the first moves as a benchmark for my algorithm.
@@ -252,8 +243,28 @@ after adding POSITION_VALUE, PAWN_POSITION_VALUE and DISCOUNT_RATE
 True        NA              3       0.155
 True        NA              4       2.101
 True        NA              5       48.476
-after adding max_depth and min_depth
-min_depth   max_depth   time taken
-------------------------------------
-3           3           0.153
+I chose to start using avg time to make moves in tournament play as my benchmark.
+The interaction between players is important.
+True        NA              3       0.308
+True        NA              4       7.407
+I decide that tournaments take too long so I pick the most difficult example in the tournament as my benchmark
+True        NA              3       0.350
+True        NA              4       14.933
+
+
 '''
+if __name__ == '__main__':
+    difficultPosition = '''
+r . b q . . . r
+p p p p n k p p
+. . n b . p . .
+. . . . p . . .
+. . P . N . . .
+P . . P B N . .
+. P . . P P P P
+R . . Q K B . R'''
+    test_history = [[[piece for piece in line] for line in difficultPosition.replace(' ', '').split()]]
+    test_history[0].reverse()
+    startTime = time.perf_counter()
+    main(test_history, 0, 0)
+    print('{:.3f}'.format(time.perf_counter()-startTime))
