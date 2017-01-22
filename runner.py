@@ -1,30 +1,24 @@
 import time
 import copy
 import shared
-import David_AI_v3
-import David_AI_v2
-import David_AI_v1
-import Michael_AI_v1_2
-import Michael_AI_v1_1
-import Michael_AI_v1_0
-import Robert_AI
-import no_move_AI
-import random_AI
-
 initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 150
+competitorNames = [
+    'David_AI_v3',
+    'David_AI_v2',
+    'David_AI_v1',
+    'Michael_AI_v1_2',
+    'Michael_AI_v1_1',
+    'Michael_AI_v1_0',
+    'Robert_AI',
+    'random_AI',
+    # 'no_move_AI',
+]
+for name in competitorNames:
+    exec('import ' + name)
 
-David_AI_v3.__name = 'David_AI_v3'
-David_AI_v2.__name = 'David_AI_v2'
-David_AI_v1.__name = 'David_AI_v1'
-Michael_AI_v1_2.__name = 'Michael_AI_v1_2'
-Michael_AI_v1_1.__name = 'Michael_AI_v1_1'
-Michael_AI_v1_0.__name = 'Michael_AI_v1_0'
-Robert_AI.__name = 'Robert_AI'
-no_move_AI.__name = 'no_move_AI'
-random_AI.__name = 'random_AI'
-
+competitors = [eval(name) for name in competitorNames]
 
 initialBoard = '''
 r n b q k b n r
@@ -52,16 +46,16 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
         print()
 
 
-def match(whiteAI, blackAI):
-    print('Match between {} on white and {} on black'.format(whiteAI.__name, blackAI.__name))
+def match(white, black):
+    print('Match between {} on white and {} on black'.format(white.__name__, black.__name__))
     white_time_remaining = black_time_remaining = initialTime
     history = [[[piece for piece in line] for line in initialBoard.replace(' ', '').split()]]
     history[0].reverse()
     for turn in range(1, 1+turnsToPlayFor):
         start_time = time.process_time()
         try:
-            chosen_move = (whiteAI if turn % 2 else blackAI)\
-                .main(copy.deepcopy(history), white_time_remaining, black_time_remaining)
+            chosen_move = (white if turn % 2 else black).main(
+                copy.deepcopy(history), white_time_remaining, black_time_remaining)
         except shared.StalemateException:
             return 0.5, 'Draw due to stalemate'
         except shared.ThreeFoldRepetition:
@@ -94,34 +88,22 @@ minimise = False
 #match(David_AI_v3, no_move_AI)
 #exit()
 
-competitors = [
-    David_AI_v3,
-    David_AI_v2,
-    David_AI_v1,
-    Michael_AI_v1_2,
-    Michael_AI_v1_1,
-    Michael_AI_v1_0,
-    Robert_AI,
-    random_AI
-    # no_move_AI,
-
-]
 tournamentResults = [('white', 'black', 'result', 'explanation')]
-for AI in competitors:
-    AI.tournamentScore = 0
+for player in competitors:
+    player.tournamentScore = 0
 
 tournamentStartTime = time.perf_counter()
-for whitePlayer in competitors:
-    for blackPlayer in competitors:
-        if whitePlayer == blackPlayer:
+for white in competitors:
+    for black in competitors:
+        if white == black:
             continue
         game_start_time = time.perf_counter()
-        result, cause = match(whitePlayer, blackPlayer)
+        result, cause = match(white, black)
         print(cause)
         print('The game took {:.3f} seconds'.format(time.perf_counter() - game_start_time))
-        tournamentResults.append((whitePlayer.__name, blackPlayer.__name, result, cause))
-        whitePlayer.tournamentScore += result
-        blackPlayer.tournamentScore += (1-result)
+        tournamentResults.append((white.__name__, black.__name__, result, cause))
+        white.tournamentScore += result
+        black.tournamentScore += (1-result)
 print('\nAll the matches played in the tournament are shown below')
 
 for result in tournamentResults:
@@ -132,6 +114,6 @@ print('Each of the {} competitors has played {} games\n'.format(
     len(competitors), 2*len(competitors)-2))
 
 competitors.sort(key=lambda c: c.tournamentScore, reverse=True)
-for AI in competitors:
+for player in competitors:
     print('{} score is {}/{}'.format(
-        AI.__name, AI.tournamentScore, 2*len(competitors)-2))
+        player.__name__, player.tournamentScore, 2*len(competitors)-2))
