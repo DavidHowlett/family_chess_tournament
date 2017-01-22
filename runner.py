@@ -1,6 +1,8 @@
 import time
 import copy
 import shared
+import hashlib
+import inspect
 initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 150
@@ -47,21 +49,45 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
 
 
 def match(white, black):
+    """This plays a single match between the white and black players. If the match has been played before then it
+    returns quickly with the previous result"""
+    file_name = r'results/{} vs {}.txt'.format(
+        white.__name__,
+        black.__name__
+    )
+    current_versions = '{} vs {}\n'.format(
+        hashlib.sha256(inspect.getsource(white).encode()).hexdigest(),
+        hashlib.sha256(inspect.getsource(white).encode()).hexdigest())
+    try:
+        file = open(file_name)
+        previous_versions = file.readline()
+        if current_versions == previous_versions:
+            # then return the previous result
+            return eval(file.readline())
+    except FileNotFoundError:
+        pass
+    file = open(file_name, 'w')
+    file.write(current_versions)
     print('Match between {} on white and {} on black'.format(white.__name__, black.__name__))
     white_time_remaining = black_time_remaining = initialTime
     history = [[[piece for piece in line] for line in initialBoard.replace(' ', '').split()]]
     history[0].reverse()
+    to_return = 0.5, 'Draw due to reaching {} turns'.format(turnsToPlayFor)
     for turn in range(1, 1+turnsToPlayFor):
         start_time = time.process_time()
         try:
             chosen_move = (white if turn % 2 else black).main(
                 copy.deepcopy(history), white_time_remaining, black_time_remaining)
         except shared.StalemateException:
-            return 0.5, 'Draw due to stalemate'
+            to_return = 0.5, 'Draw due to stalemate'
+            break
         except shared.ThreeFoldRepetition:
-            return 0.5, '{} called a draw with the threefold repetition rule'.format('White' if turn % 2 else 'Black')
+            to_return = 0.5, '{} called a draw with the threefold repetition rule'.format(
+                'White' if turn % 2 else 'Black')
+            break
         except shared.FiftyMoveException:
-            return 0.5, '{} called a draw with the 50 move rule'.format('White' if turn % 2 else 'Black')
+            to_return = 0.5, '{} called a draw with the 50 move rule'.format('White' if turn % 2 else 'Black')
+            break
         run_time = time.process_time() - start_time
         history.append(chosen_move)
         if turn % 2:
@@ -70,18 +96,25 @@ def match(white, black):
             black_time_remaining = black_time_remaining + timePerMove - run_time
         print_state(turn, chosen_move, run_time, white_time_remaining, black_time_remaining)
         if white_time_remaining < 0:
-            return 0, 'Black won due to white running out of time'
+            to_return = 0, 'Black won due to white running out of time'
+            break
         if black_time_remaining < 0:
-            return 1, 'White won due to black running out of time'
+            to_return = 1, 'White won due to black running out of time'
+            break
         if 'P' in chosen_move[7]:
-            return 0, 'Black won because white made and illegal move'
+            to_return = 0, 'Black won because white made and illegal move'
+            break
         if 'p' in chosen_move[0]:
-            return 1, 'White won because black made and illegal move'
+            to_return = 1, 'White won because black made and illegal move'
+            break
         if not any(any(piece == 'K' for piece in row) for row in chosen_move):
-            return 0, 'Black won by taking the king'
+            to_return = 0, 'Black won by taking the king'
+            break
         if not any(any(piece == 'k' for piece in row) for row in chosen_move):
-            return 1, 'White won by taking the king'
-    return 0.5, 'Draw due to reaching {} turns'.format(turnsToPlayFor)
+            to_return = 1, 'White won by taking the king'
+            break
+    file.write(str(to_return))
+    return to_return
 
 minimise = False
 
