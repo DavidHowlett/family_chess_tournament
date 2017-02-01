@@ -15,7 +15,7 @@ Not implemented yet:
     - avoiding trading our king now for their king later
 
 """
-import time
+from time import perf_counter as now
 from shared import StalemateException, ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
@@ -168,7 +168,7 @@ def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
     if player_is_white:
         v = -99999
         for possible_move, diff in possible_moves:
-            v = max(v, alpha_beta(possible_move, depth-1, score_diff+diff, False, alpha, beta))
+            v = max(v, alpha_beta(possible_move, depth - 1, score_diff+diff, False, alpha, beta))
             alpha = max(alpha, v)
             if beta <= alpha:
                 break  # beta cut off
@@ -182,9 +182,29 @@ def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
     return v
 
 
+def search(possible_moves, player_is_white, depth):
+        alpha = -99999
+        beta = 99999
+        if player_is_white:
+            for possible_move, diff in possible_moves:
+                move_score = alpha_beta(possible_move, depth - 1, diff, False, alpha, beta)
+                if move_score > alpha:
+                    alpha = move_score
+                    best_move = possible_move
+        else:
+            for possible_move, diff in possible_moves:
+                move_score = alpha_beta(possible_move, depth - 1, diff, True, alpha, beta)
+                if move_score < beta:
+                    beta = move_score
+                    best_move = possible_move
+        return best_move
+
+
 def main(history, white_time, black_time):
+    start_time = now()
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
+    available_time = white_time if player_is_white else black_time
     score = simple_score(history[-1])
     possible_moves = moves(history[-1], player_is_white)
     if not possible_moves:
@@ -199,23 +219,16 @@ def main(history, white_time, black_time):
         if repeat_free_moves:
             # only remove repeats if there are still choices remaining
             possible_moves = repeat_free_moves
-
-    alpha = -99999
-    beta = 99999
     possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
     best_move = None
-    if player_is_white:
-        for possible_move, diff in possible_moves:
-            move_score = alpha_beta(possible_move, global_depth - 1, diff, False, alpha, beta)
-            if move_score > alpha:
-                alpha = move_score
-                best_move = possible_move
-    else:
-        for possible_move, diff in possible_moves:
-            move_score = alpha_beta(possible_move, global_depth - 1, diff, True, alpha, beta)
-            if move_score < beta:
-                beta = move_score
-                best_move = possible_move
+    for depth in range(2, 10):
+        search_start_time = now()
+        best_move = search(possible_moves, player_is_white, depth)
+        search_run_time = now() - search_start_time
+        time_remaining = available_time - (now() - start_time)
+        if time_remaining < search_run_time * 20:
+            break
+    # print(depth)
     return [[piece for piece in line] for line in best_move]
 
 
@@ -257,9 +270,12 @@ First working attempt at alpha_beta scoring
 False       incremental     3       0.050
 False       incremental     4       0.932
 False       incremental     5       3.411
+Moving with alpha_beta now works
+False       incremental     3       0.035
+False       incremental     4       0.790
+False       incremental     5       3.087
 
 '''
-global_depth = 4
 
 if __name__ == '__main__':
     difficultPosition = '''
@@ -271,8 +287,12 @@ p p p p n k p p
 P . . P B N . .
 . P . . P P P P
 R . . Q K B . R'''
-    test_history = [[[piece for piece in line] for line in difficultPosition.replace(' ', '').split()]]
-    test_history[0].reverse()
-    startTime = time.perf_counter()
-    main(test_history, 0, 0)
-    print('{:.3f}'.format(time.perf_counter()-startTime))
+    portable_history = [[[piece for piece in line] for line in difficultPosition.replace(' ', '').split()]]
+    portable_history[0].reverse()
+    history = [[''.join(row) for row in board] for board in portable_history]
+    player_is_white = True
+    possible_moves = moves(history[-1], player_is_white)
+    possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
+    startTime = now()
+    search(possible_moves, player_is_white, 5)
+    print('{:.3f}'.format(now()-startTime))
