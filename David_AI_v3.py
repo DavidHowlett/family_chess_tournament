@@ -12,6 +12,7 @@ accurate score of a position it is necessary to explore the children of the stat
 Not implemented yet:
     - castling
     - en passant
+    - avoiding trading our king now for their king later
 
 """
 import time
@@ -33,12 +34,8 @@ PIECE_VALUE = {
     '.': 0,
     'K': 1000, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 0.7,
     'k': -1000, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -0.7}
-'''The further into the future a take is, the less certain it is to be a good idea
-The discount rate combines with the very high value of the king to value king takes
-earlier strongly over piece takes later'''
-DISCOUNT_RATE = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
 
-assert PIECE_VALUE['K'] > DISCOUNT_RATE*PIECE_VALUE['Q'] + DISCOUNT_RATE**2*PIECE_VALUE['K']
+
 # for most pieces there is a small advantage to being in the centre
 POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
 #  print('\n'.join(' '.join('{:.2f}'.format(POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
@@ -48,6 +45,11 @@ POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in ran
 # This is the reason for pre-calculation
 PAWN_POSITION_VALUE = [[0.006 * (10 + x - x * x / 6.9) * (y+2) ** 2 for x in range(8)] for y in range(8)]
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
+'''The further into the future a take is, the less certain it is to be a good idea
+The discount rate combines with the very high value of the king to value king takes
+earlier strongly over piece takes later'''
+DISCOUNT_RATE = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
+assert PIECE_VALUE['K'] > DISCOUNT_RATE*PIECE_VALUE['Q'] + DISCOUNT_RATE**2*PIECE_VALUE['K']
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -154,67 +156,68 @@ def simple_score(_board: [str])->float:
     return _score
 
 
-def calculate_tree(state, depth):
-    """recursively calculates children of the given state """
-    children = []
-    child_is_white = not state['white']
-    depth -= 1
-    if depth:
-        for board, score_diff in moves(state['board'], state['white']):
-            child = {'board': board, 'white': child_is_white, 'diff': score_diff}
-            calculate_tree(child, depth)
-            children.append(child)
+def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
+    """Implements alpha beta scoring"""
+    possible_moves = moves(board, player_is_white)
+    if not possible_moves:
+        # this correctly scores stalemates
+        return 0
+    if depth == 1:
+        return score_diff + (max if player_is_white else min)(m[1] for m in possible_moves)
+    possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
+    if player_is_white:
+        v = -99999
+        for possible_move, diff in possible_moves:
+            v = max(v, alpha_beta(possible_move, depth-1, score_diff+diff, False, alpha, beta))
+            alpha = max(alpha, v)
+            if beta <= alpha:
+                break  # beta cut off
     else:
-        for board, score_diff in moves(state['board'], state['white']):
-            child = {'board': board, 'white': child_is_white, 'diff': score_diff}  # ToDo optimise this line
-            children.append(child)
-    # set the children of the current state to be the newly generated list
-    state['children'] = children
-    if children:
-        if depth:
-            # then set the score to be the (score diff + score) of the best child (discounted for being in the future)
-            state['score'] = DISCOUNT_RATE * (
-                max if state['white'] else min)(child['diff']+child['score'] for child in children)
-        else:
-            # then set the score to be the score diff of the best child (discounted for being in the future)
-            state['score'] = DISCOUNT_RATE * (
-                max if state['white'] else min)(child['diff'] for child in children)
-    else:
-        # if there are no valid moves then it is a stalemate (StalemateException)
-        state['score'] = 0
-    return state
+        v = 99999
+        for possible_move, diff in possible_moves:
+            v = min(v, alpha_beta(possible_move, depth - 1, score_diff+diff, True, alpha, beta))
+            beta = min(beta, v)
+            if beta <= alpha:
+                break  # alpha cut off
+    return v
 
 
 def main(history, white_time, black_time):
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
-    initial_score = simple_score(history[-1])
-    my_simple_score = initial_score if player_is_white else -initial_score
-    # the type of "state": List[List[str], player_is_white, score, move_number, parent, children]
-    initial_state = {'board': history[-1], 'white': player_is_white}
-    calculate_tree(initial_state, global_depth)
-    possible_moves = initial_state['children']
+    score = simple_score(history[-1])
+    possible_moves = moves(history[-1], player_is_white)
     if not possible_moves:
         raise StalemateException
-    if my_simple_score < -0.5:
-        # if I am losing and in a loop then call a draw
+    if (score < -10) if player_is_white else (score > 10):
+        # if I am losing badly and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:
             raise ThreeFoldRepetition
     else:
-        # If I am drawing or winning then avoid previous game states
-        for state in possible_moves:
-            if state['board'] in history:
-                state['score'] = -3 if player_is_white else 3
+        # otherwise avoid repeated states
+        repeat_free_moves = [m for m in possible_moves if m[0] not in history]
+        if repeat_free_moves:
+            # only remove repeats if there are still choices remaining
+            possible_moves = repeat_free_moves
 
-    # add further exploration of the promising parts of the tree here
+    alpha = -99999
+    beta = 99999
+    possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
+    best_move = None
+    if player_is_white:
+        for possible_move, diff in possible_moves:
+            move_score = alpha_beta(possible_move, global_depth - 1, diff, False, alpha, beta)
+            if move_score > alpha:
+                alpha = move_score
+                best_move = possible_move
+    else:
+        for possible_move, diff in possible_moves:
+            move_score = alpha_beta(possible_move, global_depth - 1, diff, True, alpha, beta)
+            if move_score < beta:
+                beta = move_score
+                best_move = possible_move
+    return [[piece for piece in line] for line in best_move]
 
-    if global_depth > 1:
-        final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'] + s['score'])
-    elif global_depth == 1:
-        final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'])
-    return [[piece for piece in line] for line in final_state['board']]
-
-global_depth = 4
 
 '''
 I use the time to calculate and score the first moves as a benchmark for my algorithm.
@@ -234,25 +237,30 @@ True        simple_score    3       0.132
 True        simple_score    4       3.213
 True        simple_score    5       80.615
 after switching to incremental scoring (for efficiency)
-True        NA              3       0.060
+True        incremental     3       0.060
 after switching to using dicts for states (for ease of programming)
-True        NA              3       0.059
-True        NA              4       1.562
-True        NA              5       44.370
+True        incremental     3       0.059
+True        incremental     4       1.562
+True        incremental     5       44.370
 after adding POSITION_VALUE, PAWN_POSITION_VALUE and DISCOUNT_RATE
-True        NA              3       0.155
-True        NA              4       2.101
-True        NA              5       48.476
+True        incremental     3       0.155
+True        incremental     4       2.101
+True        incremental     5       48.476
 I chose to start using avg time to make moves in tournament play as my benchmark.
 The interaction between players is important.
-True        NA              3       0.308
-True        NA              4       7.407
+True        incremental     3       0.308
+True        incremental     4       7.407
 I decide that tournaments take too long so I pick the most difficult example in the tournament as my benchmark
-True        NA              3       0.350
-True        NA              4       14.933
-
+True        incremental     3       0.330
+True        incremental     4       14.933
+First working attempt at alpha_beta scoring
+False       incremental     3       0.050
+False       incremental     4       0.932
+False       incremental     5       3.411
 
 '''
+global_depth = 4
+
 if __name__ == '__main__':
     difficultPosition = '''
 r . b q . . . r
