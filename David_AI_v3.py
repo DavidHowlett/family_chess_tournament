@@ -45,11 +45,6 @@ POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in ran
 # This is the reason for pre-calculation
 PAWN_POSITION_VALUE = [[0.006 * (10 + x - x * x / 6.9) * (y+2) ** 2 for x in range(8)] for y in range(8)]
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
-'''The further into the future a take is, the less certain it is to be a good idea
-The discount rate combines with the very high value of the king to value king takes
-earlier strongly over piece takes later'''
-DISCOUNT_RATE = 0.95  # a point in 5 turns is worth 0.95**5 of a point now
-assert PIECE_VALUE['K'] > DISCOUNT_RATE*PIECE_VALUE['Q'] + DISCOUNT_RATE**2*PIECE_VALUE['K']
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -287,11 +282,10 @@ p p p p n k p p
 P . . P B N . .
 . P . . P P P P
 R . . Q K B . R'''
-    portable_history = [[[piece for piece in line] for line in difficultPosition.replace(' ', '').split()]]
-    portable_history[0].reverse()
-    history = [[''.join(row) for row in board] for board in portable_history]
+    board = [line for line in difficultPosition.replace(' ', '').split()]
+    board.reverse()
     player_is_white = True
-    possible_moves = moves(history[-1], player_is_white)
+    possible_moves = moves(board, player_is_white)
     possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
     startTime = now()
     search(possible_moves, player_is_white, 5)
