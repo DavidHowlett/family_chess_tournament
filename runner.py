@@ -1,8 +1,10 @@
+import os
 import time
 import copy
-import shared
 import hashlib
 import inspect
+import shared
+
 initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 150
@@ -174,3 +176,7 @@ competitors.sort(key=lambda c: c.tournamentScore_, reverse=True)
 for player in competitors:
     print('{} scored {}/{} taking on average {:.3f} seconds'.format(
         player.__name__, player.tournamentScore_, 2*len(competitors)-2, player.totalTime_/player.totalMoves_))
+
+if os.name == 'posix':
+    # it can take a while to run and I want to do other things in the mean time
+    os.system('say "tournament finished"')
