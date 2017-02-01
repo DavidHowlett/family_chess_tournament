@@ -129,14 +129,12 @@ def match(white, black):
     to_return['white_moves'] = white_moves
     to_return['black_moves'] = black_moves
     file.write(str(to_return))
+    to_return['not from file'] = True
     return to_return
 
 minimise = False
 
-#match(David_AI_v3, no_move_AI)
-#exit()
-
-tournamentResults = [('white', 'black', 'result', 'explanation')]
+tournamentResults = [('white', 'black', 'result', 'moves', 'time', 'explanation')]
 for player in competitors:
     player.totalMoves_ = 0
     player.totalTime_ = 0
@@ -155,10 +153,12 @@ for white in competitors:
         black.tournamentScore_ += (1 - score)
         black.totalMoves_ += result['black_moves']
         black.totalTime_ += result['black_time_taken']
-
-        print(result['cause'])
-        print('The game took {:.3f} seconds'.format(result['white_time_taken'] + result['black_time_taken']))
-        tournamentResults.append((white.__name__, black.__name__, score, result['cause']))
+        if 'not from file' in result:
+            print(result['cause'])
+            print('The game took {:.3f} seconds'.format(result['white_time_taken'] + result['black_time_taken']))
+        tournamentResults.append(
+            (white.__name__, black.__name__, score, result['black_moves'] + result['white_moves'],
+             '{:.3f}'.format(result['black_time_taken'] + result['white_time_taken']), result['cause']))
 
 print('\nAll the matches played in the tournament are shown below')
 
