@@ -72,7 +72,6 @@ def match(white, black):
     file.write(current_versions)
     # -------- turns and time -------
     black_moves = white_moves = 0
-    black_time = white_time = 0
     black_time_taken = white_time_taken = 0
 
     history = [[[piece for piece in line] for line in initialBoard.replace(' ', '').split()]]
@@ -81,6 +80,8 @@ def match(white, black):
     to_return = {'score': 0.5, 'cause': 'Draw due to reaching {} turns'.format(turnsToPlayFor)}
     for turn in range(1, 1+turnsToPlayFor):
         start_time = time.process_time()
+        white_time = initialTime + white_moves * timePerMove - white_time_taken
+        black_time = initialTime + black_moves * timePerMove - black_time_taken
         try:
             chosen_move = (white if turn % 2 else black).main(
                 copy.deepcopy(history), white_time, black_time)
