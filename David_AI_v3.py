@@ -43,7 +43,7 @@ POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in ran
 # turned into queens
 # calculating the below formula takes 861 ns but lookup in a 2D table only takes 73 ns.
 # This is the reason for pre-calculation
-PAWN_POSITION_VALUE = [[0.006 * (10 + x - x * x / 6.9) * (y+2) ** 2 for x in range(8)] for y in range(8)]
+PAWN_POSITION_VALUE = [[0.006 * (10 + x - x * x / 7) * (y+2) ** 2 for x in range(8)] for y in range(8)]
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 
 
@@ -90,6 +90,8 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                             # then it is taking it's own piece
                             break
                         if piece in 'KkNn':
+                            # don't reward moving the king towards the centre
+                            # _moves[-1] = _moves[-1][0], PIECE_VALUE[target_piece]
                             break
 
             # pawns are weird
@@ -269,7 +271,10 @@ Moving with alpha_beta now works
 False       incremental     3       0.035
 False       incremental     4       0.790
 False       incremental     5       3.087
-
+switched to benchmarking search function
+False       incremental     3       0.035
+False       incremental     4       0.698
+False       incremental     5       2.907
 '''
 
 if __name__ == '__main__':

@@ -1,0 +1,10 @@
+As of 2nd Febuary 2017 the results are:
+
+David_AI_v3 scored 12.5/14 taking on average 0.935 seconds
+David_AI_v2 scored 12/14 taking on average 0.232 seconds
+David_AI_v1 scored 8.0/14 taking on average 0.502 seconds
+Michael_AI_v1_2 scored 6.0/14 taking on average 0.567 seconds
+Michael_AI_v1_1 scored 6.0/14 taking on average 0.659 seconds
+Robert_AI scored 6.0/14 taking on average 0.308 seconds
+Michael_AI_v1_0 scored 5.5/14 taking on average 0.626 seconds
+random_AI scored 0/14 taking on average 0.001 seconds
