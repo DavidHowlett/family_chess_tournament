@@ -14,12 +14,11 @@ competitorNames = [
     'David_AI_v2',
     'David_AI_v1',
     'Michael_AI_v1_2',
-    # this occasionally throws an error on line 662 TypeError: list indices must be integers or slices, not str
-    # 'Michael_AI_v1_1',
+    'Michael_AI_v1_1',
     'Michael_AI_v1_0',
     'Robert_AI',
     'random_AI',
-    # 'no_move_AI',
+    'no_move_AI',
 ]
 for name in competitorNames:
     exec('import ' + name)
@@ -98,6 +97,11 @@ def match(white, black):
             break
         except shared.FiftyMoveException:
             to_return = {'score': 0.5, 'cause': '{} called a draw with the 50 move rule'.format(
+                'White' if turn % 2 else 'Black')}
+            break
+        except TypeError:
+            # Michael's code occasionally crashes with TypeError
+            to_return = {'score': 0 if turn % 2 else 1, 'cause': '{} crashed'.format(
                 'White' if turn % 2 else 'Black')}
             break
         run_time = time.process_time() - start_time
