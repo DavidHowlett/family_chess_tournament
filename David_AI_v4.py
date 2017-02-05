@@ -159,7 +159,19 @@ def simple_score(_board: [str])->float:
 
 def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
+    try:
+        node_score, node_type, node_search_depth = transpositionTable[
+            ''.join(board) + 'w' if player_is_white else 'b']
+        if node_search_depth == depth:
+            if node_type == 'exact':
+                return node_score
+    except KeyError:
+        pass
+
     possible_moves = moves(board, player_is_white)
+    if not possible_moves:
+        # this correctly scores stalemates
+        return 0
     '''
     for i, (possible_move, diff) in enumerate(possible_moves):
         try:
@@ -168,9 +180,7 @@ def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
         except KeyError:
             pass
     '''
-    if not possible_moves:
-        # this correctly scores stalemates
-        return 0
+
     possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
 
     current_best_score = (-99999) if player_is_white else 99999
@@ -320,6 +330,9 @@ buildTree   move count      depth   time taken
 False       8079            3       0.035
 False       155591          4       0.843
 False       681810          5       3.424
+exact matches in transposition table used
+False       645796          5       3.443
+
 
 
 
