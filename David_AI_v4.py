@@ -159,26 +159,29 @@ def simple_score(_board: [str])->float:
 
 def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
-    try:
+    # lookup the current node to see if it has already been searched
+    key = ''.join(board) + 'w' if player_is_white else 'b'
+    if key in transpositionTable:
         node_score, node_type, node_search_depth = transpositionTable[
             ''.join(board) + 'w' if player_is_white else 'b']
         if node_search_depth == depth:
-            if node_type == 'exact':
+            if (node_type == 'exact' or
+                    node_type == 'high' and node_score >= beta or
+                    node_type == 'low' and node_score <= alpha):
                 return node_score
-    except KeyError:
-        pass
 
     possible_moves = moves(board, player_is_white)
     if not possible_moves:
         # this correctly scores stalemates
         return 0
     '''
+    # try to guess the best order to try moves
     for i, (possible_move, diff) in enumerate(possible_moves):
-        try:
-            possible_moves[i] = (possible_move, transpositionTable[
-                ''.join(possible_move) + 'w' if player_is_white else 'b'])
-        except KeyError:
-            pass
+        key = ''.join(possible_move) + 'w' if player_is_white else 'b'
+        if key in transpositionTable:
+            possible_moves[i] = (possible_move, transpositionTable[key])
+        else:
+            possible_moves[i] = previous_score + diff
     '''
 
     possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
@@ -332,6 +335,8 @@ False       155591          4       0.843
 False       681810          5       3.424
 exact matches in transposition table used
 False       645796          5       3.443
+fail high and fail low from transposition table used
+False       570439          5       2.443
 
 
 
