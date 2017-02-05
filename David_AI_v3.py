@@ -45,6 +45,7 @@ POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in ran
 # This is the reason for pre-calculation
 PAWN_POSITION_VALUE = [[0.006 * (10 + x - x * x / 7) * (y+2) ** 2 for x in range(8)] for y in range(8)]
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
+total_moves = 0
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -60,6 +61,7 @@ def move(board: [str], y1, x1, y2, x2)-> [str]:
 
 
 def moves(board: [str], _player_is_white: bool)->[([str], float)]:
+    global total_moves
     """This generates a list of all possible game states after one move.
     Preferred moves should be later in the returned list."""
     _moves = []
@@ -140,7 +142,7 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                         if board[y2][x] == '.':
                             _moves.append((move(board, y, x, y2, x),
                                            position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
-
+    total_moves += len(_moves)
     return _moves
 
 
@@ -225,7 +227,7 @@ def main(history, white_time, black_time):
         time_remaining = available_time - (now() - start_time)
         if time_remaining < search_run_time * 20:
             break
-    # print(depth)
+    print(depth)
     return [[piece for piece in line] for line in best_move]
 
 
@@ -274,7 +276,7 @@ False       incremental     5       3.087
 switched to benchmarking search function
 False       incremental     3       0.035
 False       incremental     4       0.698
-False       incremental     5       2.907
+False       incremental     5       2.558
 '''
 
 if __name__ == '__main__':
@@ -287,11 +289,13 @@ p p p p n k p p
 P . . P B N . .
 . P . . P P P P
 R . . Q K B . R'''
-    board = [line for line in difficultPosition.replace(' ', '').split()]
-    board.reverse()
-    player_is_white = True
-    possible_moves = moves(board, player_is_white)
-    possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
+    test_board = [line for line in difficultPosition.replace(' ', '').split()]
+    test_board.reverse()
+    _possible_moves = moves(test_board, True)
+    _possible_moves.sort(key=lambda x: x[1], reverse=True)
     startTime = now()
-    search(possible_moves, player_is_white, 5)
-    print('{:.3f}'.format(now()-startTime))
+    main([test_board], 20, 20)
+    # search(_possible_moves, True, 5)
+    print('{:.3f}'.format(now() - startTime))
+    print(total_moves)
+
