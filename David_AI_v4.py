@@ -160,12 +160,14 @@ def simple_score(_board: [str])->float:
 def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
     possible_moves = moves(board, player_is_white)
-    # for i, (possible_move, score) in enumerate(possible_moves):
-    #    try:
-    #        possible_moves[i] = (possible_move, transpositionTable[
-    #            ''.join(possible_move) + 'w' if player_is_white else 'b'])
-    #    except KeyError:
-    #        pass
+    '''
+    for i, (possible_move, diff) in enumerate(possible_moves):
+        try:
+            possible_moves[i] = (possible_move, transpositionTable[
+                ''.join(possible_move) + 'w' if player_is_white else 'b'])
+        except KeyError:
+            pass
+    '''
     if not possible_moves:
         # this correctly scores stalemates
         return 0
@@ -183,8 +185,8 @@ def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
                 if move_score > alpha:
                     alpha = move_score
                     if alpha >= beta:
-                        # the score is a cutoff
-                        # transpositionTable[''.join(possible_move) + 'w'] = (current_best_score, 'cut')
+                        # the score failed high
+                        transpositionTable[''.join(board) + 'w'] = current_best_score, 'high', depth
                         break
         else:
             if move_score < current_best_score:
@@ -192,24 +194,28 @@ def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
                 if move_score < beta:
                     beta = move_score
                     if alpha >= beta:
-                        # the score is a cutoff
-                        # transpositionTable[''.join(possible_move) + 'b'] = (current_best_score, 'cut')
+                        # the score failed low
+                        transpositionTable[''.join(board) + 'b'] = current_best_score, 'low', depth
                         break
     else:
         # the score is exact
-        # transpositionTable[''.join(possible_move) + 'w'] = (current_best_score, 'exact')
+        transpositionTable[''.join(board) + ('w' if player_is_white else 'b')] = current_best_score, 'exact', depth
         pass
     return current_best_score
 
 
 def search(possible_moves, previous_score, player_is_white, depth):
     """Implements alpha_beta tree search, returns a best move"""
-    # for i, (possible_move, score) in enumerate(possible_moves):
-    #    try:
-    #        possible_moves[i] = (possible_move, transpositionTable[
-    #            ''.join(possible_move) + 'w' if player_is_white else 'b'])
-    #    except KeyError:
-    #        pass
+    '''
+    for i, [possible_move, diff] in enumerate(possible_moves):
+        try:
+            node_score, node_type, node_search_depth = transpositionTable[
+                ''.join(possible_move) + 'w' if player_is_white else 'b']
+            if node_depth >= depth:
+                possible_moves[i] = possible_move, node_score
+        except KeyError:
+            pass
+    '''
     assert depth > 0
     alpha = -99999
     beta = 99999
@@ -255,7 +261,7 @@ def main(history, white_time, black_time):
         best_move = search(possible_moves, score, player_is_white, depth)
         search_run_time = now() - search_start_time
         time_remaining = available_time - (now() - start_time)
-        if time_remaining < search_run_time * 20:
+        if time_remaining < search_run_time * 25:
             break
     print(depth)
     return [[piece for piece in line] for line in best_move]
@@ -308,6 +314,14 @@ False       incremental     3       0.035
 False       incremental     4       0.698
 False       incremental     5       2.558
 Start of AI_v4
+partial rewrite of alpha_beta
+writing to transposition table implemented
+buildTree   move count      depth   time taken
+False       8079            3       0.035
+False       155591          4       0.843
+False       681810          5       3.424
+
+
 
 '''
 
