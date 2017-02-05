@@ -45,6 +45,7 @@ POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in ran
 # This is the reason for pre-calculation
 PAWN_POSITION_VALUE = [[0.006 * (10 + x - x * x / 7) * (y+2) ** 2 for x in range(8)] for y in range(8)]
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
+transpositionTable = dict()
 total_moves = 0
 
 
@@ -142,6 +143,7 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                         if board[y2][x] == '.':
                             _moves.append((move(board, y, x, y2, x),
                                            position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
+
     total_moves += len(_moves)
     return _moves
 
@@ -156,8 +158,14 @@ def simple_score(_board: [str])->float:
 
 
 def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
-    """Implements alpha beta scoring"""
+    """Implements alpha beta tree search, returns a score"""
     possible_moves = moves(board, player_is_white)
+    for i, (possible_move, score) in enumerate(possible_moves):
+        try:
+            possible_moves[i] = (possible_move, transpositionTable[
+                ''.join(possible_move) + 'w' if player_is_white else 'b'])
+        except KeyError:
+            pass
     if not possible_moves:
         # this correctly scores stalemates
         return 0
@@ -171,6 +179,7 @@ def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
             alpha = max(alpha, v)
             if beta <= alpha:
                 break  # beta cut off
+        transpositionTable[''.join(possible_move) + 'w'] = alpha
     else:
         v = 99999
         for possible_move, diff in possible_moves:
@@ -178,25 +187,36 @@ def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
             beta = min(beta, v)
             if beta <= alpha:
                 break  # alpha cut off
+            transpositionTable[''.join(possible_move) + 'w'] = beta
     return v
 
 
 def search(possible_moves, player_is_white, depth):
-        alpha = -99999
-        beta = 99999
-        if player_is_white:
-            for possible_move, diff in possible_moves:
-                move_score = alpha_beta(possible_move, depth - 1, diff, False, alpha, beta)
-                if move_score > alpha:
-                    alpha = move_score
-                    best_move = possible_move
-        else:
-            for possible_move, diff in possible_moves:
-                move_score = alpha_beta(possible_move, depth - 1, diff, True, alpha, beta)
-                if move_score < beta:
-                    beta = move_score
-                    best_move = possible_move
-        return best_move
+    """Implements alpha_beta tree search, returns a best move"""
+    for i, (possible_move, score) in enumerate(possible_moves):
+        try:
+            possible_moves[i] = (possible_move, transpositionTable[
+                ''.join(possible_move) + 'w' if player_is_white else 'b'])
+        except KeyError:
+            pass
+    alpha = -99999
+    beta = 99990
+    possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
+    if player_is_white:
+        for possible_move, diff in possible_moves:
+            move_score = alpha_beta(possible_move, depth - 1, diff, False, alpha, beta)
+            transpositionTable[''.join(possible_move) + 'w'] = move_score
+            if move_score > alpha:
+                alpha = move_score
+                best_move = possible_move
+    else:
+        for possible_move, diff in possible_moves:
+            move_score = alpha_beta(possible_move, depth - 1, diff, True, alpha, beta)
+            transpositionTable[''.join(possible_move) + 'b'] = move_score
+            if move_score < beta:
+                beta = move_score
+                best_move = possible_move
+    return best_move
 
 
 def main(history, white_time, black_time):
@@ -208,7 +228,7 @@ def main(history, white_time, black_time):
     possible_moves = moves(history[-1], player_is_white)
     if not possible_moves:
         raise StalemateException
-    if (score < -10) if player_is_white else (score > 10):
+    if (score < -11) if player_is_white else (score > 11):
         # if I am losing badly and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:
             raise ThreeFoldRepetition
@@ -218,7 +238,6 @@ def main(history, white_time, black_time):
         if repeat_free_moves:
             # only remove repeats if there are still choices remaining
             possible_moves = repeat_free_moves
-    possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
     best_move = None
     for depth in range(2, 10):
         search_start_time = now()
@@ -277,6 +296,7 @@ switched to benchmarking search function
 False       incremental     3       0.035
 False       incremental     4       0.698
 False       incremental     5       2.558
+Start of AI_v4
 '''
 
 if __name__ == '__main__':
@@ -296,6 +316,5 @@ R . . Q K B . R'''
     startTime = now()
     main([test_board], 20, 20)
     # search(_possible_moves, True, 5)
-    print('{:.3f}'.format(now() - startTime))
+    print('{:.3f}'.format(now()-startTime))
     print(total_moves)
-
