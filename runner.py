@@ -14,7 +14,8 @@ competitorNames = [
     'David_AI_v2',
     'David_AI_v1',
     'Michael_AI_v1_2',
-    'Michael_AI_v1_1',
+    # this occasionally throws an error on line 662 TypeError: list indices must be integers or slices, not str
+    # 'Michael_AI_v1_1',
     'Michael_AI_v1_0',
     'Robert_AI',
     'random_AI',

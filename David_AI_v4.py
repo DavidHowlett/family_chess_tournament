@@ -157,62 +157,73 @@ def simple_score(_board: [str])->float:
     return _score
 
 
-def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
-    """Implements alpha beta tree search, returns a score"""
+def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
+    """Implements alpha beta tree search, returns a score. This fails soft."""
     possible_moves = moves(board, player_is_white)
-    for i, (possible_move, score) in enumerate(possible_moves):
-        try:
-            possible_moves[i] = (possible_move, transpositionTable[
-                ''.join(possible_move) + 'w' if player_is_white else 'b'])
-        except KeyError:
-            pass
+    # for i, (possible_move, score) in enumerate(possible_moves):
+    #    try:
+    #        possible_moves[i] = (possible_move, transpositionTable[
+    #            ''.join(possible_move) + 'w' if player_is_white else 'b'])
+    #    except KeyError:
+    #        pass
     if not possible_moves:
         # this correctly scores stalemates
         return 0
-    if depth == 1:
-        return score_diff + (max if player_is_white else min)(m[1] for m in possible_moves)
     possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
-    if player_is_white:
-        v = -99999
-        for possible_move, diff in possible_moves:
-            v = max(v, alpha_beta(possible_move, depth - 1, score_diff+diff, False, alpha, beta))
-            alpha = max(alpha, v)
-            if beta <= alpha:
-                break  # beta cut off
-        transpositionTable[''.join(possible_move) + 'w'] = alpha
+
+    current_best_score = (-99999) if player_is_white else 99999
+    for possible_move, diff in possible_moves:
+        if depth == 1:
+            move_score = previous_score+diff
+        else:
+            move_score = alpha_beta(possible_move, depth - 1, previous_score+diff, not player_is_white, alpha, beta)
+        if player_is_white:
+            if move_score > current_best_score:
+                current_best_score = move_score
+                if move_score > alpha:
+                    alpha = move_score
+                    if alpha >= beta:
+                        # the score is a cutoff
+                        # transpositionTable[''.join(possible_move) + 'w'] = (current_best_score, 'cut')
+                        break
+        else:
+            if move_score < current_best_score:
+                current_best_score = move_score
+                if move_score < beta:
+                    beta = move_score
+                    if alpha >= beta:
+                        # the score is a cutoff
+                        # transpositionTable[''.join(possible_move) + 'b'] = (current_best_score, 'cut')
+                        break
     else:
-        v = 99999
-        for possible_move, diff in possible_moves:
-            v = min(v, alpha_beta(possible_move, depth - 1, score_diff+diff, True, alpha, beta))
-            beta = min(beta, v)
-            if beta <= alpha:
-                break  # alpha cut off
-            transpositionTable[''.join(possible_move) + 'w'] = beta
-    return v
+        # the score is exact
+        # transpositionTable[''.join(possible_move) + 'w'] = (current_best_score, 'exact')
+        pass
+    return current_best_score
 
 
-def search(possible_moves, player_is_white, depth):
+def search(possible_moves, previous_score, player_is_white, depth):
     """Implements alpha_beta tree search, returns a best move"""
-    for i, (possible_move, score) in enumerate(possible_moves):
-        try:
-            possible_moves[i] = (possible_move, transpositionTable[
-                ''.join(possible_move) + 'w' if player_is_white else 'b'])
-        except KeyError:
-            pass
+    # for i, (possible_move, score) in enumerate(possible_moves):
+    #    try:
+    #        possible_moves[i] = (possible_move, transpositionTable[
+    #            ''.join(possible_move) + 'w' if player_is_white else 'b'])
+    #    except KeyError:
+    #        pass
+    assert depth > 0
     alpha = -99999
-    beta = 99990
+    beta = 99999
     possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
-    if player_is_white:
-        for possible_move, diff in possible_moves:
-            move_score = alpha_beta(possible_move, depth - 1, diff, False, alpha, beta)
-            transpositionTable[''.join(possible_move) + 'w'] = move_score
+    for possible_move, diff in possible_moves:
+        if depth == 1:
+            move_score = previous_score+diff
+        else:
+            move_score = alpha_beta(possible_move, depth - 1, previous_score+diff, not player_is_white, alpha, beta)
+        if player_is_white:
             if move_score > alpha:
                 alpha = move_score
                 best_move = possible_move
-    else:
-        for possible_move, diff in possible_moves:
-            move_score = alpha_beta(possible_move, depth - 1, diff, True, alpha, beta)
-            transpositionTable[''.join(possible_move) + 'b'] = move_score
+        else:
             if move_score < beta:
                 beta = move_score
                 best_move = possible_move
@@ -239,9 +250,9 @@ def main(history, white_time, black_time):
             # only remove repeats if there are still choices remaining
             possible_moves = repeat_free_moves
     best_move = None
-    for depth in range(2, 10):
+    for depth in range(1, 10):
         search_start_time = now()
-        best_move = search(possible_moves, player_is_white, depth)
+        best_move = search(possible_moves, score, player_is_white, depth)
         search_run_time = now() - search_start_time
         time_remaining = available_time - (now() - start_time)
         if time_remaining < search_run_time * 20:
@@ -297,6 +308,7 @@ False       incremental     3       0.035
 False       incremental     4       0.698
 False       incremental     5       2.558
 Start of AI_v4
+
 '''
 
 if __name__ == '__main__':
@@ -311,10 +323,11 @@ P . . P B N . .
 R . . Q K B . R'''
     test_board = [line for line in difficultPosition.replace(' ', '').split()]
     test_board.reverse()
+    startTime = now()
+    # main([test_board], 50, 0)
+
     _possible_moves = moves(test_board, True)
     _possible_moves.sort(key=lambda x: x[1], reverse=True)
-    startTime = now()
-    main([test_board], 20, 20)
-    # search(_possible_moves, True, 5)
+    search(_possible_moves, 0, True, 5)
     print('{:.3f}'.format(now()-startTime))
     print(total_moves)

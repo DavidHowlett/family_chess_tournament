@@ -157,6 +157,7 @@ def simple_score(_board: [str])->float:
 
 def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
     """Implements alpha beta scoring"""
+    assert depth > 0
     possible_moves = moves(board, player_is_white)
     if not possible_moves:
         # this correctly scores stalemates
@@ -291,11 +292,12 @@ P . . P B N . .
 R . . Q K B . R'''
     test_board = [line for line in difficultPosition.replace(' ', '').split()]
     test_board.reverse()
+    startTime = now()
+    # main([test_board], 50, 0)
+
     _possible_moves = moves(test_board, True)
     _possible_moves.sort(key=lambda x: x[1], reverse=True)
-    startTime = now()
-    main([test_board], 20, 20)
-    # search(_possible_moves, True, 5)
-    print('{:.3f}'.format(now() - startTime))
+    search(_possible_moves, True, 5)
+    print('{:.3f}'.format(now()-startTime))
     print(total_moves)
 
