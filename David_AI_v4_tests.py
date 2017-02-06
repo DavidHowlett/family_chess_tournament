@@ -45,6 +45,6 @@ assert ps('K', 3, 0) == -ps('k', 3, 7)
 assert ps('K', 4, 0) == -ps('k', 4, 7)
 
 assert David_AI_v4.simple_score(initialPosition) == 0
-assert David_AI_v4.board_score(initialPosition) == 0
+assert 0.000001 > David_AI_v4.board_score(initialPosition) > -0.000001
 assert len(David_AI_v4.moves(initialPosition, True)) == 20
 assert len(David_AI_v4.moves(difficultPosition, True)) == 42

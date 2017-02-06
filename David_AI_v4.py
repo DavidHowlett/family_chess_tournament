@@ -77,7 +77,7 @@ def board_score(_board: [str])->float:
         for x in range(8):
             piece = _board[y][x]
             _score += PIECE_VALUE[piece]
-            #_score += position_score(piece, x, y)
+            _score += position_score(piece, x, y)
     return _score
 
 
