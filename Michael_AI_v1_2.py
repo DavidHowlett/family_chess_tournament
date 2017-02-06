@@ -668,6 +668,8 @@ def f9(a):
     return 0
 def f10(a,b):
     c=copy.deepcopy(a)
+    if(b=='I lose, you win'):
+        return c
     d=b
     e=c[d[0][0]][d[0][1]]
     if(e[1]=='p'):
