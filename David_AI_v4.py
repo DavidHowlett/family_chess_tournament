@@ -43,10 +43,42 @@ POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in ran
 # turned into queens
 # calculating the below formula takes 861 ns but lookup in a 2D table only takes 73 ns.
 # This is the reason for pre-calculation
-PAWN_POSITION_VALUE = [[0.006 * (10 + x - x * x / 7) * (y+2) ** 2 for x in range(8)] for y in range(8)]
+PAWN_POSITION_VALUE = [[0.1*(x - (x * x / 7))+(0.03 * y**3)-0.5 for x in range(8)] for y in range(8)]
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 transpositionTable = dict()
 total_moves = 0
+
+
+def position_score(piece, x, y) -> float:
+    if piece == '.':
+        return 0
+    if piece == 'P':
+        return PAWN_POSITION_VALUE[y][x]
+    if piece == 'p':
+        return -PAWN_POSITION_VALUE[7-y][x]
+    if piece.isupper():
+        return POSITION_VALUE[y][x]
+    return -POSITION_VALUE[y][x]
+
+
+def simple_score(_board: [str])->float:
+    """This takes a board and returns the current score of white"""
+    _score = 0.0
+    for row in _board:
+        for piece in row:
+            _score += PIECE_VALUE[piece]
+    return _score
+
+
+def board_score(_board: [str])->float:
+    """This takes a board and returns the current score of white"""
+    _score = 0.0
+    for y in range(8):
+        for x in range(8):
+            piece = _board[y][x]
+            _score += PIECE_VALUE[piece]
+            #_score += position_score(piece, x, y)
+    return _score
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -155,29 +187,6 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
 
     total_moves += len(_moves)
     return _moves
-
-
-def simple_score(_board: [str])->float:
-    """This takes a board and returns the current score of white"""
-    _score = 0.0
-    for row in _board:
-        for piece in row:
-            _score += PIECE_VALUE[piece]
-    return _score
-
-
-def positional_score(_board: [str])->float:
-    """This takes a board and returns the current score of white"""
-    _score = 0.0
-    for y in range(8):
-        for x in range(8):
-            piece = _board[y][x]
-            _score += PIECE_VALUE[piece]
-            if piece is 'P':
-                _score += PAWN_POSITION_VALUE[y][x]
-            elif piece == 'P':
-                _score += PAWN_POSITION_VALUE[y][x]
-    return _score
 
 
 def estimated_score(board, previous_score, diff, player_is_white):

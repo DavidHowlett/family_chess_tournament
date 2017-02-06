@@ -25,8 +25,26 @@ R . . Q K B . R'''
 difficultPosition = difficultPosition.replace(' ', '').split()
 difficultPosition.reverse()
 
+ps = David_AI_v4.position_score
+assert ps('R', 0, 0) == ps('R', 7, 7)
+assert ps('R', 0, 0) == -ps('r', 7, 7)
+assert ps('R', 1, 0) > ps('R', 0, 0)
+assert ps('R', 0, 1) > ps('R', 0, 0)
+assert ps('R', 4, 4) > ps('R', 0, 0)
+assert ps('R', 3, 4) == ps('R', 4, 3)
+assert ps('R', 3, 4) == -ps('r', 4, 3)
+assert ps('P', 0, 0) < ps('P', 0, 7)
+assert ps('P', 0, 0) < ps('P', 1, 0)
+assert ps('p', 0, 0) == -ps('P', 0, 7)
+assert ps('p', 0, 1) == -ps('P', 0, 6)
+assert ps('p', 1, 1) == -ps('P', 1, 6)
+assert ps('p', 0, 0) < ps('p', 0, 1)
+assert ps('P', 3, 4) == -ps('p', 3, 3)
+assert ps('P', 3, 4) == -ps('p', 3, 3)
+assert ps('K', 3, 0) == -ps('k', 3, 7)
+assert ps('K', 4, 0) == -ps('k', 4, 7)
 
+assert David_AI_v4.simple_score(initialPosition) == 0
+assert David_AI_v4.board_score(initialPosition) == 0
 assert len(David_AI_v4.moves(initialPosition, True)) == 20
 assert len(David_AI_v4.moves(difficultPosition, True)) == 42
-assert David_AI_v4.simple_score(initialPosition) == 0
-assert David_AI_v4.positional_score(initialPosition) == 0
