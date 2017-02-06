@@ -297,7 +297,8 @@ R . . Q K B . R'''
 
     _possible_moves = moves(test_board, True)
     _possible_moves.sort(key=lambda x: x[1], reverse=True)
-    search(_possible_moves, True, 5)
+    bestMove = search(_possible_moves, True, 2)
     print('{:.3f}'.format(now()-startTime))
     print(total_moves)
+    print('\n'.join(' '.join(piece for piece in row) for row in bestMove.__reversed__()) + '\n')
 

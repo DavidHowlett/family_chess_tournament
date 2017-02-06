@@ -26,21 +26,7 @@ difficultPosition = difficultPosition.replace(' ', '').split()
 difficultPosition.reverse()
 
 
-def test_move_count():
-    assert len(David_AI_v4.moves(initialPosition, True)) == 20
-    assert len(David_AI_v4.moves(difficultPosition, True)) == 42
-
-
-def test_alpha_beta():
-    for board in initialPosition, difficultPosition:
-        for depth in range(1, 4):
-            assert (David_AI_v3.alpha_beta(board, depth, 0, True, -99999, 99999) ==
-                    David_AI_v4.alpha_beta(board, depth, 0, True, -99999, 99999))
-
-
-def test_search():
-    for board in initialPosition, difficultPosition:
-        possible_moves = David_AI_v4.moves(board, True)
-        for depth in range(2, 4):
-            assert (David_AI_v3.search(possible_moves, True, depth) ==
-                    David_AI_v4.search(possible_moves, 0, True, depth))
+assert len(David_AI_v4.moves(initialPosition, True)) == 20
+assert len(David_AI_v4.moves(difficultPosition, True)) == 42
+assert David_AI_v4.simple_score(initialPosition) == 0
+assert David_AI_v4.positional_score(initialPosition) == 0

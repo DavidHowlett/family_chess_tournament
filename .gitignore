@@ -1,6 +1,7 @@
 results/
 tournament results.txt
 .dropbox
+.cache/
 __pycache__
 Icon\?
 # User-specific PyCharm stuff:

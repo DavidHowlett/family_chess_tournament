@@ -32,8 +32,8 @@ PIECE_MOVE_DIRECTION = {
 }
 PIECE_VALUE = {
     '.': 0,
-    'K': 1000, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 0.7,
-    'k': -1000, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -0.7}
+    'K': 1000, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 1,
+    'k': -1000, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -1}
 
 
 # for most pieces there is a small advantage to being in the centre
@@ -114,14 +114,20 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                                     line = after_pawn_replacement[y2]
                                     after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
                                     _moves.append(
-                                        (after_pawn_replacement, position_multipler *
-                                         (2 * POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x]) +
-                                         PIECE_VALUE[replacement_piece] - PIECE_VALUE[target_piece] -
-                                         PIECE_VALUE[piece]))
+                                        (after_pawn_replacement,
+                                         PIECE_VALUE[replacement_piece] -
+                                         PIECE_VALUE[target_piece] -
+                                         PIECE_VALUE[piece] +
+                                         position_multipler *
+                                         (2 * POSITION_VALUE[y2][x2] -
+                                          PAWN_POSITION_VALUE[y][x])))
                             else:
                                 _moves.append(
                                     (after_pawn_move, position_multipler *
-                                     (2 * POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x]) - PIECE_VALUE[target_piece]))
+                                     (POSITION_VALUE[y2][x2] +
+                                      PAWN_POSITION_VALUE[y2][x2] -
+                                      PAWN_POSITION_VALUE[y][x]) -
+                                     PIECE_VALUE[target_piece]))
                 # check if pawn can move forwards 1
                 if board[y2][x] == '.':
                     # check if pawn can be promoted
@@ -133,10 +139,13 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                             line = after_pawn_replacement[y2]
                             after_pawn_replacement[y2] = line[:x] + replacement_piece + line[x + 1:]
                             _moves.append((after_pawn_replacement,
-                                           position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
+                                           PIECE_VALUE[replacement_piece] +
+                                           position_multipler * (POSITION_VALUE[y2][x] -
+                                                                 PAWN_POSITION_VALUE[y][x])))
                     else:
                         _moves.append((move(board, y, x, y2, x),
-                                       position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
+                                       position_multipler * (PAWN_POSITION_VALUE[y2][x] -
+                                                             PAWN_POSITION_VALUE[y][x])))
                     # check if pawn can move forwards 2
                     if y == 1 if _player_is_white else y == 6:
                         y2 = y + 2 if _player_is_white else y - 2
@@ -157,14 +166,35 @@ def simple_score(_board: [str])->float:
     return _score
 
 
+def positional_score(_board: [str])->float:
+    """This takes a board and returns the current score of white"""
+    _score = 0.0
+    for y in range(8):
+        for x in range(8):
+            piece = _board[y][x]
+            _score += PIECE_VALUE[piece]
+            if piece is 'P':
+                _score += PAWN_POSITION_VALUE[y][x]
+            elif piece == 'P':
+                _score += PAWN_POSITION_VALUE[y][x]
+    return _score
+
+
+def estimated_score(board, previous_score, diff, player_is_white):
+    key = ''.join(board) + 'w' if player_is_white else 'b'
+    if key in transpositionTable:
+        return transpositionTable[key][0]
+    else:
+        return previous_score + diff
+
+
 def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
     # lookup the current node to see if it has already been searched
-    key = ''.join(board) + 'w' if player_is_white else 'b'
+    key = ''.join(board) + ('w' if player_is_white else 'b')
     if key in transpositionTable:
-        node_score, node_type, node_search_depth = transpositionTable[
-            ''.join(board) + 'w' if player_is_white else 'b']
-        if node_search_depth == depth:
+        node_score, node_type, node_search_depth = transpositionTable[key]
+        if node_search_depth >= depth:
             if (node_type == 'exact' or
                     node_type == 'high' and node_score >= beta or
                     node_type == 'low' and node_score <= alpha):
@@ -174,22 +204,20 @@ def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
     if not possible_moves:
         # this correctly scores stalemates
         return 0
-    '''
-    # try to guess the best order to try moves
-    for i, (possible_move, diff) in enumerate(possible_moves):
-        key = ''.join(possible_move) + 'w' if player_is_white else 'b'
-        if key in transpositionTable:
-            possible_moves[i] = (possible_move, transpositionTable[key])
-        else:
-            possible_moves[i] = previous_score + diff
-    '''
 
-    possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
+    # try to guess the best order to try moves
+    possible_moves = [(board, diff, estimated_score(board, previous_score, diff, player_is_white))
+                      for board, diff in possible_moves]
+
+    possible_moves.sort(key=lambda x: x[2], reverse=player_is_white)
 
     current_best_score = (-99999) if player_is_white else 99999
-    for possible_move, diff in possible_moves:
+    for possible_move, diff, estimate in possible_moves:
         if depth == 1:
             move_score = previous_score+diff
+            child_key = ''.join(possible_move) + 'w'
+            if child_key not in transpositionTable:
+                transpositionTable[child_key] = move_score, 'exact', 0
         else:
             move_score = alpha_beta(possible_move, depth - 1, previous_score+diff, not player_is_white, alpha, beta)
         if player_is_white:
@@ -199,7 +227,8 @@ def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
                     alpha = move_score
                     if alpha >= beta:
                         # the score failed high
-                        transpositionTable[''.join(board) + 'w'] = current_best_score, 'high', depth
+
+                        transpositionTable[key] = current_best_score, 'high', depth
                         break
         else:
             if move_score < current_best_score:
@@ -208,32 +237,24 @@ def alpha_beta(board, depth, previous_score, player_is_white, alpha, beta)->int:
                     beta = move_score
                     if alpha >= beta:
                         # the score failed low
-                        transpositionTable[''.join(board) + 'b'] = current_best_score, 'low', depth
+                        transpositionTable[key] = current_best_score, 'low', depth
                         break
     else:
-        # the score is exact
-        transpositionTable[''.join(board) + ('w' if player_is_white else 'b')] = current_best_score, 'exact', depth
-        pass
+        # the score is exact and the earlier check of the table ensures that we are not overwriting
+        # an entry of greater depth
+        transpositionTable[key] = current_best_score, 'exact', depth
     return current_best_score
 
 
 def search(possible_moves, previous_score, player_is_white, depth):
     """Implements alpha_beta tree search, returns a best move"""
-    '''
-    for i, [possible_move, diff] in enumerate(possible_moves):
-        try:
-            node_score, node_type, node_search_depth = transpositionTable[
-                ''.join(possible_move) + 'w' if player_is_white else 'b']
-            if node_depth >= depth:
-                possible_moves[i] = possible_move, node_score
-        except KeyError:
-            pass
-    '''
     assert depth > 0
     alpha = -99999
     beta = 99999
-    possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
-    for possible_move, diff in possible_moves:
+    possible_moves = [(board, diff, estimated_score(board, previous_score, diff, player_is_white))
+                      for board, diff in possible_moves]
+    possible_moves.sort(key=lambda x: x[2], reverse=player_is_white)
+    for possible_move, diff, estimate in possible_moves:
         if depth == 1:
             move_score = previous_score+diff
         else:
@@ -250,6 +271,8 @@ def search(possible_moves, previous_score, player_is_white, depth):
 
 
 def main(history, white_time, black_time):
+    global transpositionTable
+    transpositionTable = dict()
     start_time = now()
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
@@ -274,54 +297,13 @@ def main(history, white_time, black_time):
         best_move = search(possible_moves, score, player_is_white, depth)
         search_run_time = now() - search_start_time
         time_remaining = available_time - (now() - start_time)
-        if time_remaining < search_run_time * 25:
+        if time_remaining < search_run_time * 30:
             break
     print(depth)
     return [[piece for piece in line] for line in best_move]
 
 
 '''
-I use the time to calculate and score the first moves as a benchmark for my algorithm.
-To get reliable figures wait for the CPU usage to fall below 10% before starting
-
-buildTree   score           depth   time taken
-----------------------------------------------------------------------
-None        None            0       0.094 # everything other then search & scoring
-False       fancy_score     4       5.969
-False       simple_score    4       2.936
-True        simple_score    4       3.687
-True        simple_score    5       92.041
-True        simple_score    3       0.328
-after switching to runner calling main
-True        simple_score    2       0.020
-True        simple_score    3       0.132
-True        simple_score    4       3.213
-True        simple_score    5       80.615
-after switching to incremental scoring (for efficiency)
-True        incremental     3       0.060
-after switching to using dicts for states (for ease of programming)
-True        incremental     3       0.059
-True        incremental     4       1.562
-True        incremental     5       44.370
-after adding POSITION_VALUE, PAWN_POSITION_VALUE and DISCOUNT_RATE
-True        incremental     3       0.155
-True        incremental     4       2.101
-True        incremental     5       48.476
-I chose to start using avg time to make moves in tournament play as my benchmark.
-The interaction between players is important.
-True        incremental     3       0.308
-True        incremental     4       7.407
-I decide that tournaments take too long so I pick the most difficult example in the tournament as my benchmark
-True        incremental     3       0.330
-True        incremental     4       14.933
-First working attempt at alpha_beta scoring
-False       incremental     3       0.050
-False       incremental     4       0.932
-False       incremental     5       3.411
-Moving with alpha_beta now works
-False       incremental     3       0.035
-False       incremental     4       0.790
-False       incremental     5       3.087
 switched to benchmarking search function
 False       incremental     3       0.035
 False       incremental     4       0.698
@@ -337,8 +319,9 @@ exact matches in transposition table used
 False       645796          5       3.443
 fail high and fail low from transposition table used
 False       570439          5       2.443
-
-
+transposition table used for move ordering
+transposition table write on every move generation
+False       552651          5       3.197
 
 
 '''
@@ -360,6 +343,7 @@ R . . Q K B . R'''
 
     _possible_moves = moves(test_board, True)
     _possible_moves.sort(key=lambda x: x[1], reverse=True)
-    search(_possible_moves, 0, True, 5)
+    bestMove = search(_possible_moves, 0, True, 2)
     print('{:.3f}'.format(now()-startTime))
     print(total_moves)
+    print('\n'.join(' '.join(piece for piece in row) for row in bestMove.__reversed__()) + '\n')
