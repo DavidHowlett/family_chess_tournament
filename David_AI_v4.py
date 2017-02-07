@@ -50,7 +50,7 @@ total_moves = 0
 
 
 def position_score(piece, x, y) -> float:
-    if piece == '.':
+    if piece in '.kK':
         return 0
     if piece == 'P':
         return PAWN_POSITION_VALUE[y][x]
@@ -265,17 +265,14 @@ def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
     return current_best_score
 
 
-def search(possible_moves, current_score, player_is_white, depth):
+def search(possible_moves, depth, current_score, player_is_white, alpha, beta):
     """Implements alpha_beta tree search, returns a best move"""
     assert depth > 0
-    alpha = -99999
-    beta = 99999
     possible_moves = [(board, diff, estimated_score(board, current_score, diff, player_is_white))
                       for board, diff in possible_moves]
     possible_moves.sort(key=lambda x: x[2], reverse=player_is_white)
     for possible_move, diff, estimate in possible_moves:
         # assert abs(current_score + diff - board_score(possible_move)) < 0.001
-
         if depth == 1:
             move_score = current_score + diff
         else:
@@ -288,21 +285,21 @@ def search(possible_moves, current_score, player_is_white, depth):
             if move_score < beta:
                 beta = move_score
                 best_move = possible_move
-    return best_move
+    return best_move, move_score
 
 
 def main(history, white_time, black_time):
     global transpositionTable
-    transpositionTable = dict()
+    # transpositionTable = dict()
     start_time = now()
     history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
-    score = board_score(history[-1])
+    current_score = board_score(history[-1])
     possible_moves = moves(history[-1], player_is_white)
     if not possible_moves:
         raise StalemateException
-    if (score < -11) if player_is_white else (score > 11):
+    if (current_score < -11) if player_is_white else (current_score > 11):
         # if I am losing badly and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:
             raise ThreeFoldRepetition
@@ -313,9 +310,11 @@ def main(history, white_time, black_time):
             # only remove repeats if there are still choices remaining
             possible_moves = repeat_free_moves
     best_move = None
+    alpha = -99999
+    beta = 99999
     for depth in range(1, 10):
         search_start_time = now()
-        best_move = search(possible_moves, score, player_is_white, depth)
+        best_move, bestScore = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
         search_run_time = now() - search_start_time
         time_remaining = available_time - (now() - start_time)
         if time_remaining < search_run_time * 30:
@@ -345,29 +344,8 @@ transposition table write on every move generation
 552651          5       3.197
 fixed bugs in move scoring
 327016          5       2.299
+fixed another bug in move scoring
+292592			5		1.949
 
 
 '''
-
-if __name__ == '__main__':
-    global_depth = 5
-    difficultPosition = '''
-r . b q . . . r
-p p p p n k p p
-. . n b . p . .
-. . . . p . . .
-. . P . N . . .
-P . . P B N . .
-. P . . P P P P
-R . . Q K B . R'''
-    test_board = [line for line in difficultPosition.replace(' ', '').split()]
-    test_board.reverse()
-    startTime = now()
-    # main([test_board], 50, 0)
-
-    _possible_moves = moves(test_board, True)
-    _possible_moves.sort(key=lambda x: x[1], reverse=True)
-    initialScore = board_score(test_board)
-    bestMove = search(_possible_moves, initialScore, True, global_depth)
-    print('{}\t\t{}\t\t{:.3f}'.format(total_moves, global_depth, now()-startTime))
-    print('\n'.join(' '.join(piece for piece in row) for row in bestMove.__reversed__()) + '\n')

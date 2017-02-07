@@ -1,4 +1,5 @@
 import David_AI_v4 as v4
+from time import perf_counter as now
 
 initialPosition = '''
 r n b q k b n r
@@ -76,7 +77,18 @@ v4.alpha_beta(difficultPosition, 3, v4.board_score(difficultPosition), True, -99
 v4.alpha_beta(promotionPosition, 3, v4.board_score(promotionPosition), True, -99999, 99999)
 
 # todo fix this bad move
-bestMove = v4.search(v4.moves(kingSavePosition, True), v4.board_score(kingSavePosition), True, 3)
+bestMove = v4.search(v4.moves(kingSavePosition, True), 3, v4.board_score(kingSavePosition), True, -99999, 99999)
 
 
+def perfomance_test():
+    v4.total_moves = 0
+    global_depth = 5
+    start_time = now()
+    _possible_moves = v4.moves(difficultPosition, True)
+    _possible_moves.sort(key=lambda x: x[1], reverse=True)
+    best_move, _ = v4.search(_possible_moves, global_depth, v4.board_score(difficultPosition), True, -99999, 99999)
+    print('{}\t\t\t{}\t\t{:.3f}'.format(v4.total_moves, global_depth, now()-start_time))
+    print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
+
+perfomance_test()
 

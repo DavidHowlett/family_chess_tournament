@@ -99,11 +99,6 @@ def match(white, black):
             to_return = {'score': 0.5, 'cause': '{} called a draw with the 50 move rule'.format(
                 'White' if turn % 2 else 'Black')}
             break
-        except TypeError:
-            # Michael's code occasionally crashes with TypeError
-            to_return = {'score': 0 if turn % 2 else 1, 'cause': '{} crashed'.format(
-                'White' if turn % 2 else 'Black')}
-            break
         run_time = time.process_time() - start_time
         history.append(chosen_move)
         if turn % 2:
