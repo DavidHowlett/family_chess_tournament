@@ -36,6 +36,18 @@ r . . . . . . .
 promotionPosition = promotionPosition.replace(' ', '').split()
 promotionPosition.reverse()
 
+kingSavePosition = '''
+r . . . . . . .
+p . . . . . . .
+P . . k p . . .
+. . . . r . . .
+. . . . Q . . .
+. . . p . . P .
+. . . . . . . P
+. . . . K . N R'''
+kingSavePosition = kingSavePosition.replace(' ', '').split()
+kingSavePosition.reverse()
+
 ps = v4.position_score
 assert ps('R', 0, 0) == ps('R', 7, 7)
 assert ps('R', 0, 0) == -ps('r', 7, 7)
@@ -62,6 +74,9 @@ assert len(v4.moves(difficultPosition, True)) == 42
 
 v4.alpha_beta(difficultPosition, 3, v4.board_score(difficultPosition), True, -99999, 99999)
 v4.alpha_beta(promotionPosition, 3, v4.board_score(promotionPosition), True, -99999, 99999)
+
+# todo fix this bad move
+bestMove = v4.search(v4.moves(kingSavePosition, True), v4.board_score(kingSavePosition), True, 3)
 
 
 

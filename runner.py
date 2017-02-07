@@ -13,12 +13,12 @@ competitorNames = [
     'David_AI_v3',
     'David_AI_v2',
     'David_AI_v1',
+    'Robert_AI',
     'Michael_AI_v1_2',
     'Michael_AI_v1_1',
     'Michael_AI_v1_0',
-    'Robert_AI',
-    'random_AI',
     'no_move_AI',
+    'random_AI',
 ]
 for name in competitorNames:
     exec('import ' + name)

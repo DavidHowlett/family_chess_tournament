@@ -43,7 +43,7 @@ POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in ran
 # turned into queens
 # calculating the below formula takes 861 ns but lookup in a 2D table only takes 73 ns.
 # This is the reason for pre-calculation
-PAWN_POSITION_VALUE = [[0.1*(x - (x * x / 7))+(0.03 * y**3)-0.5 for x in range(8)] for y in range(8)]
+PAWN_POSITION_VALUE = [[0.1*(x - (x * x / 7))+(0.003 * y**4)-0.5 for x in range(8)] for y in range(8)]
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 transpositionTable = dict()
 total_moves = 0
