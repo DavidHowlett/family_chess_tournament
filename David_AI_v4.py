@@ -13,6 +13,8 @@ Not implemented yet:
     - castling
     - en passant
     - avoiding trading our king now for their king later
+    - aspiration search
+    - bonus in eval function for having lots of possible moves
 
 """
 from time import perf_counter as now
@@ -310,12 +312,12 @@ def main(history, white_time, black_time):
     best_move = None
     alpha = -99999
     beta = 99999
-    for depth in range(1, 10):
+    for depth in range(1, 7):
         search_start_time = now()
         best_move, best_score = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
         search_run_time = now() - search_start_time
         time_remaining = available_time - (now() - start_time)
-        if time_remaining < search_run_time * 30:
+        if time_remaining < search_run_time * 30:  # todo this should be shorter
             break
     print(depth)
     return [[piece for piece in line] for line in best_move]
@@ -348,5 +350,5 @@ removed bonus for king moving towards centre
 294017			5		1.974
 made moves() a generator
 214728			5		1.387
-
+472960			6		3.377
 '''

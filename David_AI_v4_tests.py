@@ -37,6 +37,30 @@ r . . . . . . .
 promotionPosition = promotionPosition.replace(' ', '').split()
 promotionPosition.reverse()
 
+pawnTakePosition1 = '''
+. . . . . . . .
+. . . p . . . .
+. . . . P . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .'''
+pawnTakePosition1 = pawnTakePosition1.replace(' ', '').split()
+pawnTakePosition1.reverse()
+
+pawnTakePosition2 = '''
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . p . . . .
+. . . . P . . .
+. . . . . . . .'''
+pawnTakePosition2 = pawnTakePosition2.replace(' ', '').split()
+pawnTakePosition2.reverse()
+
 kingSavePosition = '''
 r . . . . . . .
 p . . . . . . .
@@ -72,6 +96,15 @@ assert v4.simple_score(initialPosition) == 0
 assert 0.000001 > v4.board_score(initialPosition) > -0.000001
 assert len(list(v4.moves(initialPosition, True))) == 20
 assert len(list(v4.moves(difficultPosition, True))) == 42
+assert len(list(v4.moves(pawnTakePosition1, True))) == 2
+assert len(list(v4.moves(pawnTakePosition1, False))) == 3
+assert len(list(v4.moves(pawnTakePosition2, True))) == 3
+assert len(list(v4.moves(pawnTakePosition2, False))) == 2
+# print(list(v4.moves(pawnTakePosition1, True))[0])
+# print(list(v4.moves(pawnTakePosition1, False))[0])
+# print(list(v4.moves(pawnTakePosition2, True))[0])
+# print(list(v4.moves(pawnTakePosition2, False))[0])
+
 
 v4.alpha_beta(difficultPosition, 3, v4.board_score(difficultPosition), True, -99999, 99999)
 v4.alpha_beta(promotionPosition, 3, v4.board_score(promotionPosition), True, -99999, 99999)
