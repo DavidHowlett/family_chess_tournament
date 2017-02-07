@@ -70,25 +70,25 @@ assert ps('K', 4, 0) == -ps('k', 4, 7)
 
 assert v4.simple_score(initialPosition) == 0
 assert 0.000001 > v4.board_score(initialPosition) > -0.000001
-assert len(v4.moves(initialPosition, True)) == 20
-assert len(v4.moves(difficultPosition, True)) == 42
+assert len(list(v4.moves(initialPosition, True))) == 20
+assert len(list(v4.moves(difficultPosition, True))) == 42
 
 v4.alpha_beta(difficultPosition, 3, v4.board_score(difficultPosition), True, -99999, 99999)
 v4.alpha_beta(promotionPosition, 3, v4.board_score(promotionPosition), True, -99999, 99999)
 
 # todo fix this bad move
-bestMove = v4.search(v4.moves(kingSavePosition, True), 3, v4.board_score(kingSavePosition), True, -99999, 99999)
+bestMove = v4.search(list(v4.moves(kingSavePosition, True)), 3, v4.board_score(kingSavePosition), True, -99999, 99999)
 
 
-def perfomance_test():
+def performance_test():
     v4.total_moves = 0
     global_depth = 5
     start_time = now()
-    _possible_moves = v4.moves(difficultPosition, True)
+    _possible_moves = list(v4.moves(difficultPosition, True))
     _possible_moves.sort(key=lambda x: x[1], reverse=True)
     best_move, _ = v4.search(_possible_moves, global_depth, v4.board_score(difficultPosition), True, -99999, 99999)
     print('{}\t\t\t{}\t\t{:.3f}'.format(v4.total_moves, global_depth, now()-start_time))
     print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
 
-perfomance_test()
+performance_test()
 

@@ -82,6 +82,7 @@ def board_score(_board: [str])->float:
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
+    global total_moves
     """returns a board with a move made"""
     board = board.copy()
     # add piece to destination
@@ -90,14 +91,14 @@ def move(board: [str], y1, x1, y2, x2)-> [str]:
     # remove piece from source
     line = board[y1]
     board[y1] = line[:x1] + '.' + line[x1 + 1:]
+    total_moves += 1
     return board
 
 
-def moves(board: [str], _player_is_white: bool)->[([str], float)]:
+def moves(board: [str], _player_is_white: bool):
     global total_moves
     """This generates a list of all possible game states after one move.
     Preferred moves should be later in the returned list."""
-    _moves = []
     for x in range(8):
         for y in range(8):
             piece = board[y][x]
@@ -112,18 +113,18 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                         target_piece = board[y2][x2]
                         if target_piece == '.':
                             # then it is moving into an empty square
-                            _moves.append((
+                            yield (
                                 move(board, y, x, y2, x2),
                                 position_score(piece, x2, y2) -
-                                position_score(piece, x, y)))
+                                position_score(piece, x, y))
                         elif target_piece.islower() if _player_is_white else target_piece.isupper():
                             # then it is taking an opponent's piece
-                            _moves.append((
+                            yield (
                                 move(board, y, x, y2, x2),
                                 position_score(piece, x2, y2) -
                                 position_score(target_piece, x2, y2) -
                                 position_score(piece, x, y) -
-                                PIECE_VALUE[target_piece]))
+                                PIECE_VALUE[target_piece])
                             break
                         else:
                             # then it is taking it's own piece
@@ -149,21 +150,21 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                                     after_pawn_replacement = after_pawn_move.copy()
                                     line = after_pawn_replacement[y2]
                                     after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
-                                    _moves.append((
+                                    yield(
                                         after_pawn_replacement,
                                         PIECE_VALUE[replacement_piece] -
                                         PIECE_VALUE[target_piece] -
                                         PIECE_VALUE[piece] +
                                         position_score(replacement_piece, x2, y2) -
                                         position_score(target_piece, x2, y2) -
-                                        position_score(piece, x, y)))
+                                        position_score(piece, x, y))
                             else:
-                                _moves.append((
+                                yield(
                                     after_pawn_move,
                                     position_score(piece, x2, y2) -
                                     position_score(target_piece, x2, y2) -
                                     position_score(piece, x, y) -
-                                    PIECE_VALUE[target_piece]))
+                                    PIECE_VALUE[target_piece])
                 # check if pawn can move forwards 1
                 if board[y2][x] == '.':
                     # check if pawn can be promoted
@@ -174,28 +175,25 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
                             after_pawn_replacement = after_pawn_move.copy()
                             line = after_pawn_replacement[y2]
                             after_pawn_replacement[y2] = line[:x] + replacement_piece + line[x + 1:]
-                            _moves.append((
+                            yield(
                                 after_pawn_replacement,
                                 PIECE_VALUE[replacement_piece] -
                                 PIECE_VALUE[piece] +
                                 position_score(replacement_piece, x, y2) -
-                                position_score(piece, x, y)))
+                                position_score(piece, x, y))
                     else:
-                        _moves.append((
+                        yield(
                             move(board, y, x, y2, x),
                             position_score(piece, x, y2) -
-                            position_score(piece, x, y)))
+                            position_score(piece, x, y))
                     # check if pawn can move forwards 2
                     if y == 1 if _player_is_white else y == 6:
                         y2 = y + 2 if _player_is_white else y - 2
                         if board[y2][x] == '.':
-                            _moves.append((
+                            yield(
                                 move(board, y, x, y2, x),
                                 position_score(piece, x, y2) -
-                                position_score(piece, x, y)))
-
-    total_moves += len(_moves)
-    return _moves
+                                position_score(piece, x, y))
 
 
 def estimated_score(board, previous_score, diff, player_is_white):
@@ -220,18 +218,18 @@ def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
                 return node_score
 
     possible_moves = moves(board, player_is_white)
+    if depth > 1:
+        # then try to guess the best order to try moves
+        possible_moves = list(possible_moves)
+        possible_moves.sort(
+            key=lambda _move: estimated_score(_move[0], current_score, _move[1], player_is_white),
+            reverse=player_is_white)
     if not possible_moves:
         # this correctly scores stalemates
+        # it only works on lists, not generators
         return 0
-
-    # try to guess the best order to try moves
-    possible_moves = [(board, diff, estimated_score(board, current_score, diff, player_is_white))
-                      for board, diff in possible_moves]
-
-    possible_moves.sort(key=lambda x: x[2], reverse=player_is_white)
-
     current_best_score = (-99999) if player_is_white else 99999
-    for possible_move, diff, estimate in possible_moves:
+    for possible_move, diff in possible_moves:
         move_score = current_score + diff
         # assert abs(move_score - board_score(possible_move)) < 0.001
         if depth == 1:
@@ -268,10 +266,10 @@ def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
 def search(possible_moves, depth, current_score, player_is_white, alpha, beta):
     """Implements alpha_beta tree search, returns a best move"""
     assert depth > 0
-    possible_moves = [(board, diff, estimated_score(board, current_score, diff, player_is_white))
-                      for board, diff in possible_moves]
-    possible_moves.sort(key=lambda x: x[2], reverse=player_is_white)
-    for possible_move, diff, estimate in possible_moves:
+    possible_moves.sort(
+        key=lambda _move: estimated_score(_move[0], current_score, _move[1], player_is_white),
+        reverse=player_is_white)
+    for possible_move, diff in possible_moves:
         # assert abs(current_score + diff - board_score(possible_move)) < 0.001
         if depth == 1:
             move_score = current_score + diff
@@ -296,7 +294,7 @@ def main(history, white_time, black_time):
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
     current_score = board_score(history[-1])
-    possible_moves = moves(history[-1], player_is_white)
+    possible_moves = list(moves(history[-1], player_is_white))
     if not possible_moves:
         raise StalemateException
     if (current_score < -11) if player_is_white else (current_score > 11):
@@ -314,7 +312,7 @@ def main(history, white_time, black_time):
     beta = 99999
     for depth in range(1, 10):
         search_start_time = now()
-        best_move, bestScore = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
+        best_move, best_score = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
         search_run_time = now() - search_start_time
         time_remaining = available_time - (now() - start_time)
         if time_remaining < search_run_time * 30:
@@ -346,6 +344,9 @@ fixed bugs in move scoring
 327016          5       2.299
 fixed another bug in move scoring
 292592			5		1.949
-
+removed bonus for king moving towards centre
+294017			5		1.974
+made moves() a generator
+214728			5		1.387
 
 '''
