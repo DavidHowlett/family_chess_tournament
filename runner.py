@@ -67,7 +67,7 @@ def match(white, black):
     )
     current_versions = '{} vs {}\n'.format(
         hashlib.sha256(inspect.getsource(white).encode()).hexdigest(),
-        hashlib.sha256(inspect.getsource(white).encode()).hexdigest())
+        hashlib.sha256(inspect.getsource(black).encode()).hexdigest())
     try:
         file = open(file_name)
         previous_versions = file.readline()
