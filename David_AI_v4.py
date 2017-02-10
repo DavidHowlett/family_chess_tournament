@@ -49,7 +49,7 @@ PAWN_POSITION_VALUE = [[0.1*(x - (x * x / 7))+(0.003 * y**4)-0.5 for x in range(
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 transpositionTable = dict()
 total_moves = 0
-time_out_point = now() + 10
+time_out_point = now() + 20
 
 
 def position_score(piece, x, y) -> float:
@@ -238,10 +238,13 @@ def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
         move_score = current_score + diff
         # assert abs(move_score - board_score(possible_move)) < 0.001
         if depth == 1:
+            # to save on time I don't recurse for the last move
             child_key = ''.join(possible_move) + 'w'
             if child_key not in transpositionTable:
                 transpositionTable[child_key] = move_score, 'exact', 0
-        else:
+        elif abs(diff) < 100:
+            # then the kings are both still present so it is worth searching further.
+            # this if statement also stops my engine trading my king now for your king later
             move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
             if move_score > current_best_score:
@@ -364,9 +367,26 @@ removed bonus for king moving towards centre
 made moves() a generator
 214728			5		1.387
 472960			6		3.377
-added timeout check
+added timeout check & fixed bug in timing function
 5696			3		0.040
 11654			4		0.094
 214728			5		1.412
 472954			6		3.177
+at this point David_AI_v4 now wins 15/16 games against all other AI,
+losing only one to David_AI_v1
+added iterative deepening to timing function
+42			    1		0.001
+225			    2		0.002
+5696			3		0.036
+11654			4		0.112
+214728			5		1.324
+471805			6		3.090
+stopped search when king taken
+42			1		0.000
+225			2		0.002
+5696			3		0.042
+10942			4		0.071
+213600			5		1.357
+427801			6		2.842
+
 '''
