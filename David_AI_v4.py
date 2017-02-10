@@ -49,6 +49,7 @@ PAWN_POSITION_VALUE = [[0.1*(x - (x * x / 7))+(0.003 * y**4)-0.5 for x in range(
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 transpositionTable = dict()
 total_moves = 0
+time_out_point = now() + 10
 
 
 def position_score(piece, x, y) -> float:
@@ -221,6 +222,8 @@ def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
 
     possible_moves = moves(board, player_is_white)
     if depth > 1:
+        if now() > time_out_point:
+            raise TimeoutError
         # then try to guess the best order to try moves
         possible_moves = list(possible_moves)
         possible_moves.sort(
@@ -285,16 +288,18 @@ def search(possible_moves, depth, current_score, player_is_white, alpha, beta):
             if move_score < beta:
                 beta = move_score
                 best_move = possible_move
-    return best_move, move_score
+    return best_move, alpha if player_is_white else beta
 
 
 def main(history, white_time, black_time):
     global transpositionTable
-    # transpositionTable = dict()
+    global time_out_point
+    transpositionTable = dict()
     start_time = now()
-    history = [[''.join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
+    time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
+    history = [[''.join(row) for row in board] for board in history]
     current_score = board_score(history[-1])
     possible_moves = list(moves(history[-1], player_is_white))
     if not possible_moves:
@@ -312,12 +317,20 @@ def main(history, white_time, black_time):
     best_move = None
     alpha = -99999
     beta = 99999
-    for depth in range(1, 7):
+    # 5 second depth search can take 13.149 seconds in worst case seen so far :-(
+    for depth in range(1, 6):
         search_start_time = now()
-        best_move, best_score = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
+        try:
+            best_move, best_score = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
+        except TimeoutError:
+            print('internal timeout')
+            break
         search_run_time = now() - search_start_time
         time_remaining = available_time - (now() - start_time)
-        if time_remaining < search_run_time * 30:  # todo this should be shorter
+        if time_remaining < search_run_time * 20:
+            break
+        if abs(best_score) > 100:
+            print('check mate is expected')
             break
     print(depth)
     return [[piece for piece in line] for line in best_move]
@@ -351,4 +364,9 @@ removed bonus for king moving towards centre
 made moves() a generator
 214728			5		1.387
 472960			6		3.377
+added timeout check
+5696			3		0.040
+11654			4		0.094
+214728			5		1.412
+472954			6		3.177
 '''
