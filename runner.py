@@ -7,7 +7,7 @@ import shared
 
 initialTime = 5
 timePerMove = 1
-turnsToPlayFor = 150
+turnsToPlayFor = 200
 competitorNames = [
     'David_AI_v4',
     'David_AI_v3',
