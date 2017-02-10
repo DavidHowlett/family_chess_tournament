@@ -115,6 +115,7 @@ bestMove = v4.search(list(v4.moves(kingSavePosition, True)), 3, v4.board_score(k
 
 def performance_test():
     v4.total_moves = 0
+    v4.transpositionTable = dict()
     global_depth = 5
     start_time = now()
     _possible_moves = list(v4.moves(difficultPosition, True))
