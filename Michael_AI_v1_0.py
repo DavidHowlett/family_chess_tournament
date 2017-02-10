@@ -1,6 +1,4 @@
 import copy
-import time
-k=time.time()
 def f1(a,b,c):
     if(b==1):
         b=0
@@ -10,7 +8,7 @@ def f1(a,b,c):
         return [f2(a,b),'lol']
     c+=-1
     d=-1
-    g=-900
+    g=-1000*c-90000
     h='I lose, you win'
     k=f2(a,b)/10
     while(d<7):
@@ -110,7 +108,7 @@ def f2(a,b):
                     f+=-60
     return -f
 def f3(a,b,c,d,e):
-    g=-900
+    g=-900000
     h='I lose, you win'
     i=[-1000,'error']
     if(b==0):
@@ -205,7 +203,7 @@ def f3(a,b,c,d,e):
                     h=[[d,e],[d-1,e-1]]
     return [g,h]
 def f4(a,b,c,d,e):
-    g=-900
+    g=-900000
     h='I lose, you win'
     i=[-1000,'error']
     if(d>0):
@@ -284,7 +282,7 @@ def f4(a,b,c,d,e):
                 h=[[d,e],[d+1,e+2]]
     return [g,h]
 def f5(a,b,c,d,e):
-    g=-900
+    g=-900000
     h='I lose, you win'
     i=[-1000,'error']
     f=1
@@ -345,7 +343,7 @@ def f5(a,b,c,d,e):
         f+=1
     return [g,h]
 def f6(a,b,c,d,e):
-    g=-900
+    g=-900000
     h='I lose, you win'
     i=[-1000,'error']
     f=1
@@ -406,7 +404,7 @@ def f6(a,b,c,d,e):
         f+=1
     return [g,h]
 def f7(a,b,c,d,e):
-    g=-900
+    g=-900000
     h='I lose, you win'
     i=[-1000,'error']
     f=1
@@ -523,7 +521,7 @@ def f7(a,b,c,d,e):
         f+=1
     return [g,h]
 def f8(a,b,c,d,e):
-    g=-900
+    g=-900000
     h='I lose, you win'
     i=[-1000,'error']
     f=copy.deepcopy(a)
@@ -607,6 +605,7 @@ def f9(a):
 def f10(a,b):
     c=copy.deepcopy(a)
     if(b=='I lose, you win'):
+        print("I dont want to move :( ")
         return c
     d=b
     e=c[d[0][0]][d[0][1]]
