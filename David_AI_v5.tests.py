@@ -1,4 +1,4 @@
-import David_AI_v4 as v4
+import David_AI_v5 as v5
 from time import perf_counter as now
 
 initialPosition = '''
@@ -73,7 +73,7 @@ P . . k p . . .
 kingSavePosition = kingSavePosition.replace(' ', '').split()
 kingSavePosition.reverse()
 
-ps = v4.position_score
+ps = v5.position_score
 assert ps('R', 0, 0) == ps('R', 7, 7)
 assert ps('R', 0, 0) == -ps('r', 7, 7)
 assert ps('R', 1, 0) > ps('R', 0, 0)
@@ -92,36 +92,37 @@ assert ps('P', 3, 4) == -ps('p', 3, 3)
 assert ps('K', 3, 0) == -ps('k', 3, 7)
 assert ps('K', 4, 0) == -ps('k', 4, 7)
 
-assert abs(v4.board_score(initialPosition)) < 0.000001
-assert len(list(v4.moves(initialPosition, True))) == 20
-assert len(list(v4.moves(difficultPosition, True))) == 42
-assert len(list(v4.moves(pawnTakePosition1, True))) == 2
-assert len(list(v4.moves(pawnTakePosition1, False))) == 3
-assert len(list(v4.moves(pawnTakePosition2, True))) == 3
-assert len(list(v4.moves(pawnTakePosition2, False))) == 2
+assert abs(v5.board_score(initialPosition)) < 0.000001
+assert len(list(v5.moves(initialPosition, True))) == 20
+assert len(list(v5.moves(difficultPosition, True))) == 42
+assert len(list(v5.moves(pawnTakePosition1, True))) == 2
+assert len(list(v5.moves(pawnTakePosition1, False))) == 3
+assert len(list(v5.moves(pawnTakePosition2, True))) == 3
+assert len(list(v5.moves(pawnTakePosition2, False))) == 2
 # print(list(v5.moves(pawnTakePosition1, True))[0])
 # print(list(v5.moves(pawnTakePosition1, False))[0])
 # print(list(v5.moves(pawnTakePosition2, True))[0])
 # print(list(v5.moves(pawnTakePosition2, False))[0])
 
 
-v4.alpha_beta(difficultPosition, 3, v4.board_score(difficultPosition), True, -99999, 99999)
-v4.alpha_beta(promotionPosition, 3, v4.board_score(promotionPosition), True, -99999, 99999)
+v5.alpha_beta(difficultPosition, 3, v5.board_score(difficultPosition), True, -99999, 99999)
+v5.alpha_beta(promotionPosition, 3, v5.board_score(promotionPosition), True, -99999, 99999)
 
 # todo fix this bad move
-bestMove = v4.search(list(v4.moves(kingSavePosition, True)), 3, v4.board_score(kingSavePosition), True, -99999, 99999)
+bestMove = v5.search(list(v5.moves(kingSavePosition, True)), 3, v5.board_score(kingSavePosition), True, -99999, 99999)
 
 
 def performance_test():
-    v4.total_moves = 0
-    v4.transpositionTable = dict()
-    global_depth = 5
-    start_time = now()
-    _possible_moves = list(v4.moves(difficultPosition, True))
-    _possible_moves.sort(key=lambda x: x[1], reverse=True)
-    best_move, _ = v4.search(_possible_moves, global_depth, v4.board_score(difficultPosition), True, -99999, 99999)
-    print('{}\t\t\t{}\t\t{:.3f}'.format(v4.total_moves, global_depth, now()-start_time))
-    print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
+    v5.total_moves = 0
+    for depth in range(2, 7):
+        start_time = now()
+        _possible_moves = list(v5.moves(difficultPosition, True))
+        _possible_moves.sort(key=lambda x: x[1], reverse=True)
+        best_move, _ = v5.search(_possible_moves, depth, v5.board_score(difficultPosition), True, -99999, 99999)
+        print('{}\t\t\t{}\t\t{:.3f}'.format(v5.total_moves, depth, now() - start_time))
+        print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
 
+
+v5.transpositionTable = dict()
 performance_test()
 
