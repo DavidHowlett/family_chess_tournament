@@ -1,18 +1,8 @@
-"""This was written by David for fun
-This program implements a tree search of possible future moves.
-The main data structures are:
-    - board: this is a [str] representing a 2D board
-    - state: a list representing a node in a the search tree. It contains a board and some metadata.
-
-A board can be scored with the score function.
-
-The score of a state can be simply calculated by passing its associated board to the score function. To get a more
-accurate score of a position it is necessary to explore the children of the state.
+"""This chess engine was written by David for fun. A board is represented by a [str] representing a 2D board.
 
 Not implemented yet:
     - castling
     - en passant
-    - avoiding trading our king now for their king later
     - aspiration search
     - bonus in eval function for having lots of possible moves
 
@@ -35,8 +25,8 @@ PIECE_MOVE_DIRECTION = {
 PIECE_VALUE = {
     '.': 0,
     'K': 200, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 1,
-    'k': -200, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -1}
-
+    'k': -200, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -1
+}
 
 # for most pieces there is a small advantage to being in the centre
 POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
@@ -62,15 +52,6 @@ def position_score(piece, x, y) -> float:
     if piece.isupper():
         return POSITION_VALUE[y][x]
     return -POSITION_VALUE[y][x]
-
-
-def simple_score(_board: [str])->float:
-    """This takes a board and returns the current score of white"""
-    _score = 0.0
-    for row in _board:
-        for piece in row:
-            _score += PIECE_VALUE[piece]
-    return _score
 
 
 def board_score(_board: [str])->float:
@@ -382,11 +363,10 @@ added iterative deepening to timing function
 214728			5		1.324
 471805			6		3.090
 stopped search when king taken
-42			1		0.000
-225			2		0.002
+42			    1		0.000
+225			    2		0.002
 5696			3		0.042
 10942			4		0.071
 213600			5		1.357
 427801			6		2.842
-
 '''

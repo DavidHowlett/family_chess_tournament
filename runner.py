@@ -39,7 +39,7 @@ R N B Q K B N R'''
 def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining):
     if minimise:
         print('{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}\t'.format(
-            _turn, int(David_AI_v2.simple_score(board)), 'white' if _turn % 2 else 'black', run_time,
+            _turn, int(David_AI_v3.simple_score(board)), 'white' if _turn % 2 else 'black', run_time,
             white_time_remaining, black_time_remaining))
     else:
         print('----- move {} -----'.format(_turn))
@@ -47,7 +47,7 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
         print('{} took: {:.3f} seconds'.format('white' if _turn % 2 else 'black', run_time))
         print('white time: {:.3f}'.format(white_time_remaining))
         print('black time: {:.3f}'.format(black_time_remaining))
-        print('score: {}'.format(int(David_AI_v4.simple_score(board))))
+        print('score: {}'.format(int(David_AI_v3.simple_score(board))))
         print()
 
 
