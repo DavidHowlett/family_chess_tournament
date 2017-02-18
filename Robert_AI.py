@@ -36,7 +36,7 @@ def move_set(move_dirs, move_dist):
             return []
 
         for move_dir in move_dirs:
-            for dist in range(1, move_dist+1, 1):
+            for dist in range(1, move_dist+1):
                 position = (current_position[0] + dist * move_dir[0], current_position[1] + dist * move_dir[1])
                 # Check for bad collisions
                 if position not in board:

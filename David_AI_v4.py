@@ -188,7 +188,7 @@ def estimated_score(board, previous_score, diff, player_is_white):
         return previous_score + diff
 
 
-def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
+def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->float:
     """Implements alpha beta tree search, returns a score. This fails soft."""
     # assert abs(current_score - board_score(board)) < 0.001
     # lookup the current node to see if it has already been searched
