@@ -226,12 +226,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     for possible_move, diff in possible_moves:
         move_score = current_cscore + diff # + evaluate(possible_move) # todo
         # assert abs(move_score - board_score(possible_move)) < 0.001
-        if depth == 1:
-            # to save on time I don't recurse for the last move
-            child_key = ''.join(possible_move) + 'w'
-            if child_key not in transpositionTable:
-                transpositionTable[child_key] = move_score, 'exact', 0
-        elif abs(diff) < 100:
+        if depth > 1 and abs(diff) < 100:
             # then the kings are both still present so it is worth searching further.
             # this if statement also stops my engine trading my king now for your king later
             move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
@@ -387,6 +382,11 @@ this also causes the search of more moves for the benchmark position
 217693			5		1.385
 737830			6		3.568
 144904 moves searched per second
-
-
+small boost from removing unnecessary code
+250			2		0.002
+5160			3		0.050
+18017			4		0.138
+217693			5		1.092
+737965			6		2.868
+177823 moves searched per second
 '''
