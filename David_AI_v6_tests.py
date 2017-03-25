@@ -108,7 +108,7 @@ def performance_test():
         start_time = now()
         _possible_moves = list(ai.moves(difficultPosition, True))
         _possible_moves.sort(key=lambda x: x[1], reverse=True)
-        best_move, _ = ai.search(_possible_moves, depth, ai.evaluate(difficultPosition), True, -99999, 99999)
+        best_move, _ = ai.search(_possible_moves, depth, ai.get_cscore(difficultPosition), True, -99999, 99999)
         print('{}\t\t\t{}\t\t{:.3f}'.format(ai.total_moves, depth, now() - start_time))
         # print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
     print('{} moves searched per second'.format(int(ai.total_moves/(now()-test_start_time))))

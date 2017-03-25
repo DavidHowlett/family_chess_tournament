@@ -40,7 +40,7 @@ PAWN_POSITION_VALUE = [[0.2*(x - (x * x / 7))+(0.0003 * (y+2)**4)-0.3 for x in r
 # print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 transpositionTable = dict()
 total_moves = 0
-time_out_point = now() + 20
+time_out_point = now() + 100
 
 
 def position_score(piece, x, y) -> float:
@@ -66,9 +66,65 @@ def get_cscore(_board: [str])->float:
     return _score
 
 
-def extra_terms(_board: [str]):
+def extra_terms(board: [str]):
     """Returns extra terms in evaluation function"""
-    return 0
+    mobility_difference = 0
+    for x in range(8):
+        for y in range(8):
+            piece = board[y][x]
+            if piece == '.':
+                continue
+            white = piece.isupper()
+            # pawns are weird
+            if piece in 'Pp':
+                y2 = y + 1 if white else y - 1
+                # check if a take is possible
+                for x2 in (x - 1, x + 1):
+                    if 0 <= x2 <= 7:
+                        target_piece = board[y2][x2]
+                        if target_piece.islower() if white else target_piece.isupper():
+                            # then a take is possible
+                            if y2 == 7 if white else y2 == 0:
+                                # then the end of the board has been reached and promotion is needed
+                                for replacement_piece in ('QRBN' if white else 'qrbn'):
+                                    mobility_difference += 1 if white else -1
+                            else:
+                                mobility_difference += 1 if white else -1
+                # check if pawn can move forwards 1
+                if board[y2][x] == '.':
+                    # check if pawn can be promoted
+                    if y2 == 7 if white else y2 == 0:
+                        # add each possible promotion to _moves
+                        for replacement_piece in ('QRBN' if white else 'qrbn'):
+                            mobility_difference += 1 if white else -1
+                    else:
+                        mobility_difference += 1 if white else -1
+                        # check if pawn can move forwards 2
+                    if y == 1 if white else y == 6:
+                        y2 = y + 2 if white else y - 2
+                        if board[y2][x] == '.':
+                            mobility_difference += 1 if white else -1
+            else:
+                for xd, yd in PIECE_MOVE_DIRECTION[piece]:
+                    for i in range(1, 100):
+                        x2 = x + i * xd
+                        y2 = y + i * yd
+                        if not (0 <= x2 <= 7 and 0 <= y2 <= 7):
+                            # then it is a move off the board
+                            break
+                        target_piece = board[y2][x2]
+                        if target_piece == '.':
+                            # then it is moving into an empty square
+                            mobility_difference += 1 if white else -1
+                        elif target_piece.islower() if white else target_piece.isupper():
+                            mobility_difference += 1 if white else -1
+                            break
+                        else:
+                            # then it is taking it's own piece
+                            break
+                        if piece in 'KkNn':
+                            break
+    return mobility_difference * 0.1
 
 
 def evaluate(_board: [str])->float:
@@ -224,7 +280,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         return 0
     current_best_score = (-99999) if player_is_white else 99999
     for possible_move, diff in possible_moves:
-        move_score = current_cscore + diff  # + extra_terms(possible_move) # todo
+        move_score = current_cscore + diff + extra_terms(possible_move)
         # assert abs(move_score - board_score(possible_move)) < 0.001
         if depth > 1 and abs(diff) < 100:
             # then the kings are both still present so it is worth searching further.
@@ -264,7 +320,7 @@ def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
     for possible_move, diff in possible_moves:
         # assert abs(current_score + diff - board_score(possible_move)) < 0.001
         if depth == 1:
-            move_score = current_cscore + diff  # + extra_terms(possible_move) # todo
+            move_score = current_cscore + diff + extra_terms(possible_move)
         else:
             move_score = alpha_beta(possible_move, depth - 1, current_cscore + diff, not player_is_white, alpha, beta)
         if player_is_white:
@@ -320,7 +376,7 @@ def main(history, white_time, black_time):
         if abs(best_score) > 100:
             # print('check mate is expected')
             break
-    # print(depth)
+    print(depth)
     return [[piece for piece in line] for line in best_move]
 
 
@@ -389,4 +445,11 @@ small boost from removing unnecessary code
 217693			5		1.092
 737965			6		2.868
 177823 moves searched per second
+added move counting
+300			2		0.083
+3508			3		0.483
+12901			4		1.628
+109606			5		13.375
+396902			6		47.114
+6331 moves searched per second
 '''
