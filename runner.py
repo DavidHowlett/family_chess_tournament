@@ -4,22 +4,24 @@ import copy
 import hashlib
 import inspect
 import shared
+import David_AI_v5
 
 initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 200
 competitorNames = [
+    'David_AI_v5',
     'David_AI_v4',
     'David_AI_v3',
-    'David_AI_v2',
-    'David_AI_v1',
-    'Robert_AI',
-    'Michael_AI_v1_2',
-    'Michael_AI_v1_1',
-    'Michael_AI_v1_0',
+    # 'David_AI_v2',
+    # 'David_AI_v1',
+    # 'Robert_AI',
+    # 'Michael_AI_v1_2',
+    # 'Michael_AI_v1_1',
+    # 'Michael_AI_v1_0',
     'Iain_AI_v1',
     # 'no_move_AI',
-    'random_AI',
+    # 'random_AI',
 ]
 for name in competitorNames:
     exec('import ' + name)
@@ -40,7 +42,7 @@ R N B Q K B N R'''
 def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining):
     if minimise:
         print('{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}\t'.format(
-            _turn, int(David_AI_v3.simple_score(board)), 'white' if _turn % 2 else 'black', run_time,
+            _turn, int(David_AI_v5.board_score(board)), 'white' if _turn % 2 else 'black', run_time,
             white_time_remaining, black_time_remaining))
     else:
         print('----- move {} -----'.format(_turn))
@@ -48,14 +50,14 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
         print('{} took: {:.3f} seconds'.format('white' if _turn % 2 else 'black', run_time))
         print('white time: {:.3f}'.format(white_time_remaining))
         print('black time: {:.3f}'.format(black_time_remaining))
-        print('score: {}'.format(int(David_AI_v3.simple_score(board))))
+        print('score: {:.2f}'.format(David_AI_v5.board_score(board)))
         print()
 
 
 def legal_moves(history, player_is_white):
     """"Generates a list of legal moves. Missing castling, en-passant."""
     board = [''.join(piece for piece in line) for line in history[-1]]
-    moves = [[[piece for piece in row] for row in board] for board, _ in David_AI_v4.moves(board, player_is_white)]
+    moves = [[[piece for piece in row] for row in board] for board, _ in David_AI_v5.moves(board, player_is_white)]
     return moves
 
 def match(white, black):

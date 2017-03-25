@@ -29,14 +29,14 @@ PIECE_VALUE = {
 }
 
 # for most pieces there is a small advantage to being in the centre
-POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
-#  print('\n'.join(' '.join('{:.2f}'.format(POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
+POSITION_VALUE = [[0.03 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
+# print('\n'.join(' '.join('{:.2f}'.format(POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 # pawns are more valuable in the centre but more importantly they become much more valuable when they are close to being
 # turned into queens
 # calculating the below formula takes 861 ns but lookup in a 2D table only takes 73 ns.
 # This is the reason for pre-calculation
-PAWN_POSITION_VALUE = [[0.1*(x - (x * x / 7))+(0.003 * y**4)-0.5 for x in range(8)] for y in range(8)]
-#  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
+PAWN_POSITION_VALUE = [[0.2*(x - (x * x / 7))+(0.0003 * (y+2)**4)-0.3 for x in range(8)] for y in range(8)]
+# print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 transpositionTable = dict()
 total_moves = 0
 time_out_point = now() + 20
@@ -314,9 +314,9 @@ def main(history, white_time, black_time):
         if time_remaining < search_run_time * 20:
             break
         if abs(best_score) > 100:
-            print('check mate is expected')
+            # print('check mate is expected')
             break
-    print(depth)
+    # print(depth)
     return [[piece for piece in line] for line in best_move]
 
 
