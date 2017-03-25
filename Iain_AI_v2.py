@@ -43,16 +43,31 @@ def moves(board, white_turn):
         for x in range(8):
             piece = board[y][x]
             if white_turn:
-                if piece == 'N':
+                if piece in 'KQRBN':
                     for y_move_direction, x_move_direction in PIECE_MOVE_DIRECTION[piece]:
-                        new_y = y + y_move_direction
-                        new_x = x + x_move_direction
-                        if 0 <= new_y <= 7 and 0 <= new_x <= 7:
-                            if board[new_y][new_x] == '.' or board[new_y][new_x].islower():
-                                new_board = copy.deepcopy(board)
-                                new_board[y][x] = '.'
-                                new_board[new_y][new_x] = 'N'
-                                legal_moves.append(new_board)
+                        for distance in range(1, 8):
+                            new_y = y + y_move_direction * distance
+                            new_x = x + x_move_direction * distance
+                            if 0 <= new_y <= 7 and 0 <= new_x <= 7:
+                                if board[new_y][new_x] == '.':
+                                    new_board = copy.deepcopy(board)
+                                    new_board[y][x] = '.'
+                                    new_board[new_y][new_x] = piece
+                                    legal_moves.append(new_board)
+                                elif board[new_y][new_x].islower():
+                                    new_board = copy.deepcopy(board)
+                                    new_board[y][x] = '.'
+                                    new_board[new_y][new_x] = piece
+                                    legal_moves.append(new_board)
+                                    break
+                                else:
+                                    break
+                                    # breaks if one of own pieces
+                            else:
+                                break
+                            if piece in 'KN':
+                                break
+
                 if piece == 'P' and y <= 6:
                     if board[y+1][x] == '.':
                         new_board = copy.deepcopy(board)
@@ -60,16 +75,30 @@ def moves(board, white_turn):
                         new_board[y+1][x] = 'P'
                         legal_moves.append(new_board)
             else:
-                if piece == 'n':
+                if piece in 'kqrbn':
                     for y_move_direction, x_move_direction in PIECE_MOVE_DIRECTION[piece]:
-                        new_y = y + y_move_direction
-                        new_x = x + x_move_direction
-                        if 0 <= new_y <= 7 and 0 <= new_x <= 7:
-                            if board[new_y][new_x] == '.' or board[new_y][new_x].isupper():
-                                new_board = copy.deepcopy(board)
-                                new_board[y][x] = '.'
-                                new_board[new_y][new_x] = 'n'
-                                legal_moves.append(new_board)
+                        for distance in range(1, 8):
+                            new_y = y + y_move_direction * distance
+                            new_x = x + x_move_direction * distance
+                            if 0 <= new_y <= 7 and 0 <= new_x <= 7:
+                                if board[new_y][new_x] == '.':
+                                    new_board = copy.deepcopy(board)
+                                    new_board[y][x] = '.'
+                                    new_board[new_y][new_x] = piece
+                                    legal_moves.append(new_board)
+                                elif board[new_y][new_x].isupper():
+                                    new_board = copy.deepcopy(board)
+                                    new_board[y][x] = '.'
+                                    new_board[new_y][new_x] = piece
+                                    legal_moves.append(new_board)
+                                    break
+                                else:
+                                    break
+                                    # breaks if one of own pieces
+                            else:
+                                break
+                            if piece in 'kn':
+                                break
                 if piece == 'p' and y >= 1:
                     if board[y-1][x] == '.':
                         new_board = copy.deepcopy(board)
@@ -79,19 +108,21 @@ def moves(board, white_turn):
     return legal_moves
 
 
+def search(board, white_turn):
+    best_score = -999
+    for move in moves(board, white_turn):
+        current_score = score(move) if white_turn else -score(move)
+        if current_score > best_score:
+            best_move = move
+            best_score = current_score
+    return best_move, best_score
+
+
 def main(history, white_time, black_time):
     if len(history) % 2 == 1:
         white_turn = True
     else:
         white_turn = False
     current_board = history[-1]
-    return moves(current_board, white_turn)[0]
-    if len(history) % 4 == 2:
-        current_board[7][6] = '.'
-        current_board[5][7] = 'n'
-    else:
-        current_board[5][7] = '.'
-        current_board[7][6] = 'n'
-    '''print('current score is:')
-    print(score(current_board))'''
-    return current_board
+    return search(current_board, white_turn)[0]
+
