@@ -37,7 +37,3 @@ This maximum may be increased in future.
 
 If a player wants to call a draw they should raise one of the exceptions in shared.py 
 Please only call draws when it is legal to do so.
-
-# ToDo
-
-Make the runner remember the results of matches between AI's with particular hashes to save time when rerunning the tournament.

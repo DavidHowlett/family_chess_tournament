@@ -314,9 +314,9 @@ def main(history, white_time, black_time):
         if time_remaining < search_run_time * 20:
             break
         if abs(best_score) > 100:
-            print('victory is expected')
+            # print('victory is expected')
             break
-    print(depth)
+    # print(depth)
     return [[piece for piece in line] for line in best_move]
 
 
