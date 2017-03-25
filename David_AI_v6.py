@@ -5,7 +5,8 @@ Not implemented yet:
     - en passant
     - aspiration search
     - bonus in eval function for having lots of possible moves
-
+note that the cscore only includes parts of the score that are cumulatively evaluated
+score is the result of the evaluation function
 """
 from time import perf_counter as now
 from shared import StalemateException, ThreeFoldRepetition
@@ -54,7 +55,7 @@ def position_score(piece, x, y) -> float:
     return -POSITION_VALUE[y][x]
 
 
-def basic_score(_board: [str])->float:
+def get_cscore(_board: [str])->float:
     """This takes a board and returns the material and position score of white"""
     _score = 0.0
     for y in range(8):
@@ -71,7 +72,7 @@ def extra_terms(_board: [str]):
 
 
 def evaluate(_board: [str])->float:
-    return basic_score(_board) + extra_terms(_board)
+    return get_cscore(_board) + extra_terms(_board)
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -187,17 +188,17 @@ def moves(board: [str], _player_is_white: bool):
                                 position_score(piece, x, y))
 
 
-def estimated_score(board, previous_score, diff, player_is_white):
+def estimated_score(board, previous_cscore, diff, player_is_white):
     key = ''.join(board) + 'w' if player_is_white else 'b'
     if key in transpositionTable:
         return transpositionTable[key][0]
     else:
-        return previous_score + diff
+        return previous_cscore + diff + extra_terms(board)
 
 
-def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
+def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
-    # assert abs(current_score - board_score(board)) < 0.001
+    # assert abs(current_cscore - board_score(board)) < 0.001
     # lookup the current node to see if it has already been searched
     key = ''.join(board) + ('w' if player_is_white else 'b')
     if key in transpositionTable:
@@ -215,7 +216,7 @@ def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
         # then try to guess the best order to try moves
         possible_moves = list(possible_moves)
         possible_moves.sort(
-            key=lambda _move: estimated_score(_move[0], current_score, _move[1], player_is_white),
+            key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
             reverse=player_is_white)
     if not possible_moves:
         # this correctly scores stalemates
@@ -223,7 +224,7 @@ def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
         return 0
     current_best_score = (-99999) if player_is_white else 99999
     for possible_move, diff in possible_moves:
-        move_score = current_score + diff# + evaluate(possible_move) # todo
+        move_score = current_cscore + diff # + evaluate(possible_move) # todo
         # assert abs(move_score - board_score(possible_move)) < 0.001
         if depth == 1:
             # to save on time I don't recurse for the last move
@@ -259,18 +260,18 @@ def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
     return current_best_score
 
 
-def search(possible_moves, depth, current_score, player_is_white, alpha, beta):
+def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
     """Implements alpha_beta tree search, returns a best move"""
     assert depth > 0
     possible_moves.sort(
-        key=lambda _move: estimated_score(_move[0], current_score, _move[1], player_is_white),
+        key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
         reverse=player_is_white)
     for possible_move, diff in possible_moves:
         # assert abs(current_score + diff - board_score(possible_move)) < 0.001
         if depth == 1:
-            move_score = current_score + diff
+            move_score = current_cscore + diff # + evaluate(possible_move) # todo
         else:
-            move_score = alpha_beta(possible_move, depth - 1, current_score + diff, not player_is_white, alpha, beta)
+            move_score = alpha_beta(possible_move, depth - 1, current_cscore + diff, not player_is_white, alpha, beta)
         if player_is_white:
             if move_score > alpha:
                 alpha = move_score
@@ -292,6 +293,7 @@ def main(history, white_time, black_time):
     time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
     history = [[''.join(row) for row in board] for board in history]
     current_score = evaluate(history[-1])
+    current_cscore = get_cscore(history[-1])
     possible_moves = list(moves(history[-1], player_is_white))
     if not possible_moves:
         raise StalemateException
@@ -312,7 +314,7 @@ def main(history, white_time, black_time):
     for depth in range(1, 6):
         search_start_time = now()
         try:
-            best_move, best_score = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
+            best_move, best_score = search(possible_moves, depth, current_cscore, player_is_white, alpha, beta)
         except TimeoutError:
             print('internal timeout')
             break
