@@ -224,7 +224,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         return 0
     current_best_score = (-99999) if player_is_white else 99999
     for possible_move, diff in possible_moves:
-        move_score = current_cscore + diff # + evaluate(possible_move) # todo
+        move_score = current_cscore + diff  # + extra_terms(possible_move) # todo
         # assert abs(move_score - board_score(possible_move)) < 0.001
         if depth > 1 and abs(diff) < 100:
             # then the kings are both still present so it is worth searching further.
@@ -264,7 +264,7 @@ def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
     for possible_move, diff in possible_moves:
         # assert abs(current_score + diff - board_score(possible_move)) < 0.001
         if depth == 1:
-            move_score = current_cscore + diff # + evaluate(possible_move) # todo
+            move_score = current_cscore + diff  # + extra_terms(possible_move) # todo
         else:
             move_score = alpha_beta(possible_move, depth - 1, current_cscore + diff, not player_is_white, alpha, beta)
         if player_is_white:
