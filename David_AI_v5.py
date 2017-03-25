@@ -370,4 +370,5 @@ stopped search when king taken
 213600			5		1.357
 427801			6		2.842
 At this point David_AI_v4 wins 16/16 games
+changed position scoring to make David_AI_v5
 '''

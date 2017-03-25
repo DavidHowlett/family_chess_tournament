@@ -54,8 +54,8 @@ def position_score(piece, x, y) -> float:
     return -POSITION_VALUE[y][x]
 
 
-def board_score(_board: [str])->float:
-    """This takes a board and returns the current score of white"""
+def basic_score(_board: [str])->float:
+    """This takes a board and returns the material and position score of white"""
     _score = 0.0
     for y in range(8):
         for x in range(8):
@@ -63,6 +63,15 @@ def board_score(_board: [str])->float:
             _score += PIECE_VALUE[piece]
             _score += position_score(piece, x, y)
     return _score
+
+
+def extra_terms(_board: [str]):
+    """Returns extra terms in evaluation function"""
+    return 0
+
+
+def evaluate(_board: [str])->float:
+    return basic_score(_board) + extra_terms(_board)
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
@@ -114,8 +123,6 @@ def moves(board: [str], _player_is_white: bool):
                             # then it is taking it's own piece
                             break
                         if piece in 'KkNn':
-                            # don't reward moving the king towards the centre
-                            # _moves[-1] = _moves[-1][0], PIECE_VALUE[target_piece]
                             break
 
             # pawns are weird
@@ -216,7 +223,7 @@ def alpha_beta(board, depth, current_score, player_is_white, alpha, beta)->int:
         return 0
     current_best_score = (-99999) if player_is_white else 99999
     for possible_move, diff in possible_moves:
-        move_score = current_score + diff
+        move_score = current_score + diff# + evaluate(possible_move) # todo
         # assert abs(move_score - board_score(possible_move)) < 0.001
         if depth == 1:
             # to save on time I don't recurse for the last move
@@ -284,7 +291,7 @@ def main(history, white_time, black_time):
     available_time = white_time if player_is_white else black_time
     time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
     history = [[''.join(row) for row in board] for board in history]
-    current_score = board_score(history[-1])
+    current_score = evaluate(history[-1])
     possible_moves = list(moves(history[-1], player_is_white))
     if not possible_moves:
         raise StalemateException
@@ -301,7 +308,7 @@ def main(history, white_time, black_time):
     best_move = None
     alpha = -99999
     beta = 99999
-    # 5 second depth search can take 13.149 seconds in worst case seen so far :-(
+    # 5 depth search can take 13.149 seconds in worst case seen so far :-(
     for depth in range(1, 6):
         search_start_time = now()
         try:
@@ -370,4 +377,14 @@ stopped search when king taken
 213600			5		1.357
 427801			6		2.842
 At this point David_AI_v4 wins 16/16 games
+changed position scoring to make David_AI_v5
+this also causes the search of more moves for the benchmark position
+250			2		0.002
+5160			3		0.046
+18017			4		0.090
+217693			5		1.385
+737830			6		3.568
+144904 moves searched per second
+
+
 '''
