@@ -10,20 +10,20 @@ initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 200
 competitorNames = [
-    'David_AI_v6',
-    'David_AI_v5',
-    'David_AI_v4',
-    'David_AI_v3',
-    'David_AI_v2',
-    'David_AI_v1',
-    'Robert_AI',
-    'Michael_AI_v1_2',
-    'Michael_AI_v1_1',
-    'Michael_AI_v1_0',
+    # 'David_AI_v6',
+    # 'David_AI_v5',
+    # 'David_AI_v4',
+    # 'David_AI_v3',
+    # 'David_AI_v2',
+    # 'David_AI_v1',
+    # 'Robert_AI',
+    # 'Michael_AI_v1_2',
+    # 'Michael_AI_v1_1',
+    # 'Michael_AI_v1_0',
     'Iain_AI_v2',
     # 'Iain_AI_v1',
     # 'no_move_AI',
-    # 'random_AI',
+    'random_AI',
 ]
 for name in competitorNames:
     exec('import ' + name)
