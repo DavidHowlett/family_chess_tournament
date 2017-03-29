@@ -1,10 +1,14 @@
 """This chess engine was written by David for fun. A board is represented by a [str] representing a 2D board.
 
-Not implemented yet:
+ToDo:
+    - pull from Iain
+    - convert eval to centipawns
+    - look one move further into the future if the last move is a take
+    - bonus / penalty to evaluation for tempo to better enable variable depth search
     - castling
     - en passant
     - aspiration search
-    - bonus in eval function for having lots of possible moves
+    - 
 note that the cscore only includes parts of the score that are cumulatively evaluated
 score is the result of the evaluation function
 """
@@ -39,7 +43,7 @@ POSITION_VALUE = [[0.03 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in ran
 PAWN_POSITION_VALUE = [[0.2*(x - (x * x / 7))+(0.0003 * (y+2)**4)-0.3 for x in range(8)] for y in range(8)]
 # print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 transpositionTable = dict()
-total_moves = 0
+total_leaves = 0
 time_out_point = now() + 100
 
 
@@ -66,9 +70,11 @@ def get_cscore(_board: [str])->float:
     return _score
 
 
-def extra_terms(board: [str]):
+def extra_terms(board: [str]):  # todo this can be a lot smarter
+    global total_leaves
     """Returns extra terms in evaluation function"""
-    mobility_difference = 0
+    total_leaves += 1
+    added_score = 0
     for x in range(8):
         for y in range(8):
             piece = board[y][x]
@@ -85,25 +91,21 @@ def extra_terms(board: [str]):
                         if target_piece.islower() if white else target_piece.isupper():
                             # then a take is possible
                             if y2 == 7 if white else y2 == 0:
-                                # then the end of the board has been reached and promotion is needed
-                                for replacement_piece in ('QRBN' if white else 'qrbn'):
-                                    mobility_difference += 1 if white else -1
+                                added_score += 4 if white else -4
                             else:
-                                mobility_difference += 1 if white else -1
+                                added_score += 0.2 if white else -0.2
                 # check if pawn can move forwards 1
                 if board[y2][x] == '.':
                     # check if pawn can be promoted
                     if y2 == 7 if white else y2 == 0:
-                        # add each possible promotion to _moves
-                        for replacement_piece in ('QRBN' if white else 'qrbn'):
-                            mobility_difference += 1 if white else -1
+                        added_score += 3 if white else -3
                     else:
-                        mobility_difference += 1 if white else -1
+                        added_score += 0.1 if white else -0.1
                         # check if pawn can move forwards 2
                     if y == 1 if white else y == 6:
                         y2 = y + 2 if white else y - 2
                         if board[y2][x] == '.':
-                            mobility_difference += 1 if white else -1
+                            added_score += 0.1 if white else -0.1
             else:
                 for xd, yd in PIECE_MOVE_DIRECTION[piece]:
                     for i in range(1, 100):
@@ -115,16 +117,18 @@ def extra_terms(board: [str]):
                         target_piece = board[y2][x2]
                         if target_piece == '.':
                             # then it is moving into an empty square
-                            mobility_difference += 1 if white else -1
+                            added_score += 0.1 if white else -0.1
                         elif target_piece.islower() if white else target_piece.isupper():
-                            mobility_difference += 1 if white else -1
+                            # then it is attacking
+                            added_score += 0.15 if white else -0.15
                             break
                         else:
-                            # then it is taking it's own piece
+                            # then it is defending it's own piece
+                            added_score += 0.1 if white else -0.1
                             break
                         if piece in 'KkNn':
                             break
-    return mobility_difference * 0.1
+    return added_score
 
 
 def evaluate(_board: [str])->float:
@@ -132,7 +136,6 @@ def evaluate(_board: [str])->float:
 
 
 def move(board: [str], y1, x1, y2, x2)-> [str]:
-    global total_moves
     """returns a board with a move made"""
     board = board.copy()
     # add piece to destination
@@ -141,7 +144,6 @@ def move(board: [str], y1, x1, y2, x2)-> [str]:
     # remove piece from source
     line = board[y1]
     board[y1] = line[:x1] + '.' + line[x1 + 1:]
-    total_moves += 1
     return board
 
 
