@@ -10,7 +10,6 @@ R N B Q K B N R
 """
 
 
-
 def main(history, white_time, black_time):
     if len(history) % 2 == 1:
         white_turn = True
