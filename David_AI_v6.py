@@ -2,7 +2,6 @@
 
 ToDo:
     - pull from Iain
-    - convert eval to centipawns
     - look one move further into the future if the last move is a take
     - bonus / penalty to evaluation for tempo to better enable variable depth search
     - castling
@@ -29,18 +28,18 @@ PIECE_MOVE_DIRECTION = {
 }
 PIECE_VALUE = {
     '.': 0,
-    'K': 200, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 1,
-    'k': -200, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -1
+    'K': 20000, 'Q': 975, 'R': 500, 'B': 335, 'N': 325, 'P': 100,
+    'k': -20000, 'q': -975, 'r': -500, 'b': -335, 'n': -325, 'p': -100
 }
 
 # for most pieces there is a small advantage to being in the centre
-POSITION_VALUE = [[0.03 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
+POSITION_VALUE = [[3 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
 # print('\n'.join(' '.join('{:.2f}'.format(POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 # pawns are more valuable in the centre but more importantly they become much more valuable when they are close to being
 # turned into queens
 # calculating the below formula takes 861 ns but lookup in a 2D table only takes 73 ns.
 # This is the reason for pre-calculation
-PAWN_POSITION_VALUE = [[0.2*(x - (x * x / 7))+(0.0003 * (y+2)**4)-0.3 for x in range(8)] for y in range(8)]
+PAWN_POSITION_VALUE = [[20*(x - (x * x / 7))+(0.03 * (y+2)**4)-30 for x in range(8)] for y in range(8)]
 # print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 transpositionTable = dict()
 total_leaves = 0
@@ -70,10 +69,11 @@ def get_cscore(_board: [str])->float:
     return _score
 
 
-def extra_terms(board: [str]):  # todo this can be a lot smarter
+def extra_terms(board: [str]):
     global total_leaves
-    """Returns extra terms in evaluation function"""
+    """Returns extra terms in evaluation function, speed appears to be more important though"""
     total_leaves += 1
+    return 0
     added_score = 0
     for x in range(8):
         for y in range(8):
@@ -91,21 +91,21 @@ def extra_terms(board: [str]):  # todo this can be a lot smarter
                         if target_piece.islower() if white else target_piece.isupper():
                             # then a take is possible
                             if y2 == 7 if white else y2 == 0:
-                                added_score += 4 if white else -4
+                                added_score += 400 if white else -400
                             else:
-                                added_score += 0.2 if white else -0.2
+                                added_score += 20 if white else -20
                 # check if pawn can move forwards 1
                 if board[y2][x] == '.':
                     # check if pawn can be promoted
                     if y2 == 7 if white else y2 == 0:
-                        added_score += 3 if white else -3
+                        added_score += 300 if white else -300
                     else:
-                        added_score += 0.1 if white else -0.1
+                        added_score += 10 if white else -10
                         # check if pawn can move forwards 2
                     if y == 1 if white else y == 6:
                         y2 = y + 2 if white else y - 2
                         if board[y2][x] == '.':
-                            added_score += 0.1 if white else -0.1
+                            added_score += 10 if white else -10
             else:
                 for xd, yd in PIECE_MOVE_DIRECTION[piece]:
                     for i in range(1, 100):
@@ -117,14 +117,14 @@ def extra_terms(board: [str]):  # todo this can be a lot smarter
                         target_piece = board[y2][x2]
                         if target_piece == '.':
                             # then it is moving into an empty square
-                            added_score += 0.1 if white else -0.1
+                            added_score += 5 if white else -5
                         elif target_piece.islower() if white else target_piece.isupper():
                             # then it is attacking
-                            added_score += 0.15 if white else -0.15
+                            added_score += 5 if white else -5
                             break
                         else:
                             # then it is defending it's own piece
-                            added_score += 0.1 if white else -0.1
+                            added_score += 5 if white else -5
                             break
                         if piece in 'KkNn':
                             break
@@ -284,7 +284,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     for possible_move, diff in possible_moves:
         move_score = current_cscore + diff + extra_terms(possible_move)
         # assert abs(move_score - board_score(possible_move)) < 0.001
-        if depth > 1 and abs(diff) < 100:
+        if depth > 1 and abs(diff) < 10000:
             # then the kings are both still present so it is worth searching further.
             # this if statement also stops my engine trading my king now for your king later
             move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
@@ -350,7 +350,7 @@ def main(history, white_time, black_time):
     possible_moves = list(moves(history[-1], player_is_white))
     if not possible_moves:
         raise StalemateException
-    if (current_score < -11) if player_is_white else (current_score > 11):
+    if (current_score < -1100) if player_is_white else (current_score > 1100):
         # if I am losing badly and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:
             raise ThreeFoldRepetition
@@ -375,7 +375,7 @@ def main(history, white_time, black_time):
         time_remaining = available_time - (now() - start_time)
         if time_remaining < search_run_time * 20:
             break
-        if abs(best_score) > 100:
+        if abs(best_score) > 10000:
             # print('check mate is expected')
             break
     print(depth)
@@ -454,4 +454,12 @@ added move counting
 109606			5		13.375
 396902			6		47.114
 6331 moves searched per second
+switched to centipawn evaluation & tweaked scoring
+358			2		0.055
+4777			3		0.612
+21297			4		2.285
+286896			5		36.687
+7237 leaves searched per second
+15/20 scored with the extra terms
+18/20 with extra terms removed
 '''
