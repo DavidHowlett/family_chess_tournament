@@ -1,4 +1,4 @@
-import David_AI_v6 as ai
+import David_AI_v7 as ai
 from time import perf_counter as now
 
 initialPosition = '''
@@ -73,7 +73,6 @@ P . . k p . . .
 kingSavePosition = kingSavePosition.replace(' ', '').split()
 kingSavePosition.reverse()
 
-ps = ai.position_score
 '''
 assert ps('R', 0, 0) == ps('R', 7, 7)
 assert ps('R', 0, 0) == -ps('r', 7, 7)
@@ -107,7 +106,7 @@ assert len(list(ai.moves(pawnTakePosition2, False))) == 2
 def performance_test():
     ai.total_leaves = 0
     test_start_time = now()
-    for depth in range(2, 5):
+    for depth in range(2, 6):
         start_time = now()
         _possible_moves = list(ai.moves(difficultPosition, True))
         _possible_moves.sort(key=lambda x: x[1], reverse=True)

@@ -4,12 +4,13 @@ import copy
 import hashlib
 import inspect
 import shared
-import David_AI_v6
+import David_AI_v7 as ai
 
 initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 200
 competitorNames = [
+    'David_AI_v7',
     'David_AI_v6',
     'David_AI_v5',
     'David_AI_v4',
@@ -44,7 +45,7 @@ R N B Q K B N R'''
 def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining):
     if minimise:
         print('{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}\t'.format(
-            _turn, int(David_AI_v6.evaluate(board)), 'white' if _turn % 2 else 'black', run_time,
+            _turn, int(ai.evaluate(board)), 'white' if _turn % 2 else 'black', run_time,
             white_time_remaining, black_time_remaining))
     else:
         print('----- move {} -----'.format(_turn))
@@ -52,14 +53,14 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
         print('{} took: {:.3f} seconds'.format('white' if _turn % 2 else 'black', run_time))
         print('white time: {:.3f}'.format(white_time_remaining))
         print('black time: {:.3f}'.format(black_time_remaining))
-        print('score: {:.2f}'.format(David_AI_v6.evaluate(board)))
+        print('score: {:.2f}'.format(ai.evaluate(board)))
         print()
 
 
 def legal_moves(history, player_is_white):
     """"Generates a list of legal moves. Missing castling, en-passant."""
     board = [''.join(piece for piece in line) for line in history[-1]]
-    moves = [[[piece for piece in row] for row in board] for board, _ in David_AI_v6.moves(board, player_is_white)]
+    moves = [[[piece for piece in row] for row in board] for board, _ in ai.moves(board, player_is_white)]
     return moves
 
 
