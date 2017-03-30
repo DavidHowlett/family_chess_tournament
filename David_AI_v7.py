@@ -80,23 +80,18 @@ POSITION_VALUE_READABLE = {
         [0, 10, -10, -30, -30, -10, 10, 0],
         [10, 20, 0, -20, -20, 0, 20, 10],
         [30, 40, 20, 0,   0, 20, 40, 30],
-        [40, 50, 30, 10, 10, 30, 50, 40]]
+        [40, 50, 30, 10, 10, 30, 50, 40]],
+    '.': [[0 for _ in range(8)] for _ in range(8)]
 }
 POSITION_VALUE = dict()
-for piece in POSITION_VALUE_READABLE:
-    positionTable = copy.deepcopy(POSITION_VALUE_READABLE[piece])
-    POSITION_VALUE[piece.lower()] = [[-value for value in row] for row in positionTable]
-    positionTable.reverse()
-    POSITION_VALUE[piece] = positionTable
+for piece_ in POSITION_VALUE_READABLE:
+    tmp = copy.deepcopy(POSITION_VALUE_READABLE[piece_])
+    POSITION_VALUE[piece_.lower()] = [[-value for value in row] for row in tmp]
+    tmp.reverse()
+    POSITION_VALUE[piece_] = tmp
 transpositionTable = dict()
 total_leaves = 0
 time_out_point = now() + 100
-
-
-def position_score(piece, x, y) -> float:
-    if piece == '.':
-        return 0
-    return POSITION_VALUE[piece][y][x]
 
 
 def get_cscore(_board: [str])->float:
@@ -106,7 +101,7 @@ def get_cscore(_board: [str])->float:
         for x in range(8):
             piece = _board[y][x]
             _score += PIECE_VALUE[piece]
-            _score += position_score(piece, x, y)
+            _score += POSITION_VALUE[piece][y][x]
     return _score
 
 
@@ -208,15 +203,15 @@ def moves(board: [str], _player_is_white: bool):
                             # then it is moving into an empty square
                             yield (
                                 move(board, y, x, y2, x2),
-                                position_score(piece, x2, y2) -
-                                position_score(piece, x, y))
+                                POSITION_VALUE[piece][y2][x2] -
+                                POSITION_VALUE[piece][y][x])
                         elif target_piece.islower() if _player_is_white else target_piece.isupper():
                             # then it is taking an opponent's piece
                             yield (
                                 move(board, y, x, y2, x2),
-                                position_score(piece, x2, y2) -
-                                position_score(target_piece, x2, y2) -
-                                position_score(piece, x, y) -
+                                POSITION_VALUE[piece][y2][x2] -
+                                POSITION_VALUE[target_piece][y2][x2] -
+                                POSITION_VALUE[piece][y][x] -
                                 PIECE_VALUE[target_piece])
                             break
                         else:
@@ -246,15 +241,15 @@ def moves(board: [str], _player_is_white: bool):
                                         PIECE_VALUE[replacement_piece] -
                                         PIECE_VALUE[target_piece] -
                                         PIECE_VALUE[piece] +
-                                        position_score(replacement_piece, x2, y2) -
-                                        position_score(target_piece, x2, y2) -
-                                        position_score(piece, x, y))
+                                        POSITION_VALUE[replacement_piece][y2][x2] -
+                                        POSITION_VALUE[target_piece][y2][x2] -
+                                        POSITION_VALUE[piece][y][x])
                             else:
                                 yield(
                                     after_pawn_move,
-                                    position_score(piece, x2, y2) -
-                                    position_score(target_piece, x2, y2) -
-                                    position_score(piece, x, y) -
+                                    POSITION_VALUE[piece][y2][x2] -
+                                    POSITION_VALUE[target_piece][y2][x2] -
+                                    POSITION_VALUE[piece][y][x] -
                                     PIECE_VALUE[target_piece])
                 # check if pawn can move forwards 1
                 if board[y2][x] == '.':
@@ -270,21 +265,21 @@ def moves(board: [str], _player_is_white: bool):
                                 after_pawn_replacement,
                                 PIECE_VALUE[replacement_piece] -
                                 PIECE_VALUE[piece] +
-                                position_score(replacement_piece, x, y2) -
-                                position_score(piece, x, y))
+                                POSITION_VALUE[replacement_piece][y2][x] -
+                                POSITION_VALUE[piece][y][x])
                     else:
                         yield(
                             move(board, y, x, y2, x),
-                            position_score(piece, x, y2) -
-                            position_score(piece, x, y))
+                            POSITION_VALUE[piece][y2][x] -
+                            POSITION_VALUE[piece][y][x])
                     # check if pawn can move forwards 2
                     if y == 1 if _player_is_white else y == 6:
                         y2 = y + 2 if _player_is_white else y - 2
                         if board[y2][x] == '.':
                             yield(
                                 move(board, y, x, y2, x),
-                                position_score(piece, x, y2) -
-                                position_score(piece, x, y))
+                                POSITION_VALUE[piece][y2][x] -
+                                POSITION_VALUE[piece][y][x])
 
 
 def estimated_score(board, previous_cscore, diff, player_is_white):
@@ -324,7 +319,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     current_best_score = (-99999) if player_is_white else 99999
     for possible_move, diff in possible_moves:
         move_score = current_cscore + diff + extra_terms(possible_move)
-        assert abs(move_score - evaluate(possible_move)) < 0.001
+        # assert abs(move_score - evaluate(possible_move)) < 0.001
         if depth > 1 and abs(diff) < 10000:
             # then the kings are both still present so it is worth searching further.
             # this if statement also stops my engine trading my king now for your king later
@@ -356,14 +351,14 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
 
 def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
     """Implements alpha_beta tree search, returns a best move"""
-    assert depth > 0
+    # assert depth > 0
     possible_moves.sort(
         key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
         reverse=player_is_white)
     for possible_move, diff in possible_moves:
         if depth == 1:
             move_score = current_cscore + diff + extra_terms(possible_move)
-            assert abs(move_score - evaluate(possible_move)) < 0.001
+            # assert abs(move_score - evaluate(possible_move)) < 0.001
         else:
             move_score = alpha_beta(possible_move, depth - 1, current_cscore + diff, not player_is_white, alpha, beta)
         if player_is_white:
@@ -464,9 +459,15 @@ switched to centipawn evaluation & tweaked scoring
 1105592			6		4.259
 192741 leaves searched per second
 simplified piece value lookup
-166			2		0.006
-4876			3		0.046
-19911			4		0.088
-287690			5		1.377
-189586 leaves searched per second
+159			2		0.002
+5164			3		0.033
+20096			4		0.086
+160780			5		0.809
+172953 leaves searched per second
+removed function call for position value lookup
+159			2		0.001
+5164			3		0.024
+20096			4		0.094
+160780			5		0.669
+204022 leaves searched per second :-)
 '''
