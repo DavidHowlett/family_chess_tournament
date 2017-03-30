@@ -400,7 +400,7 @@ def main(history, white_time, black_time):
     alpha = -99999
     beta = 99999
     # 5 depth search can take 13.149 seconds in worst case seen so far :-(
-    for depth in range(1, 6):
+    for depth in range(1, 10):
         search_start_time = now()
         try:
             best_move, best_score = search(possible_moves, depth, current_cscore, player_is_white, alpha, beta)
