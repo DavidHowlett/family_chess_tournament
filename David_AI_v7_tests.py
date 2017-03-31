@@ -93,7 +93,6 @@ assert ps('K', 3, 0) == -ps('k', 3, 7)
 assert ps('K', 4, 0) == -ps('k', 4, 7)
 '''
 
-print(ai.evaluate(initialPosition))
 assert abs(ai.evaluate(initialPosition)) < 0.000001
 assert len(list(ai.moves(initialPosition, True))) == 20
 assert len(list(ai.moves(difficultPosition, True))) == 42

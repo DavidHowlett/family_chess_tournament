@@ -33,7 +33,16 @@ PIECE_VALUE = {
 }
 
 POSITION_VALUE_READABLE = {
-    'P': [[5*(x - (x * x / 7))+(0.02 * (y+2)**4)-10 for x in range(8)] for y in range(7, -1, -1)],
+    'P': [
+        [0,   0,  0,  0,  0,  0,  0,  0],
+        [50, 50, 50, 50, 50, 50, 50, 50],
+        [10, 10, 20, 30, 30, 20, 10, 10],
+        [5,   5, 10, 25, 25, 10,  5,  5],
+        [0,   0,  0,  2,  2,  0,  0,  0],
+        [5,  -5,-10,  0,  0,-10, -5,  5],
+        [5,  10, 10,-20,-20, 10, 10,  5],
+        [0,   0,  0,  0,  0,  0,  0,  0]],
+    # [[5*(x - (x * x / 7))+(0.02 * (y+2)**4)-10 for x in range(8)] for y in range(7, -1, -1)],
     # print('\n'.join(' '.join('{}'.format(int(PAWN_POSITION_VALUE[y][x]))
     #   for x in range(8))for y in range(8))+'\n')
     'N': [
@@ -310,8 +319,8 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # then try to guess the best order to try moves
         possible_moves = list(possible_moves)
         possible_moves.sort(
-            key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
-            reverse=player_is_white)
+            key=lambda _move: _move[1],
+            reverse=player_is_white)  # todo this duplicates work and could run faster
     if not possible_moves:
         # this correctly scores stalemates
         # it only works on lists, not generators
@@ -320,10 +329,12 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     for possible_move, diff in possible_moves:
         move_score = current_cscore + diff + extra_terms(possible_move)
         # assert abs(move_score - evaluate(possible_move)) < 0.001
-        if depth > 1 and abs(diff) < 10000:
-            # then the kings are both still present so it is worth searching further.
-            # this if statement also stops my engine trading my king now for your king later
-            move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
+        # Only search deeper if both kings are still present.
+        # This also stops my engine trading my king now for your king later.
+        if abs(diff) < 10000:
+            # search deeper then normal if a take is made
+            if depth >= 2 or (depth >= 0 and abs(diff) > 0.5):  # this does not use move ordering :-( todo
+                move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
             if move_score > current_best_score:
                 current_best_score = move_score
@@ -350,7 +361,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
 
 
 def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
-    """Implements alpha_beta tree search, returns a best move"""
+    """Implements top level node in alpha_beta tree search, returns a best move"""
     # assert depth > 0
     possible_moves.sort(
         key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
@@ -404,17 +415,19 @@ def main(history, white_time, black_time):
         search_start_time = now()
         try:
             best_move, best_score = search(possible_moves, depth, current_cscore, player_is_white, alpha, beta)
+
         except TimeoutError:
             print('internal timeout')
             break
         search_run_time = now() - search_start_time
+        print(depth, search_run_time)
         time_remaining = available_time - (now() - start_time)
-        if time_remaining < search_run_time * 20:
+        if time_remaining < search_run_time * 30:
             break
         if abs(best_score) > 10000:
             # print('check mate is expected')
             break
-    print(depth)
+    # print(depth)
     return [[piece for piece in line] for line in best_move]
 
 
@@ -470,4 +483,22 @@ removed function call for position value lookup
 20096			4		0.094
 160780			5		0.669
 204022 leaves searched per second :-)
+changed pawn lookup table and switched to testing on PC
+131			2		0.001
+4057			3		0.029
+18982			4		0.108
+126569			5		0.776
+138422 leaves searched per second
+added quiescence search to depth 2
+878			2		0.008
+45827			3		0.336
+197728			4		1.433
+1102823			5		6.893
+127180 leaves searched per second
+ditched fancy move sorting
+878			2		0.008
+44478			3		0.332
+190035			4		1.300
+1032192			5		6.660
+124355 leaves searched per second
 '''

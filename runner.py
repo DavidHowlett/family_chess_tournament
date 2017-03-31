@@ -115,13 +115,13 @@ def match(white, black):
             break
         run_time = time.process_time() - start_time
         if player_is_white:
-            white_moves += 1
             white_time_taken += run_time
+            white_time = initialTime + white_moves * timePerMove - white_time_taken
+            white_moves += 1
         else:
-            black_moves += 1
             black_time_taken += run_time
-        white_time = initialTime + white_moves * timePerMove - white_time_taken
-        black_time = initialTime + black_moves * timePerMove - black_time_taken
+            black_time = initialTime + black_moves * timePerMove - black_time_taken
+            black_moves += 1
         print_state(turn, chosen_move, run_time, white_time, black_time)
         if white_time < 0:
             to_return = {'score': 0, 'cause': 'Black won due to white running out of time'}
