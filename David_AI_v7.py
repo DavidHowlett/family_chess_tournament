@@ -1,8 +1,8 @@
 """This chess engine was written by David for fun. A board is represented by a [str] representing a 2D board.
 
 ToDo:
-    - look one move further into the future if the last move is a take
-    - bonus / penalty to evaluation for tempo to better enable variable depth search
+    - switch to negamax
+    - discount future scores
     - castling
     - en passant
     - aspiration search
@@ -244,9 +244,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
             raise TimeoutError
         # then try to guess the best order to try moves
         possible_moves = list(possible_moves)
-        possible_moves.sort(
-            key=lambda _move: _move[1],
-            reverse=player_is_white)  # todo this duplicates work and could run faster
+        possible_moves.sort(key=lambda _move: _move[1], reverse=player_is_white)
     if not possible_moves:
         # this correctly scores stalemates
         # it only works on lists, not generators
@@ -259,7 +257,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # This also stops my engine trading my king now for your king later.
         if abs(diff) < 10000:
             # search deeper then normal if a take is made
-            if depth >= 2 or (depth >= 0 and abs(diff) > 0.5):  # this does not use move ordering :-( todo
+            if depth >= 2 or (depth >= 1 and abs(diff) > 0.5):  # this does not use move ordering :-( todo
                 move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
             if move_score > current_best_score:
@@ -352,14 +350,14 @@ def main(history, white_time, black_time):
             print('internal timeout')
             break
         search_run_time = now() - search_start_time
-        print(f'{depth}  {search_run_time:.3f}')
+        # print(f'{depth}  {search_run_time:.3f}')
         time_remaining = available_time - (now() - start_time)
         if time_remaining < search_run_time * 30:
             break
         if abs(best_score) > 10000:
             # print('check mate is expected')
             break
-    # print(depth)
+    print(f'search depth: {depth}-{depth+1}')
     return [[piece for piece in line] for line in best_move]
 
 
@@ -439,4 +437,10 @@ removed all traces of evaluate
 194771			4		1.297
 1094450			5		6.508
 134704 leaves searched per second
+quiescence search to depth 1
+210			2		0.002
+8224			3		0.068
+58484			4		0.354
+311780			5		2.244
+116886 leaves searched per second
 '''

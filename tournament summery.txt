@@ -1,19 +1,19 @@
 As of the 31st of March 2017 the results are:
 
-David_AI_v7 scored 25.5/28 taking on average 0.955 seconds
-David_AI_v4 scored 25.5/28 taking on average 0.864 seconds
-David_AI_v6 scored 24.5/28 taking on average 0.807 seconds
-David_AI_v5 scored 23/28 taking on average 0.856 seconds
-David_AI_v2 scored 20/28 taking on average 0.237 seconds
-David_AI_v3 scored 17.5/28 taking on average 0.955 seconds
-Michael_AI_v1_0 scored 14.0/28 taking on average 0.754 seconds
-Michael_AI_v1_1 scored 12.5/28 taking on average 0.790 seconds
-David_AI_v1 scored 11.5/28 taking on average 0.497 seconds
-Michael_AI_v1_2 scored 11.5/28 taking on average 0.805 seconds
-Robert_AI scored 10.5/28 taking on average 0.459 seconds
+David_AI_v7 scored 27.5/28 taking on average 0.909 seconds
+David_AI_v6 scored 25.0/28 taking on average 0.760 seconds
+David_AI_v4 scored 24/28 taking on average 0.890 seconds
+David_AI_v5 scored 23/28 taking on average 0.872 seconds
+David_AI_v2 scored 20/28 taking on average 0.248 seconds
+David_AI_v3 scored 17.5/28 taking on average 0.959 seconds
+Michael_AI_v1_0 scored 13.0/28 taking on average 0.764 seconds
+Michael_AI_v1_1 scored 12.5/28 taking on average 0.793 seconds
+David_AI_v1 scored 11.5/28 taking on average 0.481 seconds
+Michael_AI_v1_2 scored 11.5/28 taking on average 0.784 seconds
+Robert_AI scored 10.5/28 taking on average 0.497 seconds
 random_AI scored 6/28 taking on average 0.004 seconds
 Iain_AI_v1 scored 5.0/28 taking on average 0.008 seconds
-Iain_AI_v2 scored 3.0/28 taking on average 1.091 seconds
+Iain_AI_v2 scored 3.0/28 taking on average 1.086 seconds
 no_move_AI scored 0/28 taking on average 0.000 seconds
 
 As of the 10th of February 2017 the results are:
