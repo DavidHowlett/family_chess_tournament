@@ -103,16 +103,16 @@ assert len(list(ai.moves(pawnTakePosition2, False))) == 2
 
 
 def performance_test():
-    ai.total_leaves = 0
+    ai.total_moves = 0
     test_start_time = now()
     for depth in range(2, 6):
         start_time = now()
         _possible_moves = list(ai.moves(difficultPosition, True))
         _possible_moves.sort(key=lambda x: x[1], reverse=True)
-        best_move, _ = ai.search(_possible_moves, depth, ai.get_cscore(difficultPosition), True, -99999, 99999)
-        print('{}\t\t\t{}\t\t{:.3f}'.format(ai.total_leaves, depth, now() - start_time))
+        best_move, _ = ai.search(_possible_moves, depth, ai.evaluate(difficultPosition), True, -99999, 99999)
+        print('{}\t\t\t{}\t\t{:.3f}'.format(ai.total_moves, depth, now() - start_time))
         # print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
-    print('{} leaves searched per second'.format(int(ai.total_leaves/(now()-test_start_time))))
+    print('{} leaves searched per second'.format(int(ai.total_moves/(now()-test_start_time))))
 
 
 ai.transpositionTable = dict()

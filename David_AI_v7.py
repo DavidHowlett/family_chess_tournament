@@ -99,12 +99,11 @@ for piece_ in POSITION_VALUE_READABLE:
     tmp.reverse()
     POSITION_VALUE[piece_] = tmp
 transpositionTable = dict()
-total_leaves = 0
+total_moves = 0
 time_out_point = now() + 100
 
 
-def get_cscore(_board: [str])->float:
-    """This takes a board and returns the material and position score of white"""
+def evaluate(_board: [str])->float:
     _score = 0.0
     for y in range(8):
         for x in range(8):
@@ -114,74 +113,10 @@ def get_cscore(_board: [str])->float:
     return _score
 
 
-def extra_terms(board: [str]):
-    global total_leaves
-    """Returns extra terms in evaluation function, speed appears to be more important though"""
-    total_leaves += 1
-    return 0
-    added_score = 0
-    for x in range(8):
-        for y in range(8):
-            piece = board[y][x]
-            if piece == '.':
-                continue
-            white = piece.isupper()
-            # pawns are weird
-            if piece in 'Pp':
-                y2 = y + 1 if white else y - 1
-                # check if a take is possible
-                for x2 in (x - 1, x + 1):
-                    if 0 <= x2 <= 7:
-                        target_piece = board[y2][x2]
-                        if target_piece.islower() if white else target_piece.isupper():
-                            # then a take is possible
-                            if y2 == 7 if white else y2 == 0:
-                                added_score += 400 if white else -400
-                            else:
-                                added_score += 20 if white else -20
-                # check if pawn can move forwards 1
-                if board[y2][x] == '.':
-                    # check if pawn can be promoted
-                    if y2 == 7 if white else y2 == 0:
-                        added_score += 300 if white else -300
-                    else:
-                        added_score += 10 if white else -10
-                        # check if pawn can move forwards 2
-                    if y == 1 if white else y == 6:
-                        y2 = y + 2 if white else y - 2
-                        if board[y2][x] == '.':
-                            added_score += 10 if white else -10
-            else:
-                for xd, yd in PIECE_MOVE_DIRECTION[piece]:
-                    for i in range(1, 100):
-                        x2 = x + i * xd
-                        y2 = y + i * yd
-                        if not (0 <= x2 <= 7 and 0 <= y2 <= 7):
-                            # then it is a move off the board
-                            break
-                        target_piece = board[y2][x2]
-                        if target_piece == '.':
-                            # then it is moving into an empty square
-                            added_score += 5 if white else -5
-                        elif target_piece.islower() if white else target_piece.isupper():
-                            # then it is attacking
-                            added_score += 5 if white else -5
-                            break
-                        else:
-                            # then it is defending it's own piece
-                            added_score += 5 if white else -5
-                            break
-                        if piece in 'KkNn':
-                            break
-    return added_score
-
-
-def evaluate(_board: [str])->float:
-    return get_cscore(_board) + extra_terms(_board)
-
-
 def move(board: [str], y1, x1, y2, x2)-> [str]:
+    global total_moves
     """returns a board with a move made"""
+    total_moves += 1
     board = board.copy()
     # add piece to destination
     line = board[y2]
@@ -193,7 +128,6 @@ def move(board: [str], y1, x1, y2, x2)-> [str]:
 
 
 def moves(board: [str], _player_is_white: bool):
-    global total_moves
     """This generates a list of all possible game states after one move.
     Preferred moves should be later in the returned list."""
     for x in range(8):
@@ -291,14 +225,6 @@ def moves(board: [str], _player_is_white: bool):
                                 POSITION_VALUE[piece][y][x])
 
 
-def estimated_score(board, previous_cscore, diff, player_is_white):
-    key = ''.join(board) + 'w' if player_is_white else 'b'
-    if key in transpositionTable:
-        return transpositionTable[key][0]
-    else:
-        return previous_cscore + diff + extra_terms(board)
-
-
 def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
     # assert abs(current_cscore - board_score(board)) < 0.001
@@ -327,7 +253,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         return 0
     current_best_score = (-99999) if player_is_white else 99999
     for possible_move, diff in possible_moves:
-        move_score = current_cscore + diff + extra_terms(possible_move)
+        move_score = current_cscore + diff
         # assert abs(move_score - evaluate(possible_move)) < 0.001
         # Only search deeper if both kings are still present.
         # This also stops my engine trading my king now for your king later.
@@ -360,6 +286,14 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     return current_best_score
 
 
+def estimated_score(board, previous_cscore, diff, player_is_white):
+    key = ''.join(board) + 'w' if player_is_white else 'b'
+    if key in transpositionTable:
+        return transpositionTable[key][0]
+    else:
+        return previous_cscore + diff
+
+
 def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
     """Implements top level node in alpha_beta tree search, returns a best move"""
     # assert depth > 0
@@ -368,7 +302,7 @@ def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
         reverse=player_is_white)
     for possible_move, diff in possible_moves:
         if depth == 1:
-            move_score = current_cscore + diff + extra_terms(possible_move)
+            move_score = current_cscore + diff
             # assert abs(move_score - evaluate(possible_move)) < 0.001
         else:
             move_score = alpha_beta(possible_move, depth - 1, current_cscore + diff, not player_is_white, alpha, beta)
@@ -393,7 +327,6 @@ def main(history, white_time, black_time):
     time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
     history = [[''.join(row) for row in board] for board in history]
     current_score = evaluate(history[-1])
-    current_cscore = get_cscore(history[-1])
     possible_moves = list(moves(history[-1], player_is_white))
     if not possible_moves:
         raise StalemateException
@@ -414,13 +347,12 @@ def main(history, white_time, black_time):
     for depth in range(1, 10):
         search_start_time = now()
         try:
-            best_move, best_score = search(possible_moves, depth, current_cscore, player_is_white, alpha, beta)
-
+            best_move, best_score = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
         except TimeoutError:
             print('internal timeout')
             break
         search_run_time = now() - search_start_time
-        print(depth, search_run_time)
+        print(f'{depth}  {search_run_time:.3f}')
         time_remaining = available_time - (now() - start_time)
         if time_remaining < search_run_time * 30:
             break
@@ -501,4 +433,10 @@ ditched fancy move sorting
 190035			4		1.300
 1032192			5		6.660
 124355 leaves searched per second
+removed all traces of evaluate
+878			2		0.008
+45726			3		0.312
+194771			4		1.297
+1094450			5		6.508
+134704 leaves searched per second
 '''
