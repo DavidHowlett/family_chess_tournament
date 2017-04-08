@@ -227,7 +227,7 @@ def moves(board: [str], _player_is_white: bool):
 
 def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
-    # assert abs(current_cscore - board_score(board)) < 0.001
+    # assert abs(current_cscore - evaluate(board)) < 0.001
     # lookup the current node to see if it has already been searched
     key = ''.join(board) + ('w' if player_is_white else 'b')
     if key in transpositionTable:
@@ -255,10 +255,11 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # assert abs(move_score - evaluate(possible_move)) < 0.001
         # Only search deeper if both kings are still present.
         # This also stops my engine trading my king now for your king later.
-        if abs(diff) < 10000:
-            # search deeper then normal if a take is made
-            if depth >= 2 or (depth >= 1 and abs(diff) > 0.5):  # this does not use move ordering :-( todo
-                move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
+        # I also search deeper then normal if a take is made
+        # Note that the comparison is ordered for evaluation speed
+        if depth >= 1 and (depth >=2 or abs(diff) > 0.5) and abs(diff) < 1000:
+            # this does not always use move ordering :-( todo
+            move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
             if move_score > current_best_score:
                 current_best_score = move_score
@@ -358,6 +359,7 @@ def main(history, white_time, black_time):
             # print('check mate is expected')
             break
     print(f'search depth: {depth}-{depth+1}')
+    print(f'expected score: {best_score}')
     return [[piece for piece in line] for line in best_move]
 
 
@@ -443,4 +445,17 @@ quiescence search to depth 1
 58484			4		0.354
 311780			5		2.244
 116886 leaves searched per second
+switched back to mac
+210			2		0.003
+8224			3		0.056
+58484			4		0.311
+311780			5		2.356
+114390 leaves searched per second
+reordered comparison
+210			2		0.002
+8224			3		0.087
+58484			4		0.218
+311780			5		1.363
+186732 leaves searched per second
+
 '''
