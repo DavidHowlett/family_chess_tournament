@@ -2,6 +2,7 @@
 
 ToDo:
     - switch to negamax
+    - change positional scoring according to the game's phase
     - discount future scores
     - castling
     - en passant
@@ -119,11 +120,11 @@ def move(board: [str], y1, x1, y2, x2)-> [str]:
     total_moves += 1
     board = board.copy()
     # add piece to destination
-    line = board[y2]
-    board[y2] = line[:x2] + board[y1][x1] + line[x2 + 1:]
+    board[y2] = board[y2].copy()
+    board[y2][x2] = board[y1][x1]
     # remove piece from source
-    line = board[y1]
-    board[y1] = line[:x1] + '.' + line[x1 + 1:]
+    board[y1] = board[y1].copy()
+    board[y1][x1] = '.'
     return board
 
 
@@ -177,8 +178,8 @@ def moves(board: [str], _player_is_white: bool):
                                 # then the end of the board has been reached and promotion is needed
                                 for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
                                     after_pawn_replacement = after_pawn_move.copy()
-                                    line = after_pawn_replacement[y2]
-                                    after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
+                                    after_pawn_replacement[y2] = after_pawn_replacement[y2].copy()
+                                    after_pawn_replacement[y2][x2] = replacement_piece
                                     yield(
                                         after_pawn_replacement,
                                         PIECE_VALUE[replacement_piece] -
@@ -202,8 +203,8 @@ def moves(board: [str], _player_is_white: bool):
                         # add each possible promotion to _moves
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
                             after_pawn_replacement = after_pawn_move.copy()
-                            line = after_pawn_replacement[y2]
-                            after_pawn_replacement[y2] = line[:x] + replacement_piece + line[x + 1:]
+                            after_pawn_replacement[y2] = after_pawn_replacement[y2].copy()
+                            after_pawn_replacement[y2][x2] = replacement_piece
                             yield(
                                 after_pawn_replacement,
                                 PIECE_VALUE[replacement_piece] -
@@ -229,7 +230,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
     # assert abs(current_cscore - evaluate(board)) < 0.001
     # lookup the current node to see if it has already been searched
-    key = ''.join(board) + ('w' if player_is_white else 'b')
+    key = ''.join(piece for row in board for piece in row) + ('w' if player_is_white else 'b')
     if key in transpositionTable:
         node_score, node_type, node_search_depth = transpositionTable[key]
         if node_search_depth >= depth:
@@ -286,7 +287,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
 
 
 def estimated_score(board, previous_cscore, diff, player_is_white):
-    key = ''.join(board) + 'w' if player_is_white else 'b'
+    key = ''.join(piece for row in board for piece in row) + ('w' if player_is_white else 'b')
     if key in transpositionTable:
         return transpositionTable[key][0]
     else:
@@ -324,7 +325,7 @@ def main(history, white_time, black_time):
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
     time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
-    history = [[''.join(row) for row in board] for board in history]
+    # history = [[''.join(row) for row in board] for board in history]
     current_score = evaluate(history[-1])
     possible_moves = list(moves(history[-1], player_is_white))
     if not possible_moves:
@@ -360,7 +361,7 @@ def main(history, white_time, black_time):
             break
     print(f'search depth: {depth}-{depth+1}')
     print(f'expected score: {best_score}')
-    return [[piece for piece in line] for line in best_move]
+    return best_move  # [[piece for piece in line] for line in best_move]
 
 
 '''
@@ -457,5 +458,11 @@ reordered comparison
 58484			4		0.218
 311780			5		1.363
 186732 leaves searched per second
+switched back to using lists of lists
+210			2		0.002	65
+8224			3		0.059	1977
+58484			4		0.226	3889
+311780			5		1.751	59593
+152995 leaves searched per second
 
 '''
