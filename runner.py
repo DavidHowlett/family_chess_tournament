@@ -4,7 +4,7 @@ import copy
 import hashlib
 import inspect
 import shared
-import David_AI_v7 as ai
+import David_AI_v6 as ai
 
 initialTime = 5
 timePerMove = 1
@@ -59,7 +59,8 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
 
 def legal_moves(history, player_is_white):
     """"Generates a list of legal moves. Missing castling, en-passant."""
-    moves = [board for board, _ in ai.moves(history[-1], player_is_white)]
+    board = [''.join(piece for piece in line) for line in history[-1]]
+    moves = [[[piece for piece in row] for row in board] for board, _ in ai.moves(board, player_is_white)]
     return moves
 
 
