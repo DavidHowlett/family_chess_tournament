@@ -218,7 +218,7 @@ def moves(board, _player_is_white: bool):
                             POSITION_VALUE[piece][pos1])
                     # check if pawn can move forwards 2
                     if y == 1 if _player_is_white else y == 6:
-                        pos2 = pos1 + (8 if _player_is_white else -8)
+                        pos2 = pos1 + (16 if _player_is_white else -16)
                         if board[pos2] == '.':
                             yield(
                                 move(board, pos1, pos2),
