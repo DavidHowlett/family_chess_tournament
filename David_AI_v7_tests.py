@@ -37,6 +37,18 @@ r . . . . . . .
 promotionPosition = [line.split(' ') for line in promotionPosition.split('\n') if len(line) > 5]
 promotionPosition.reverse()
 
+promotionPosition2 = '''
+. r . . . . k r
+. p p . . p p p
+p . P . . . . .
+. . . . . N . .
+. . n . p . . .
+. . . . P . . .
+P . P . . P P P
+. R . . . . K R'''
+promotionPosition2 = [line.split(' ') for line in promotionPosition2.split('\n') if len(line) > 5]
+promotionPosition2.reverse()
+
 pawnTakePosition1 = '''
 . . . . . . . .
 . . . p . . . .
@@ -73,25 +85,10 @@ P . . k p . . .
 kingSavePosition = [line.split(' ') for line in kingSavePosition.split('\n') if len(line) > 5]
 kingSavePosition.reverse()
 
-'''
-assert ps('R', 0, 0) == ps('R', 7, 7)
-assert ps('R', 0, 0) == -ps('r', 7, 7)
-assert ps('R', 1, 0) > ps('R', 0, 0)
-assert ps('R', 0, 1) > ps('R', 0, 0)
-assert ps('R', 4, 4) > ps('R', 0, 0)
-assert ps('R', 3, 4) == ps('R', 4, 3)
-assert ps('R', 3, 4) == -ps('r', 4, 3)
-assert ps('P', 0, 0) < ps('P', 0, 7)
-assert ps('P', 0, 0) < ps('P', 1, 0)
-assert ps('p', 0, 0) == -ps('P', 0, 7)
-assert ps('p', 0, 1) == -ps('P', 0, 6)
-assert ps('p', 1, 1) == -ps('P', 1, 6)
-assert ps('p', 0, 0) < ps('p', 0, 1)
-assert ps('P', 3, 4) == -ps('p', 3, 3)
-assert ps('P', 3, 4) == -ps('p', 3, 3)
-assert ps('K', 3, 0) == -ps('k', 3, 7)
-assert ps('K', 4, 0) == -ps('k', 4, 7)
-'''
+
+for position in (initialPosition, difficultPosition, promotionPosition, promotionPosition2, pawnTakePosition1,
+                 pawnTakePosition2, kingSavePosition):
+    print(len(list(ai.moves(position, True))))
 
 assert len(initialPosition) == 8
 assert len(initialPosition[0]) == 8
@@ -107,14 +104,15 @@ assert len(list(ai.moves(pawnTakePosition2, False))) == 2
 def performance_test():
     ai.total_moves = 0
     test_start_time = now()
+    board = difficultPosition
     for depth in range(2, 6):
         start_time = now()
-        _possible_moves = list(ai.moves(difficultPosition, True))
+        _possible_moves = list(ai.moves(board, True))
         _possible_moves.sort(key=lambda x: x[1], reverse=True)
-        best_move, _ = ai.search(_possible_moves, depth, ai.evaluate(difficultPosition), True, -99999, 99999)
+        best_move, _ = ai.search(_possible_moves, depth, ai.evaluate(board), True, -99999, 99999)
         print('{}\t\t\t{}\t\t{:.3f}\t{}'.format(ai.total_moves, depth, now() - start_time, len(ai.transpositionTable)))
         # print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
-    print('{} leaves searched per second'.format(int(ai.total_moves/(now()-test_start_time))))
+    print('{} moves made per second'.format(int(ai.total_moves/(now()-test_start_time))))
 
 
 ai.transpositionTable = dict()

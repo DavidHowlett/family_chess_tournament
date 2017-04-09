@@ -10,6 +10,7 @@ initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 200
 competitorNames = [
+    'David_AI_v8',
     'David_AI_v7',
     'David_AI_v6',
     'David_AI_v5',

@@ -1,7 +1,6 @@
 """This chess engine was written by David for fun. A board is represented by a [str] representing a 2D board.
 
 ToDo:
-    - use arrays
     - add piece values to position values to save a lookup
     - switch to negamax
     - change positional scoring according to the game's phase
@@ -204,7 +203,7 @@ def moves(board, _player_is_white: bool):
                         after_pawn_move = move(board, pos1, pos2)
                         # add each possible promotion to _moves
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
-                            after_pawn_replacement = after_pawn_move.copy()
+                            after_pawn_replacement = copy(after_pawn_move)
                             after_pawn_replacement[pos2] = replacement_piece
                             yield(
                                 after_pawn_replacement,

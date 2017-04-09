@@ -1,4 +1,4 @@
-import David_AI_v7 as ai
+import David_AI_v8 as ai
 from array import array
 from time import perf_counter as now
 
@@ -63,7 +63,7 @@ for key in boards:
     position.reverse()
     assert len(position) == 64
     boards[key] = position
-    print(ai.evaluate(position))
+    print(len(list(ai.moves(position, True))))
 
 assert abs(ai.evaluate(boards['initialPosition'])) < 0.000001
 assert len(list(ai.moves(boards['initialPosition'], True))) == 20

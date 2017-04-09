@@ -114,6 +114,15 @@ def evaluate(_board: [str])->float:
     return _score
 
 
+def piece_count(board):
+    total = 0
+    for row in board:
+        for piece in row:
+            if piece != '.':
+                total += 1
+    return total
+
+
 def move(board: [str], y1, x1, y2, x2)-> [str]:
     global total_moves
     """returns a board with a move made"""
@@ -204,7 +213,7 @@ def moves(board: [str], _player_is_white: bool):
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
                             after_pawn_replacement = after_pawn_move.copy()
                             after_pawn_replacement[y2] = after_pawn_replacement[y2].copy()
-                            after_pawn_replacement[y2][x2] = replacement_piece
+                            after_pawn_replacement[y2][x] = replacement_piece
                             yield(
                                 after_pawn_replacement,
                                 PIECE_VALUE[replacement_piece] -
