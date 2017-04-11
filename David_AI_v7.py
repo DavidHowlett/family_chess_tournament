@@ -267,7 +267,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # This also stops my engine trading my king now for your king later.
         # I also search deeper then normal if a take is made
         # Note that the comparison is ordered for evaluation speed
-        if depth >= 1 and (depth >=2 or abs(diff) > 0.5) and abs(diff) < 1000:
+        if depth >= 1 and (depth >= 2 or abs(diff) > 0.5) and abs(diff) < 1000:
             # this does not always use move ordering :-( todo
             move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
@@ -292,6 +292,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # the score is exact and the earlier check of the table ensures that we are not overwriting
         # an entry of greater depth
         transpositionTable[key] = current_best_score, 'exact', depth
+    assert key in transpositionTable
     return current_best_score
 
 

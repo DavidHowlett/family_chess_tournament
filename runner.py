@@ -26,6 +26,7 @@ competitorNames = [
     'Iain_AI_v1',
     'no_move_AI',
     'random_AI',
+    # 'Human_player'
 ]
 for name in competitorNames:
     exec('import ' + name)

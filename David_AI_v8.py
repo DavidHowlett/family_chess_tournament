@@ -1,16 +1,24 @@
-"""This chess engine was written by David for fun. A board is represented by a [str] representing a 2D board.
+"""This chess engine was written by David for fun. 
+A board is represented by 65 char array.
+The first 64 chars contain the pieces on the board.
+Char 65 contains the castling rights. 
+Char 65 will be 0x00 if all castling is impossible.
+The lowest bit represents castling with the rook on square 0
+The second bit represents castling with the rook on square 7
+the third bit represents castling with the rook on square 56
+the fourth bit represents castling with the rook on square 63
 
 ToDo:
-    - add piece values to position values to save a lookup
+    - castling
+    - en passant
+    - write to the transposition table for the the branches of the root node
+    - add strict legal move generation function (look for check and stalemate)
     - switch to negamax
     - change positional scoring according to the game's phase
     - discount future scores
-    - castling
-    - en passant
     - aspiration search
     - 
-note that the cscore only includes parts of the score that are cumulatively evaluated
-score is the result of the evaluation function
+
 """
 from time import perf_counter as now
 from copy import copy
@@ -97,21 +105,16 @@ POSITION_VALUE_READABLE = {
 POSITION_VALUE = dict()
 for piece_ in POSITION_VALUE_READABLE:
     POSITION_VALUE[piece_.lower()] = [
-        -value for row in POSITION_VALUE_READABLE[piece_] for value in row]
+        PIECE_VALUE[piece_.lower()]-value for row in POSITION_VALUE_READABLE[piece_] for value in row]
     POSITION_VALUE[piece_] = [
-        value for row in POSITION_VALUE_READABLE[piece_].__reversed__() for value in row]
+        PIECE_VALUE[piece_]+value for row in POSITION_VALUE_READABLE[piece_].__reversed__() for value in row]
 transpositionTable = dict()
 total_moves = 0
 time_out_point = now() + 100
 
 
-def evaluate(_board)->float:
-    _score = 0.0
-    for pos in range(64):
-        piece = _board[pos]
-        _score += PIECE_VALUE[piece]
-        _score += POSITION_VALUE[piece][pos]
-    return _score
+def evaluate(board)->float:
+    return sum(POSITION_VALUE[board[pos]][pos] for pos in range(64))
 
 
 def move(board, pos1, pos2):
@@ -155,8 +158,7 @@ def moves(board, _player_is_white: bool):
                                 move(board, pos1, pos2),
                                 POSITION_VALUE[piece][pos2] -
                                 POSITION_VALUE[target_piece][pos2] -
-                                POSITION_VALUE[piece][pos1] -
-                                PIECE_VALUE[target_piece])
+                                POSITION_VALUE[piece][pos1])
                             break
                         else:
                             # then it is taking it's own piece
@@ -181,9 +183,6 @@ def moves(board, _player_is_white: bool):
                                     after_pawn_replacement[pos2] = replacement_piece
                                     yield(
                                         after_pawn_replacement,
-                                        PIECE_VALUE[replacement_piece] -
-                                        PIECE_VALUE[target_piece] -
-                                        PIECE_VALUE[piece] +
                                         POSITION_VALUE[replacement_piece][pos2] -
                                         POSITION_VALUE[target_piece][pos2] -
                                         POSITION_VALUE[piece][pos1])
@@ -192,8 +191,7 @@ def moves(board, _player_is_white: bool):
                                     after_pawn_move,
                                     POSITION_VALUE[piece][pos2] -
                                     POSITION_VALUE[target_piece][pos2] -
-                                    POSITION_VALUE[piece][pos1] -
-                                    PIECE_VALUE[target_piece])
+                                    POSITION_VALUE[piece][pos1])
 
                 # check if pawn can move forwards 1
                 pos2 = pos1 + (8 if _player_is_white else -8)
@@ -207,8 +205,6 @@ def moves(board, _player_is_white: bool):
                             after_pawn_replacement[pos2] = replacement_piece
                             yield(
                                 after_pawn_replacement,
-                                PIECE_VALUE[replacement_piece] -
-                                PIECE_VALUE[piece] +
                                 POSITION_VALUE[replacement_piece][pos2] -
                                 POSITION_VALUE[piece][pos1])
                     else:
@@ -320,7 +316,8 @@ def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
 def main(history, white_time, black_time):
     global transpositionTable
     global time_out_point
-    transpositionTable = dict()
+    if len(history) < 3:
+        transpositionTable = dict()
     start_time = now()
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
@@ -361,6 +358,7 @@ def main(history, white_time, black_time):
             break
     print(f'search depth: {depth}-{depth+1}')
     print(f'expected score: {best_score}')
+    assert len(best_move) == 64
     return [[best_move[x+8*y] for x in range(8)] for y in range(8)]
 
 
@@ -464,10 +462,25 @@ switched back to using lists of lists
 58484			4		0.226	3889
 311780			5		1.751	59593
 152995 leaves searched per second
+changed way moves are counted
+42			1		0.001	0
+252			2		0.004	65
+8266			3		0.073	1977
+58526			4		0.203	3889
+311822			5		1.746	59593
+153933 moves made per second
 switched to using arrays
-213			2		0.001	57
-7536			3		0.043	1657
-16831			4		0.056	2436
-209130			5		1.186	43641
-162497 leaves searched per second
+42			1		0.000	0
+262			2		0.002	64
+8585			3		0.075	2018
+18977			4		0.156	2981
+251061			5		1.476	56693
+146883 moves made per second
+removed PIECE_VALUE
+42			1		0.000	0
+262			2		0.001	64
+8585			3		0.043	2018
+18977			4		0.049	2981
+251061			5		1.347	56693
+174216 moves made per second
 '''

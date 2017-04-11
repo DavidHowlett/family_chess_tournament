@@ -86,9 +86,9 @@ kingSavePosition = [line.split(' ') for line in kingSavePosition.split('\n') if 
 kingSavePosition.reverse()
 
 
-for position in (initialPosition, difficultPosition, promotionPosition, promotionPosition2, pawnTakePosition1,
-                 pawnTakePosition2, kingSavePosition):
-    print(len(list(ai.moves(position, True))))
+#for position in (initialPosition, difficultPosition, promotionPosition, promotionPosition2, pawnTakePosition1,
+#                 pawnTakePosition2, kingSavePosition):
+#    print(len(list(ai.moves(position, True))))
 
 assert len(initialPosition) == 8
 assert len(initialPosition[0]) == 8
@@ -103,9 +103,9 @@ assert len(list(ai.moves(pawnTakePosition2, False))) == 2
 
 def performance_test():
     ai.total_moves = 0
-    test_start_time = now()
     board = difficultPosition
-    for depth in range(2, 6):
+    test_start_time = now()
+    for depth in range(1, 3):
         start_time = now()
         _possible_moves = list(ai.moves(board, True))
         _possible_moves.sort(key=lambda x: x[1], reverse=True)
