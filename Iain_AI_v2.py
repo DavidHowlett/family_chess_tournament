@@ -16,7 +16,7 @@ things todo in order of importance:
     implement pawn double move
 """
 import copy
-import random
+import time
 PIECE_MOVE_DIRECTION = {
     'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
     'k': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
@@ -154,8 +154,8 @@ def moves(board, white_turn):
 def search(board, white_turn, depth):
     best_score = -99900
     for move in moves(board, white_turn):
-        if depth > 0:
-            current_score = search(board, not white_turn, depth - 1)[1]
+        if depth > 1:
+            current_score = search(move, not white_turn, depth - 1)[1]
         else:
             current_score = score(move)
         if not white_turn:
@@ -163,16 +163,28 @@ def search(board, white_turn, depth):
         if current_score > best_score:
             best_move = move
             best_score = current_score
+        # print(current_score, best_score, best_move)
     return best_move, best_score
 
 
 def main(history, white_time, black_time):
+    start_time = time.perf_counter()
     if len(history) % 2 == 1:
         white_turn = True
+        my_time = white_time
     else:
         white_turn = False
+        my_time = black_time
     current_board = history[-1]
-    return search(current_board, white_turn, 2)[0]
+    for depth in range(1, 99):
+        depth = 2
+        best_move, best_score = search(current_board, white_turn, depth)
+        current_time = time.perf_counter()
+        time_spent = current_time - start_time
+        time_remaining = my_time - time_spent
+        print(depth, time_spent, best_score)
+        if time_remaining < 50 * time_spent:
+            return best_move
 
 initialPosition = [
     ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
@@ -184,4 +196,3 @@ initialPosition = [
     ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
     ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']]
 initialPosition.reverse()
-assert score(initialPosition) == 0
