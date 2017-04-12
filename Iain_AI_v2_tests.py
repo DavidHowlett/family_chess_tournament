@@ -15,8 +15,9 @@ taken = '''r . . . . b . r
 . . B Q . . . .
 . . K . B . . .
 . . . . . . . .'''
-x = list([[piece for piece in row.replace(' ', '')] for row in taken.split('\n')].__reversed__())
+x = list([[piece for piece in row.replace(' ', '')] for row in initialPosition.split('\n')].__reversed__())
 
 # print(x)
-best_move, best_score = Iain_AI_v2.search(x, False, 3)
-print(best_score, best_move)
+for depth in range(1, 4):
+    best_move, best_score = Iain_AI_v2.search(x, True, depth)
+    print(best_score, best_move)

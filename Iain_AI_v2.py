@@ -53,9 +53,9 @@ def score(board):
         for x in range(8):
             piece = board[y][x]
             points += PIECE_VALUE[piece]
-            if piece == 'N':
+            if piece.isupper():
                 points += Knight_position_scores[y][x]
-            if piece == 'n':
+            if piece.islower():
                 points -= Knight_position_scores[y][x]
     # print(points)
     return points
@@ -153,13 +153,12 @@ def moves(board, white_turn):
 
 def search(board, white_turn, depth):
     best_score = -99900
+    best_move = board
     for move in moves(board, white_turn):
         if depth > 1:
-            current_score = search(move, not white_turn, depth - 1)[1]
+            current_score = -search(move, not white_turn, depth - 1)[1]
         else:
-            current_score = score(move)
-        if not white_turn:
-            current_score = -current_score
+            current_score = score(move) if white_turn else -score(move)
         if current_score > best_score:
             best_move = move
             best_score = current_score
@@ -176,13 +175,12 @@ def main(history, white_time, black_time):
         white_turn = False
         my_time = black_time
     current_board = history[-1]
-    for depth in range(1, 99):
-        depth = 2
+    for depth in range(1, 999):
         best_move, best_score = search(current_board, white_turn, depth)
         current_time = time.perf_counter()
         time_spent = current_time - start_time
         time_remaining = my_time - time_spent
-        print(depth, time_spent, best_score)
+        print(depth, best_score)
         if time_remaining < 50 * time_spent:
             return best_move
 
