@@ -58,11 +58,12 @@ P . . k p . . .
 . . . . K . N R'''}
 
 for key in boards:
-    position = boards[key].replace(' ', '').replace('\n', '')
-    position = array('u', position)
-    position.reverse()
-    assert len(position) == 64
-    boards[key] = position
+    board = boards[key].replace(' ', '').replace('\n', '')
+    board = array('u', board)
+    board.reverse()
+    assert len(board) == 64
+    board.append(chr(0))
+    boards[key] = board
     # print(len(list(ai.moves(position, True))))
 
 assert abs(ai.evaluate(boards['initialPosition'])) < 0.000001
@@ -87,9 +88,7 @@ def performance_test():
     test_start_time = now()
     for depth in range(1, 6):
         start_time = now()
-        _possible_moves = list(ai.moves(board, True))
-        _possible_moves.sort(key=lambda x: x[1], reverse=True)
-        best_move, _ = ai.search(_possible_moves, depth, ai.evaluate(board), True, -99999, 99999)
+        best_move, _ = ai.search(board, depth, ai.evaluate(board), True, -99999, 99999)
         print('{}\t\t\t{}\t\t{:.3f}\t{}'.format(ai.total_moves, depth, now() - start_time, len(ai.transpositionTable)))
         # print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
     print('{} moves made per second'.format(int(ai.total_moves/(now()-test_start_time))))

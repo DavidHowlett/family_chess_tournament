@@ -2,20 +2,18 @@
 A board is represented by 65 char array.
 The first 64 chars contain the pieces on the board.
 Char 65 contains the castling rights. 
-Char 65 will be 0x00 if all castling is impossible.
-The lowest bit represents castling with the rook on square 0
-The second bit represents castling with the rook on square 7
-the third bit represents castling with the rook on square 56
-the fourth bit represents castling with the rook on square 63
 
 ToDo:
+    - create isCheck function
+    - add strict legal move generation function (look for check and stalemate)
+    - create isStalemate function
+    - make runner end the game when there is checkmate
+    - make runner end the game when there are no legal moves (stalemate)
     - castling
     - en passant
-    - write to the transposition table for the the branches of the root node
-    - add strict legal move generation function (look for check and stalemate)
     - switch to negamax
     - change positional scoring according to the game's phase
-    - discount future scores
+    - score moves towards enemy king more highly
     - aspiration search
     - 
 
@@ -102,6 +100,13 @@ POSITION_VALUE_READABLE = {
         [40, 50, 30, 10, 10, 30, 50, 40]],
     '.': [[0 for _ in range(8)] for _ in range(8)]
 }
+
+# Char 65 will be 0x00 if all castling is impossible.
+BOTTOM_LEFT_CASTLING = 1
+BOTTOM_RIGHT_CASTLING = 2
+TOP_LEFT_CASTLING = 4
+TOP_RIGHT_CASTLING = 8
+ALL_CASTLING = BOTTOM_LEFT_CASTLING + BOTTOM_RIGHT_CASTLING + TOP_LEFT_CASTLING + TOP_RIGHT_CASTLING
 POSITION_VALUE = dict()
 for piece_ in POSITION_VALUE_READABLE:
     POSITION_VALUE[piece_.lower()] = [
@@ -111,6 +116,7 @@ for piece_ in POSITION_VALUE_READABLE:
 transpositionTable = dict()
 total_moves = 0
 time_out_point = now() + 100
+history = []
 
 
 def evaluate(board)->float:
@@ -126,6 +132,23 @@ def move(board, pos1, pos2):
     board[pos2] = board[pos1]
     # remove piece from source
     board[pos1] = '.'
+
+    # most moves don't affect castling rights so I do a fast set membership test
+    if pos1 in {0, 4, 7, 56, 60, 63}:
+        castling_rights = ord(board[64])
+        if pos1 == 0:
+            castling_rights &= ALL_CASTLING - BOTTOM_LEFT_CASTLING
+        elif pos1 == 4:
+            castling_rights &= ALL_CASTLING - BOTTOM_LEFT_CASTLING - BOTTOM_RIGHT_CASTLING
+        elif pos1 == 7:
+            castling_rights &= ALL_CASTLING - BOTTOM_RIGHT_CASTLING
+        elif pos1 == 56:
+            castling_rights &= ALL_CASTLING - TOP_LEFT_CASTLING
+        elif pos1 == 60:
+            castling_rights &= ALL_CASTLING - TOP_LEFT_CASTLING - TOP_RIGHT_CASTLING
+        elif pos1 == 63:
+            castling_rights &= ALL_CASTLING - TOP_RIGHT_CASTLING
+        board[64] = chr(castling_rights)
     return board
 
 
@@ -165,7 +188,6 @@ def moves(board, _player_is_white: bool):
                             break
                         if piece in 'KkNn':
                             break
-
             # pawns are weird
             if piece == 'P' if _player_is_white else piece == 'p':
                 # this section is for captures
@@ -220,6 +242,17 @@ def moves(board, _player_is_white: bool):
                                 move(board, pos1, pos2),
                                 POSITION_VALUE[piece][pos2] -
                                 POSITION_VALUE[piece][pos1])
+    castling_rights = ord(board[64])
+    '''
+    if castling_rights & BOTTOM_LEFT_CASTLING:
+        assert board[0] == 'R' and board[4] == 'K'
+    if castling_rights & BOTTOM_RIGHT_CASTLING:
+        assert board[7] == 'R' and board[4] == 'K'
+    if castling_rights & TOP_LEFT_CASTLING:
+        assert board[56] == 'r' and board[60] == 'k'
+    if castling_rights & TOP_RIGHT_CASTLING:
+        assert board[63] == 'r' and board[60] == 'k'
+    '''
 
 
 def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
@@ -254,7 +287,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # This also stops my engine trading my king now for your king later.
         # I also search deeper then normal if a take is made
         # Note that the comparison is ordered for evaluation speed
-        if depth >= 1 and (depth >=2 or abs(diff) > 0.5) and abs(diff) < 1000:
+        if depth >= 1 and (depth >= 2 or abs(diff) > 0.5) and abs(diff) < 1000:
             # this does not always use move ordering :-( todo
             move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
@@ -290,9 +323,12 @@ def estimated_score(board, previous_cscore, diff, player_is_white):
         return previous_cscore + diff
 
 
-def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
+def search(board, depth, current_cscore, player_is_white, alpha, beta):
     """Implements top level node in alpha_beta tree search, returns a best move"""
     # assert depth > 0
+    # convert the generator of moves to a list and score repeats in the history as 0 (they lead to draws)
+    possible_moves = [(possible_move, 0 if possible_move in history else diff)
+                      for possible_move, diff in moves(board, player_is_white)]
     possible_moves.sort(
         key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
         reverse=player_is_white)
@@ -313,38 +349,49 @@ def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
     return best_move, alpha if player_is_white else beta
 
 
-def main(history, white_time, black_time):
+def main(given_history, white_time, black_time):
     global transpositionTable
     global time_out_point
+    global history
+    start_time = now()
+    history = []
+    # at the beginning of a game all castling options are possible
+    castling_rights = ALL_CASTLING
+    # incrementally update the castling rights
+    for board in given_history:
+        board = array('u', (piece for row in board for piece in row))
+        if board[0] != 'R':
+            castling_rights &= ALL_CASTLING - BOTTOM_LEFT_CASTLING
+        if board[7] != 'R':
+            castling_rights &= ALL_CASTLING - BOTTOM_RIGHT_CASTLING
+        if board[56] != 'r':
+            castling_rights &= ALL_CASTLING - TOP_LEFT_CASTLING
+        if board[63] != 'r':
+            castling_rights &= ALL_CASTLING - TOP_RIGHT_CASTLING
+        if board[4] != 'K':
+            castling_rights &= ALL_CASTLING - BOTTOM_LEFT_CASTLING - BOTTOM_RIGHT_CASTLING
+        if board[60] != 'k':
+            castling_rights &= ALL_CASTLING - TOP_LEFT_CASTLING - TOP_RIGHT_CASTLING
+        board.append(chr(castling_rights))
+        history.append(board)
+    current_board = history[-1]
+    print(current_board)
     if len(history) < 3:
         transpositionTable = dict()
-    start_time = now()
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
     time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
-    current_board = array('u', (piece for row in history[-1] for piece in row))
     current_score = evaluate(current_board)
-    possible_moves = list(moves(current_board, player_is_white))
-    if not possible_moves:
-        raise StalemateException
-    if (current_score < -1100) if player_is_white else (current_score > 1100):
-        # if I am losing badly and in a loop then call a draw
-        if len(history) > 9 and history[-1] == history[-5] == history[-9]:
-            raise ThreeFoldRepetition
-    else:
-        # otherwise avoid repeated states
-        repeat_free_moves = [m for m in possible_moves if m[0] not in history]
-        if repeat_free_moves:
-            # only remove repeats if there are still choices remaining
-            possible_moves = repeat_free_moves
+    assert type(history[-1]) == type(current_board)
     best_move = None
     alpha = -99999
     beta = 99999
-    # 5 depth search can take 13.149 seconds in worst case seen so far :-(
     for depth in range(1, 10):
         search_start_time = now()
         try:
-            best_move, best_score = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
+            best_move, best_score = search(current_board, depth, current_score, player_is_white, alpha, beta)
+            # the transposition table write is inside the try: to ensure it is only written when the search completes
+            transpositionTable[current_board.tobytes()] = best_score, 'exact', depth
         except TimeoutError:
             print('internal timeout')
             break
@@ -358,7 +405,11 @@ def main(history, white_time, black_time):
             break
     print(f'search depth: {depth}-{depth+1}')
     print(f'expected score: {best_score}')
-    assert len(best_move) == 64
+    # if I am losing badly and in a loop then call a draw
+    if ((best_score < -400) if player_is_white else (best_score > 400) and
+            len(history) > 9 and history[-1] == history[-5] == history[-9]):
+        raise ThreeFoldRepetition
+    assert len(best_move) == 65
     return [[best_move[x+8*y] for x in range(8)] for y in range(8)]
 
 
@@ -479,8 +530,22 @@ switched to using arrays
 removed PIECE_VALUE
 42			1		0.000	0
 262			2		0.001	64
-8585			3		0.043	2018
-18977			4		0.049	2981
-251061			5		1.347	56693
-174216 moves made per second
+8585			3		0.054	2018
+18977			4		0.052	2981
+251061			5		1.378	56693
+169003 moves made per second
+added tracking of castling rights
+42			1		0.000	0
+262			2		0.002	64
+8585			3		0.055	2018
+18977			4		0.076	2981
+251061			5		1.666	56693
+139514 moves made per second
+make tracking of castling rights more efficient
+42			1		0.001	0
+262			2		0.004	64
+8585			3		0.067	2018
+18977			4		0.062	2981
+251061			5		1.507	56693
+153069 moves made per second
 '''
