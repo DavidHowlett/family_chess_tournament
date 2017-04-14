@@ -31,8 +31,8 @@ PIECE_MOVE_DIRECTION = {
 }
 PIECE_VALUE = {
     '.': 0,
-    'K': 20_000, 'Q': 900, 'R': 500, 'B': 300, 'N': 300, 'P': 100,
-    'k': -20_000, 'q': -900, 'r': -500, 'b': -300, 'n': -300, 'p': -100
+    'K': 20_000_000, 'Q': 900, 'R': 500, 'B': 300, 'N': 300, 'P': 100,
+    'k': -20_000_000, 'q': -900, 'r': -500, 'b': -300, 'n': -300, 'p': -100
 }
 
 # knight
@@ -152,7 +152,7 @@ def moves(board, white_turn):
 
 
 def search(board, white_turn, depth):
-    best_score = -99900
+    best_score = -99_900_000  # this will only matter if there are no moves and avoids crashing runner
     best_move = board
     for move in moves(board, white_turn):
         if depth > 1:
@@ -182,6 +182,8 @@ def main(history, white_time, black_time):
         time_remaining = my_time - time_spent
         print(depth, best_score)
         if time_remaining < 50 * time_spent:
+            return best_move
+        if abs(best_score) > 1_000_000:  # detect king take
             return best_move
 
 initialPosition = [
