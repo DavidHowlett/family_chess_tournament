@@ -58,10 +58,10 @@ P . . k p . . .
 . . . . K . N R'''}
 
 for key in boards:
-    board = boards[key].replace(' ', '').replace('\n', '')
-    board = array('u', board)
+    board = boards[key].replace(' ', '').split()
+    board = array('u', ''.join('_'*8+row for row in board))
     board.reverse()
-    assert len(board) == 64
+    assert len(board) == 128
     board.append(chr(0))
     boards[key] = board
     # print(len(list(ai.moves(position, True))))
@@ -74,12 +74,12 @@ assert len(list(ai.moves(boards['pawnTakePosition1'], False))) == 3
 assert len(list(ai.moves(boards['pawnTakePosition2'], True))) == 3
 assert len(list(ai.moves(boards['pawnTakePosition2'], False))) == 2
 
-assert ai.POSITION_VALUE['R'][0] < ai.POSITION_VALUE['R'][63]
-assert ai.POSITION_VALUE['N'][3+4*8] == ai.POSITION_VALUE['N'][4+3*8]
-assert ai.POSITION_VALUE['N'][3+4*8] == -ai.POSITION_VALUE['n'][3+4*8]
-assert ai.POSITION_VALUE['P'][8] < ai.POSITION_VALUE['P'][8*5]
-assert ai.POSITION_VALUE['p'][8*6] > ai.POSITION_VALUE['p'][8*2]
-assert ai.POSITION_VALUE['P'][8*4] < ai.POSITION_VALUE['P'][4+8*4]
+assert ai.POSITION_VALUE['R'][0] < ai.POSITION_VALUE['R'][7+7*16]
+assert ai.POSITION_VALUE['N'][3+4*16] == ai.POSITION_VALUE['N'][4+3*16]
+assert ai.POSITION_VALUE['N'][3+4*16] == -ai.POSITION_VALUE['n'][3+4*16]
+assert ai.POSITION_VALUE['P'][16] < ai.POSITION_VALUE['P'][5*16]
+assert ai.POSITION_VALUE['p'][6*16] > ai.POSITION_VALUE['p'][2*16]
+assert ai.POSITION_VALUE['P'][4*16] < ai.POSITION_VALUE['P'][4+4*16]
 
 
 def performance_test():
