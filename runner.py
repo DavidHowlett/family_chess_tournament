@@ -24,8 +24,8 @@ competitorNames = [
     'Michael_AI_v1_0',
     'Robert_AI',
     'Iain_AI_v2',
-    # 'Iain_AI_v1',
-    # 'no_move_AI',
+    'Iain_AI_v1',
+    'no_move_AI',
     'random_AI',
     # 'Human_player'
 ]

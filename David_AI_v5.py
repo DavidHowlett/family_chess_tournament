@@ -316,7 +316,7 @@ def main(history, white_time, black_time):
         if abs(best_score) > 100:
             # print('check mate is expected')
             break
-    # print(depth)
+    print(depth)
     return [[piece for piece in line] for line in best_move]
 
 

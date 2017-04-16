@@ -185,6 +185,7 @@ def main(history, white_time, black_time):
     final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s[2])
     final_board = final_state[0]
     predicted_score = initial_state[2]
+    print(global_depth)
     return [[piece for piece in line] for line in final_board]
 
 # below are the settings for the algorithm

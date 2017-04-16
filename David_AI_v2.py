@@ -211,6 +211,7 @@ def main(history, white_time, black_time):
         final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'] + s['score'])
     elif global_depth == 1:
         final_state = (max if player_is_white else min)(possible_moves, key=lambda s: s['diff'])
+    print(global_depth)
     return [[piece for piece in line] for line in final_state['board']]
 
 global_depth = 3
