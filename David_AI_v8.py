@@ -3,7 +3,7 @@ A board is represented by 128 char array
 
 ToDo:
     - create isCheck function
-    - castling move generation
+    - use isCheck in castling
     - add strict legal move generation function (look for check and stalemate)
     - create isStalemate function
     - make runner end the game when there is checkmate
@@ -19,20 +19,17 @@ ToDo:
 from time import perf_counter as now
 from copy import copy
 from array import array
+from itertools import count
 from shared import ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
-    'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
-    'k': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'Q': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
-    'q': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'R': ((1, 0), (0, 1), (-1, 0), (0, -1)),
-    'r': ((1, 0), (0, 1), (-1, 0), (0, -1)),
-    'B': ((1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'b': ((1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'N': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
-    'n': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
-}
+    'R': (1, 16, -1, -16),
+    'B': (1+16, 1-16, 16-1, -1-16),
+    'N': (1+2*16, 1-2*16, -1+2*16, -1-2*16, 2+16, 2-16, -2+16, -2-16)}
+PIECE_MOVE_DIRECTION['K'] = PIECE_MOVE_DIRECTION['R'] + PIECE_MOVE_DIRECTION['B']
+PIECE_MOVE_DIRECTION['Q'] = PIECE_MOVE_DIRECTION['K']
+for _piece in copy(PIECE_MOVE_DIRECTION):
+    PIECE_MOVE_DIRECTION[_piece.lower()] = PIECE_MOVE_DIRECTION[_piece]
 PIECE_VALUE = {
     '.': 0,
     'K': 20000, 'Q': 975, 'R': 500, 'B': 335, 'N': 325, 'P': 100,
@@ -87,6 +84,7 @@ POSITION_VALUE_READABLE = {
         [0, 0, 1, 2, 2, 1, 0, 0],
         [0, 0, 1, 1, 1, 1, 0, 0],
         [-5, -5, -5, -5, -5, -5, -5, -5]],
+    # this should change with the game's phase
     'K': [
         [-40, -30, -50, -70, -70, -50, -30, -40],
         [-30, -20, -40, -60, -60, -40, -20, -30],
@@ -98,13 +96,12 @@ POSITION_VALUE_READABLE = {
         [40, 50, 30, 10, 10, 30, 50, 40]],
     '.': [[0 for _ in range(8)] for _ in range(8)]
 }
-
-# The castling char will be 0x00 if all castling is impossible.
-BOTTOM_LEFT_CASTLING = 1
-BOTTOM_RIGHT_CASTLING = 2
-TOP_LEFT_CASTLING = 4
-TOP_RIGHT_CASTLING = 8
-ALL_CASTLING = BOTTOM_LEFT_CASTLING + BOTTOM_RIGHT_CASTLING + TOP_LEFT_CASTLING + TOP_RIGHT_CASTLING
+# The last 4 chars of the board contain the castling rights.
+# If the char is true then castling is allowed
+BOTTOM_LEFT_CASTLING = 124
+BOTTOM_RIGHT_CASTLING = 125
+TOP_LEFT_CASTLING = 126
+TOP_RIGHT_CASTLING = 127
 POSITION_VALUE = dict()
 for piece_ in POSITION_VALUE_READABLE:
     POSITION_VALUE[piece_] = []
@@ -116,6 +113,9 @@ for piece_ in POSITION_VALUE_READABLE:
         POSITION_VALUE[piece_.lower()].extend(
             [-PIECE_VALUE[piece_]-value for value in row.__reversed__()]+[None]*8)
 assert len(POSITION_VALUE['K']) == 128
+# valid positions
+valid_pos = [x+16*y for x in range(8) for y in range(8)]
+assert len(valid_pos) == 64
 transpositionTable = dict()
 total_moves = 0
 time_out_point = now() + 100
@@ -139,124 +139,154 @@ def move(board, pos1, pos2):
     # most moves don't affect castling rights so I do a fast set membership test
     if pos1 in {0, 4, 7,
                 0+7*16, 4+7*16, 7+7*16}:
-        castling_rights = ord(board[127])
         if pos1 == 0:
-            castling_rights &= ALL_CASTLING - BOTTOM_LEFT_CASTLING
+            board[BOTTOM_LEFT_CASTLING] = '\0'
         elif pos1 == 4:
-            castling_rights &= ALL_CASTLING - BOTTOM_LEFT_CASTLING - BOTTOM_RIGHT_CASTLING
+            board[BOTTOM_LEFT_CASTLING] = board[BOTTOM_RIGHT_CASTLING] = '\0'
         elif pos1 == 7:
-            castling_rights &= ALL_CASTLING - BOTTOM_RIGHT_CASTLING
+            board[BOTTOM_RIGHT_CASTLING] = '\0'
         elif pos1 == 0+7*16:
-            castling_rights &= ALL_CASTLING - TOP_LEFT_CASTLING
+            board[TOP_LEFT_CASTLING] = '\0'
         elif pos1 == 4+7*16:
-            castling_rights &= ALL_CASTLING - TOP_LEFT_CASTLING - TOP_RIGHT_CASTLING
+            board[TOP_LEFT_CASTLING] = board[TOP_RIGHT_CASTLING] = '\0'
         elif pos1 == 7+7*16:
-            castling_rights &= ALL_CASTLING - TOP_RIGHT_CASTLING
-        board[127] = chr(castling_rights)
+            board[TOP_RIGHT_CASTLING] = '\0'
     return board
 
 
 def moves(board, _player_is_white: bool):
     """This generates a list of all possible game states after one move.
     Preferred moves should be later in the returned list."""
-    for x in range(8):
-        for y in range(8):
-            pos1 = x+16*y
-            piece = board[pos1]
-            if piece in 'KQRBN' if _player_is_white else piece in 'kqrbn':
-                for xd, yd in PIECE_MOVE_DIRECTION[piece]:
-                    for i in range(1, 100):
-                        x2 = x+i*xd
-                        y2 = y+i*yd
-                        if not (0 <= x2 <= 7 and 0 <= y2 <= 7):
-                            # then it is a move off the board
-                            break
-                        pos2 = x2+16*y2
-                        target_piece = board[pos2]
-                        if target_piece == '.':
-                            # then it is moving into an empty square
-                            yield (
-                                move(board, pos1, pos2),
-                                POSITION_VALUE[piece][pos2] -
-                                POSITION_VALUE[piece][pos1])
-                        elif target_piece.islower() if _player_is_white else target_piece.isupper():
-                            # then it is taking an opponent's piece
-                            yield (
-                                move(board, pos1, pos2),
-                                POSITION_VALUE[piece][pos2] -
-                                POSITION_VALUE[target_piece][pos2] -
-                                POSITION_VALUE[piece][pos1])
-                            break
-                        else:
-                            # then it is taking it's own piece
-                            break
-                        if piece in 'KkNn':
-                            break
-            # pawns are weird
-            if piece == 'P' if _player_is_white else piece == 'p':
-                # this section is for captures
-                for xd in (1, -1):
-                    if 0 <= x+xd <= 7:
-                        pos2 = pos1 + xd + (16 if _player_is_white else -16)
-                        target_piece = board[pos2]
-                        if target_piece.islower() if _player_is_white else target_piece.isupper():
-                            # then a take is possible
-                            after_pawn_move = move(board, pos1, pos2)
-                            if pos2 >= (7*16) if _player_is_white else pos2 < 8:
-                                # then the end of the board has been reached and promotion is needed
-                                for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
-                                    after_pawn_replacement = copy(after_pawn_move)
-                                    after_pawn_replacement[pos2] = replacement_piece
-                                    yield(
-                                        after_pawn_replacement,
-                                        POSITION_VALUE[replacement_piece][pos2] -
-                                        POSITION_VALUE[target_piece][pos2] -
-                                        POSITION_VALUE[piece][pos1])
-                            else:
-                                yield(
-                                    after_pawn_move,
-                                    POSITION_VALUE[piece][pos2] -
-                                    POSITION_VALUE[target_piece][pos2] -
-                                    POSITION_VALUE[piece][pos1])
-
-                # check if pawn can move forwards 1
-                pos2 = pos1 + (16 if _player_is_white else -16)
-                if board[pos2] == '.':
-                    # check if pawn can be promoted
+    for pos1 in valid_pos:
+        piece = board[pos1]
+        if piece in 'KQRBN' if _player_is_white else piece in 'kqrbn':
+            for direction in PIECE_MOVE_DIRECTION[piece]:
+                for pos2 in count(pos1+direction, direction):
+                    if pos2 & 0x88:
+                        # then it is a move off the board
+                        break
+                    target_piece = board[pos2]
+                    if target_piece == '.':
+                        # then it is moving into an empty square
+                        yield (
+                            move(board, pos1, pos2),
+                            POSITION_VALUE[piece][pos2] -
+                            POSITION_VALUE[piece][pos1])
+                    elif target_piece.islower() if _player_is_white else target_piece.isupper():
+                        # then it is taking an opponent's piece
+                        yield (
+                            move(board, pos1, pos2),
+                            POSITION_VALUE[piece][pos2] -
+                            POSITION_VALUE[target_piece][pos2] -
+                            POSITION_VALUE[piece][pos1])
+                        break
+                    else:
+                        # then it is taking it's own piece
+                        break
+                    if piece in 'KkNn':
+                        break
+        # pawns are weird
+        if piece == 'P' if _player_is_white else piece == 'p':
+            # this section is for captures
+            for pos2 in (pos1+1+16, pos1-1+16) if _player_is_white else (pos1+1-16, pos1-1-16):
+                if pos2 & 0x88:
+                    continue
+                target_piece = board[pos2]
+                if target_piece.islower() if _player_is_white else target_piece.isupper():
+                    # then a take is possible
+                    after_pawn_move = move(board, pos1, pos2)
                     if pos2 >= (7*16) if _player_is_white else pos2 < 8:
-                        after_pawn_move = move(board, pos1, pos2)
-                        # add each possible promotion to _moves
+                        # then the end of the board has been reached and promotion is needed
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
                             after_pawn_replacement = copy(after_pawn_move)
                             after_pawn_replacement[pos2] = replacement_piece
                             yield(
                                 after_pawn_replacement,
                                 POSITION_VALUE[replacement_piece][pos2] -
+                                POSITION_VALUE[target_piece][pos2] -
                                 POSITION_VALUE[piece][pos1])
                     else:
+                        yield(
+                            after_pawn_move,
+                            POSITION_VALUE[piece][pos2] -
+                            POSITION_VALUE[target_piece][pos2] -
+                            POSITION_VALUE[piece][pos1])
+
+            # Check if pawn can move forwards 1
+            # Note that there is no need to check for moving off the edge of the board
+            # due to pawns on the back row always being promoted.
+            pos2 = pos1 + (16 if _player_is_white else -16)
+            if board[pos2] == '.':
+                # check if pawn can be promoted
+                if pos2 >= (7*16) if _player_is_white else pos2 < 8:
+                    after_pawn_move = move(board, pos1, pos2)
+                    # add each possible promotion to _moves
+                    for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
+                        after_pawn_replacement = copy(after_pawn_move)
+                        after_pawn_replacement[pos2] = replacement_piece
+                        yield(
+                            after_pawn_replacement,
+                            POSITION_VALUE[replacement_piece][pos2] -
+                            POSITION_VALUE[piece][pos1])
+                else:
+                    yield(
+                        move(board, pos1, pos2),
+                        POSITION_VALUE[piece][pos2] -
+                        POSITION_VALUE[piece][pos1])
+                # check if pawn can move forwards 2
+                if pos1 < 32 if _player_is_white else pos1 >= 6*16 :
+                    pos2 = pos1 + (32 if _player_is_white else -32)
+                    if board[pos2] == '.':
                         yield(
                             move(board, pos1, pos2),
                             POSITION_VALUE[piece][pos2] -
                             POSITION_VALUE[piece][pos1])
-                    # check if pawn can move forwards 2
-                    if y == 1 if _player_is_white else y == 6:
-                        pos2 = pos1 + (32 if _player_is_white else -32)
-                        if board[pos2] == '.':
-                            yield(
-                                move(board, pos1, pos2),
-                                POSITION_VALUE[piece][pos2] -
-                                POSITION_VALUE[piece][pos1])
-    castling_rights = ord(board[127])
-    '''
-    if castling_rights & BOTTOM_LEFT_CASTLING:
-        assert board[0] == 'R' and board[4] == 'K'
-    if castling_rights & BOTTOM_RIGHT_CASTLING:
-        assert board[7] == 'R' and board[4] == 'K'
-    if castling_rights & TOP_LEFT_CASTLING:
-        assert board[56] == 'r' and board[60] == 'k'
-    if castling_rights & TOP_RIGHT_CASTLING:
-        assert board[63] == 'r' and board[60] == 'k'
-    '''
+    # TODO this should check if the king is moving into, out of or through check
+    if _player_is_white:
+        if (board[BOTTOM_LEFT_CASTLING] and
+                board[0] == 'R' and
+                board[1] == '.' and
+                board[2] == '.' and
+                board[3] == '.' and
+                board[4] == 'K'):
+            yield castle(board, 0, 4, 3, 2)
+        if (board[BOTTOM_RIGHT_CASTLING] and
+                board[7] == 'R' and
+                board[6] == '.' and
+                board[5] == '.' and
+                board[4] == 'K'):
+            yield castle(board, 7, 4, 5, 6)
+    else:
+        if (board[TOP_LEFT_CASTLING] and
+                board[0+7*16] == 'r' and
+                board[1+7*16] == '.' and
+                board[2+7*16] == '.' and
+                board[3+7*16] == '.' and
+                board[4+7*16] == 'k'):
+            yield castle(board, 0+7*16, 4+7*16, 3+7*16, 2+7*16)
+        if (board[TOP_RIGHT_CASTLING] and
+                board[7+7*16] == 'r' and
+                board[6+7*16] == '.' and
+                board[5+7*16] == '.' and
+                board[4+7*16] == 'k'):
+            yield castle(board, 7+7*16, 4+7*16, 5+7*16, 6+7*16)
+
+
+def castle(board, old_rook_location, old_king_location, new_rook_location, new_king_location):
+    board = copy(board)
+    board[new_rook_location] = board[old_rook_location]
+    board[new_king_location] = board[old_king_location]
+    board[old_rook_location] = board[old_king_location] = '.'
+    if old_king_location == 4:
+        board[BOTTOM_LEFT_CASTLING] = board[BOTTOM_RIGHT_CASTLING] = '\0'
+    else:
+        board[TOP_LEFT_CASTLING] = board[TOP_RIGHT_CASTLING] = '\0'
+    return (
+        board,
+        POSITION_VALUE['R'][new_rook_location] +
+        POSITION_VALUE['K'][new_king_location] -
+        POSITION_VALUE['R'][old_rook_location] -
+        POSITION_VALUE['K'][old_king_location])
 
 
 def under_attack(board, pos, side):
@@ -363,35 +393,62 @@ def search(board, depth, current_cscore, player_is_white, alpha, beta):
     return best_move, alpha if player_is_white else beta
 
 
+def to_array(given_history: [[str]] or [[[str]]]) -> array or [array]:
+    """Converts boards from a list of lists to arrays"""
+    # shortcut the method if only given a single board
+    if type(given_history[0][0]) == str:
+        return array('u', ''.join(''.join(row)+'_'*8 for row in given_history))
+    assert len(given_history[0]) == 8
+    assert len(given_history[0][0]) == 8
+    _history = []
+    # at the beginning of a game all castling options are possible
+    castling_rights = array('u', '____')
+    # incrementally update the castling rights
+    for given_board in given_history:
+        board = array('u', ''.join(''.join(row)+'_'*8 for row in given_board))
+        if board[0] != 'R':
+            castling_rights[0] = '\0'
+        if board[4] != 'K':
+            castling_rights[0] = castling_rights[1] = '\0'
+        if board[7] != 'R':
+            castling_rights[1] = '\0'
+        if board[0+7*16] != 'r':
+            castling_rights[2] = '\0'
+        if board[4+7*16] != 'k':
+            castling_rights[2] = castling_rights[3] = '\0'
+        if board[7+7*16] != 'r':
+            castling_rights[3] = '\0'
+        board[-4:] = castling_rights
+        _history.append(board)
+    return _history
+
+
+def from_array(given_history: array or [array]) -> [[str]] or [[[str]]]:
+    """Converts boards from arrays to lists of lists"""
+    if type(given_history) == array:
+        array_board = given_history
+        list_of_lists = [[array_board[x + 16 * y] for x in range(8)] for y in range(8)]
+        assert type(list_of_lists) == list
+        assert type(list_of_lists[0]) == list
+        return list_of_lists
+    _history = [[[
+        array_board[x + 16 * y] for x in range(8)] for y in range(8)]
+        for array_board in given_history]
+    assert type(_history) == list
+    assert type(_history[0]) == list
+    assert type(_history[0][0]) == list
+    return _history
+
+
 def main(given_history, white_time, black_time):
     global transpositionTable
     global time_out_point
     global history
     start_time = now()
-    history = []
-    # at the beginning of a game all castling options are possible
-    castling_rights = ALL_CASTLING
-    # incrementally update the castling rights
-    for given_board in given_history:
-        board = array('u', ''.join(''.join(row)+'_'*8 for row in given_board))
-        if board[0] != 'R':
-            castling_rights &= ALL_CASTLING - BOTTOM_LEFT_CASTLING
-        if board[4] != 'K':
-            castling_rights &= ALL_CASTLING - BOTTOM_LEFT_CASTLING - BOTTOM_RIGHT_CASTLING
-        if board[7] != 'R':
-            castling_rights &= ALL_CASTLING - BOTTOM_RIGHT_CASTLING
-        if board[7*16] != 'r':
-            castling_rights &= ALL_CASTLING - TOP_LEFT_CASTLING
-        if board[4+7*16] != 'k':
-            castling_rights &= ALL_CASTLING - TOP_LEFT_CASTLING - TOP_RIGHT_CASTLING
-        if board[7+4*16] != 'r':
-            castling_rights &= ALL_CASTLING - TOP_RIGHT_CASTLING
-        board[127] = chr(castling_rights)
-        history.append(board)
+    history = to_array(given_history)
     current_board = history[-1]
     assert len(current_board) == 128
     assert type(history[-1]) == type(current_board)
-    # print(current_board)
     if len(history) < 3:
         transpositionTable = dict()
     player_is_white = len(history) % 2 == 1
@@ -425,7 +482,7 @@ def main(given_history, white_time, black_time):
             len(history) > 9 and history[-1] == history[-5] == history[-9]):
         raise ThreeFoldRepetition
     assert len(best_move) == 128
-    return [[best_move[x+16*y] for x in range(8)] for y in range(8)]
+    return from_array(best_move)
 
 
 '''
@@ -570,4 +627,18 @@ switched to unoptimised 0x88 representation
 18984			4		0.082	2986
 252137			5		1.962	57081
 120205 moves made per second
+optimised 0x88 move generation
+42			1		0.000	0
+262			2		0.001	64
+8589			3		0.043	2018
+18986			4		0.057	2981
+251283			5		1.316	56691
+177237 moves made per second
+implemented castling & changed move generation order
+42			1		0.000	0
+252			2		0.001	65
+8353			3		0.060	1989
+59137			4		0.179	3921
+315452			5		1.253	60681
+211089 moves made per second
 '''

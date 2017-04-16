@@ -1,6 +1,7 @@
 results/*
 !results/place holder
 tournament results.txt
+junk*
 .dropbox
 .cache/
 __pycache__

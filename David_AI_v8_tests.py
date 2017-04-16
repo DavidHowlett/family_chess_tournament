@@ -2,7 +2,8 @@ import David_AI_v8 as ai
 from array import array
 from time import perf_counter as now
 
-boards = {'initialPosition': '''
+boards = {
+    'initialPosition': '''
 r n b q k b n r
 p p p p p p p p
 . . . . . . . .
@@ -11,7 +12,7 @@ p p p p p p p p
 . . . . . . . .
 P P P P P P P P
 R N B Q K B N R''',
-'difficultPosition': '''
+    'difficultPosition': '''
 r . b q . . . r
 p p p p n k p p
 . . n b . p . .
@@ -20,7 +21,7 @@ p p p p n k p p
 P . . P B N . .
 . P . . P P P P
 R . . Q K B . R''',
-'promotionPosition': '''
+    'promotionPosition': '''
 r . . . . . . .
 . P . P . . . .
 . . . . . . . .
@@ -29,7 +30,7 @@ r . . . . . . .
 . . . . . . . .
 . . . . p . p .
 . . . . . . . R''',
-'pawnTakePosition1': '''
+    'pawnTakePosition1': '''
 . . . . . . . .
 . . . p . . . .
 . . . . P . . .
@@ -38,7 +39,7 @@ r . . . . . . .
 . . . . . . . .
 . . . . . . . .
 . . . . . . . .''',
-'pawnTakePosition2': '''
+    'pawnTakePosition2': '''
 . . . . . . . .
 . . . . . . . .
 . . . . . . . .
@@ -47,7 +48,7 @@ r . . . . . . .
 . . . p . . . .
 . . . . P . . .
 . . . . . . . .''',
-'kingSavePosition':'''
+    'kingSavePosition': '''
 r . . . . . . .
 p . . . . . . .
 P . . k p . . .
@@ -55,17 +56,24 @@ P . . k p . . .
 . . . . Q . . .
 . . . p . . P .
 . . . . . . . P
-. . . . K . N R'''}
+. . . . K . N R''',
+    'castlingPosition': '''
+r . . . k . . r
+p . . . . . . p
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+P . . . . . . P
+R . . . K . . R'''
+}
 
 for key in boards:
-    board = boards[key].replace(' ', '').split()
-    board = array('u', ''.join('_'*8+row for row in board))
-    board.reverse()
+    board = boards[key].replace(' ', '').split().__reversed__()
+    board = array('u', ''.join(row+'_'*8 for row in board))
     assert len(board) == 128
-    board.append(chr(0))
     boards[key] = board
     # print(len(list(ai.moves(position, True))))
-
 assert abs(ai.evaluate(boards['initialPosition'])) < 0.000001
 assert len(list(ai.moves(boards['initialPosition'], True))) == 20
 assert len(list(ai.moves(boards['difficultPosition'], True))) == 42
@@ -73,7 +81,8 @@ assert len(list(ai.moves(boards['pawnTakePosition1'], True))) == 2
 assert len(list(ai.moves(boards['pawnTakePosition1'], False))) == 3
 assert len(list(ai.moves(boards['pawnTakePosition2'], True))) == 3
 assert len(list(ai.moves(boards['pawnTakePosition2'], False))) == 2
-
+assert len(list(ai.moves(boards['castlingPosition'], True))) == 16
+assert len(list(ai.moves(boards['castlingPosition'], False))) == 16
 assert ai.POSITION_VALUE['R'][0] < ai.POSITION_VALUE['R'][7+7*16]
 assert ai.POSITION_VALUE['N'][3+4*16] == ai.POSITION_VALUE['N'][4+3*16]
 assert ai.POSITION_VALUE['N'][3+4*16] == -ai.POSITION_VALUE['n'][3+4*16]

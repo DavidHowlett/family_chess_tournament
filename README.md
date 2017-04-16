@@ -3,7 +3,8 @@
 Christmas 2016 the 3 Howlett brothers competed to see who could produce the best chess AI. 
 We agreed to build our AI's without looking at any of the existing literature or code on the subject.
 David, Robert and Micheal all produced functional chess AI's in python.
-David's AI was winning by the end of the christmas holidays. 
+David's AI was winning by the end of the christmas holidays.
+After the christmas holidays we looked at the existing literature.
 
 # How to play
 
@@ -32,7 +33,7 @@ A player loses if:
 - Their time remaining hits 0
 - Their king is taken (checking for the king being taken is a little easier then checking for checkmate)
 
-Currently the runner will call a draw after 150 moves to prevent infinite games. 
+Currently the runner will call a draw after 300 moves to prevent infinite games. 
 This maximum may be increased in future. 
 
 If a player wants to call a draw they should raise one of the exceptions in shared.py 
