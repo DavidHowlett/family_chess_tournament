@@ -13,8 +13,6 @@ ToDo:
     - change positional scoring according to the game's phase
     - score moves towards enemy king more highly
     - aspiration search
-    - 
-
 """
 from time import perf_counter as now
 from copy import copy
@@ -274,8 +272,8 @@ def moves(board, _player_is_white: bool):
 
 def castle(board, old_rook_location, old_king_location, new_rook_location, new_king_location):
     board = copy(board)
-    board[new_rook_location] = board[old_rook_location]
-    board[new_king_location] = board[old_king_location]
+    board[new_rook_location] = rook = board[old_rook_location]
+    board[new_king_location] = king = board[old_king_location]
     board[old_rook_location] = board[old_king_location] = '.'
     if old_king_location == 4:
         board[BOTTOM_LEFT_CASTLING] = board[BOTTOM_RIGHT_CASTLING] = '\0'
@@ -283,10 +281,10 @@ def castle(board, old_rook_location, old_king_location, new_rook_location, new_k
         board[TOP_LEFT_CASTLING] = board[TOP_RIGHT_CASTLING] = '\0'
     return (
         board,
-        POSITION_VALUE['R'][new_rook_location] +
-        POSITION_VALUE['K'][new_king_location] -
-        POSITION_VALUE['R'][old_rook_location] -
-        POSITION_VALUE['K'][old_king_location])
+        POSITION_VALUE[rook][new_rook_location] +
+        POSITION_VALUE[king][new_king_location] -
+        POSITION_VALUE[rook][old_rook_location] -
+        POSITION_VALUE[king][old_king_location])
 
 
 def under_attack(board, pos, side):
@@ -300,7 +298,8 @@ def under_attack(board, pos, side):
 
 def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
-    # assert abs(current_cscore - evaluate(board)) < 0.001
+    # if abs(current_cscore - evaluate(board)) > 0.1:
+    #    print(current_cscore, evaluate(board), board)
     # assert len(board) == 128
     # lookup the current node to see if it has already been searched
     key = board.tobytes() + (b'w' if player_is_white else b'b')
@@ -478,8 +477,9 @@ def main(given_history, white_time, black_time):
     print(f'search depth: {depth}-{depth+1}')
     print(f'expected score: {best_score}')
     # if I am losing badly and in a loop then call a draw
-    if ((best_score < -400) if player_is_white else (best_score > 400) and
+    if (((best_score < -400) if player_is_white else (best_score > 400)) and
             len(history) > 9 and history[-1] == history[-5] == history[-9]):
+        print(history)
         raise ThreeFoldRepetition
     assert len(best_move) == 128
     return from_array(best_move)

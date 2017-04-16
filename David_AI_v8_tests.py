@@ -65,7 +65,16 @@ p . . . . . . p
 . . . . . . . .
 . . . . . . . .
 P . . . . . . P
-R . . . K . . R'''
+R . . . K . . R''',
+    'currentBug': '''
+. . . . . r k r
+. p . . . . . p
+p . . . . . . .
+. . . . . p . .
+. . n N . B . .
+. . N . . . . P
+P K . . . P P .
+. . . R . . . R'''
 }
 
 for key in boards:
@@ -93,11 +102,11 @@ assert ai.POSITION_VALUE['P'][4*16] < ai.POSITION_VALUE['P'][4+4*16]
 
 def performance_test():
     ai.total_moves = 0
-    board = boards['difficultPosition']
+    _board = boards['difficultPosition']
     test_start_time = now()
     for depth in range(1, 6):
         start_time = now()
-        best_move, _ = ai.search(board, depth, ai.evaluate(board), True, -99999, 99999)
+        best_move, _ = ai.search(_board, depth, ai.evaluate(_board), True, -99999, 99999)
         print('{}\t\t\t{}\t\t{:.3f}\t{}'.format(ai.total_moves, depth, now() - start_time, len(ai.transpositionTable)))
         # print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
     print('{} moves made per second'.format(int(ai.total_moves/(now()-test_start_time))))
