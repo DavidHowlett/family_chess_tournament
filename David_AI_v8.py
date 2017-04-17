@@ -3,7 +3,7 @@ A board is represented by 128 char array
 
 ToDo:
     - play more matches to better ascertain the score
-    - score repeated positions differently
+    - score repeated positions differently as they lead to draws
     - create isCheck function
     - use isCheck in castling
     - add strict legal move generation function (look for check and stalemate)
@@ -460,7 +460,7 @@ def main(given_history, white_time, black_time):
         search_run_time = now() - search_start_time
         # print(f'{depth}  {search_run_time:.3f}')
         time_remaining = available_time - (now() - start_time)
-        if time_remaining < search_run_time * 30:
+        if time_remaining < search_run_time * 40:
             break
         if abs(best_score) > 10000:
             # print('check mate is expected')

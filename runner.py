@@ -10,6 +10,8 @@ import David_AI_v8 as ai
 initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 300
+matchRepeats = 5
+extraRepeatTime = 0.1
 competitorNames = [
     'David_AI_v8',
     'David_AI_v7',
@@ -56,7 +58,7 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
         print('{} took: {:.3f} seconds'.format('white' if _turn % 2 else 'black', run_time))
         print('white time: {:.3f}'.format(white_time_remaining))
         print('black time: {:.3f}'.format(black_time_remaining))
-        print('score: {:.2f}'.format(ai.evaluate(ai.to_array(board))))
+        print('score: {}'.format(ai.evaluate(ai.to_array(board))))
         print()
 
 
@@ -69,17 +71,15 @@ def legal_moves(history, player_is_white):
     return moves
 
 
-def match(white, black):
-    """This plays a single match between the white and black players. If the match has been played before then it
+def match(white, black, repeat):
+    """This plays a single match between the white and black players. 
+    If the match has been played before then it
     returns quickly with the previous result."""
     # -------- memoization -------
-    file_name = r'results/{} vs {}.txt'.format(
-        white.__name__,
-        black.__name__
-    )
-    current_versions = '{} vs {}\n'.format(
-        hashlib.sha256(inspect.getsource(white).encode()).hexdigest(),
-        hashlib.sha256(inspect.getsource(black).encode()).hexdigest())
+    file_name = rf'results/{white.__name__} vs {black.__name__} repeat {repeat}.txt'
+    current_versions = (
+        f'{hashlib.sha256(inspect.getsource(white).encode()).hexdigest()} vs '
+        f'{hashlib.sha256(inspect.getsource(black).encode()).hexdigest()} repeat {repeat}\n')
     try:
         file = open(file_name)
         previous_versions = file.readline()
@@ -88,9 +88,7 @@ def match(white, black):
             return eval(file.readline())
     except (FileNotFoundError, SyntaxError):
         pass
-    print('Match between {} on white and {} on black'.format(white.__name__, black.__name__))
-    file = open(file_name, 'w')
-    file.write(current_versions)
+    print(f'Match {repeat} between {white.__name__} on white and {black.__name__} on black')
     # -------- turns and time -------
     black_moves = white_moves = 0
     black_time_taken = white_time_taken = 0
@@ -102,8 +100,8 @@ def match(white, black):
     for turn in range(1, 1+turnsToPlayFor):
         player_is_white = turn % 2
         start_time = time.process_time()
-        white_time = initialTime + white_moves * timePerMove - white_time_taken
-        black_time = initialTime + black_moves * timePerMove - black_time_taken
+        white_time = initialTime + white_moves * (timePerMove + repeat * extraRepeatTime) - white_time_taken
+        black_time = initialTime + black_moves * (timePerMove + repeat * extraRepeatTime) - black_time_taken
         try:
             chosen_move = (white if player_is_white else black).main(
                 copy.deepcopy(history), white_time, black_time)
@@ -121,11 +119,11 @@ def match(white, black):
         run_time = time.process_time() - start_time
         if player_is_white:
             white_time_taken += run_time
-            white_time = initialTime + white_moves * timePerMove - white_time_taken
+            white_time = initialTime + white_moves * (timePerMove + repeat * extraRepeatTime) - white_time_taken
             white_moves += 1
         else:
             black_time_taken += run_time
-            black_time = initialTime + black_moves * timePerMove - black_time_taken
+            black_time = initialTime + black_moves * (timePerMove + repeat * extraRepeatTime) - black_time_taken
             black_moves += 1
         print_state(turn, chosen_move, run_time, white_time, black_time)
         if white_time < 0:
@@ -152,7 +150,7 @@ def match(white, black):
     to_return['black_time_taken'] = black_time_taken
     to_return['white_moves'] = white_moves
     to_return['black_moves'] = black_moves
-    file.write(str(to_return))
+    open(file_name, 'w').write(current_versions+str(to_return))
     to_return['not from file'] = True
     return to_return
 
@@ -167,22 +165,23 @@ for player in competitors:
 tournamentStartTime = time.perf_counter()
 for white in competitors:
     for black in competitors:
-        if white == black:
-            continue
-        result = match(white, black)
-        score = result['score']
-        white.tournamentScore_ += score
-        white.totalMoves_ += result['white_moves']
-        white.totalTime_ += result['white_time_taken']
-        black.tournamentScore_ += (1 - score)
-        black.totalMoves_ += result['black_moves']
-        black.totalTime_ += result['black_time_taken']
-        if 'not from file' in result:
-            print(result['cause'])
-            print('The game took {:.3f} seconds'.format(result['white_time_taken'] + result['black_time_taken']))
-        tournamentResults.append(
-            (white.__name__, black.__name__, score, result['black_moves'] + result['white_moves'],
-             '{:.3f}'.format(result['black_time_taken'] + result['white_time_taken']), result['cause']))
+        for repeat in range(1, matchRepeats+1):
+            if white == black:
+                continue
+            result = match(white, black, repeat)
+            score = result['score']
+            white.tournamentScore_ += score
+            white.totalMoves_ += result['white_moves']
+            white.totalTime_ += result['white_time_taken']
+            black.tournamentScore_ += (1 - score)
+            black.totalMoves_ += result['black_moves']
+            black.totalTime_ += result['black_time_taken']
+            if 'not from file' in result:
+                print(result['cause'])
+                print('The game took {:.3f} seconds'.format(result['white_time_taken'] + result['black_time_taken']))
+            tournamentResults.append(
+                (white.__name__, black.__name__, score, result['black_moves'] + result['white_moves'],
+                 '{:.3f}'.format(result['black_time_taken'] + result['white_time_taken']), result['cause']))
 
 print('\nAll the matches played in the tournament are shown below')
 
