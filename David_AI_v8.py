@@ -2,6 +2,8 @@
 A board is represented by 128 char array
 
 ToDo:
+    - play more matches to better ascertain the score
+    - score repeated positions differently
     - create isCheck function
     - use isCheck in castling
     - add strict legal move generation function (look for check and stalemate)
@@ -287,15 +289,6 @@ def castle(board, old_rook_location, old_king_location, new_rook_location, new_k
         POSITION_VALUE[king][old_king_location])
 
 
-def under_attack(board, pos, side):
-    """Returns if a position on a board is under attack by a side"""
-    raise NotImplementedError
-    x = pos % 8
-    y = pos // 16
-    for xd, yd in PIECE_MOVE_DIRECTION['N']:
-        pass
-
-
 def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
     # if abs(current_cscore - evaluate(board)) > 0.1:
@@ -369,9 +362,7 @@ def estimated_score(board, previous_cscore, diff, player_is_white):
 def search(board, depth, current_cscore, player_is_white, alpha, beta):
     """Implements top level node in alpha_beta tree search, returns a best move"""
     # assert depth > 0
-    # convert the generator of moves to a list and score repeats in the history as 0 (they lead to draws)
-    possible_moves = [(possible_move, 0 if possible_move in history else diff)
-                      for possible_move, diff in moves(board, player_is_white)]
+    possible_moves = list(moves(board, player_is_white))
     possible_moves.sort(
         key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
         reverse=player_is_white)
@@ -457,7 +448,7 @@ def main(given_history, white_time, black_time):
     best_move = None
     alpha = -99999
     beta = 99999
-    for depth in range(1, 10):
+    for depth in range(1, 99):
         search_start_time = now()
         try:
             best_move, best_score = search(current_board, depth, current_score, player_is_white, alpha, beta)
