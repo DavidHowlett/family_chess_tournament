@@ -2,7 +2,6 @@
 A board is represented by 128 char array
 
 ToDo:
-    - play more matches to better ascertain the score
     - score repeated positions differently as they lead to draws
     - create isCheck function
     - use isCheck in castling

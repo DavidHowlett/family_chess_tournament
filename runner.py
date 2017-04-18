@@ -10,7 +10,6 @@ import David_AI_v8 as ai
 initialTime = 5
 timePerMove = 1
 turnsToPlayFor = 300
-matchRepeats = 5
 extraRepeatTime = 0.1
 competitorNames = [
     'David_AI_v8',
@@ -88,7 +87,7 @@ def match(white, black, repeat):
             return eval(file.readline())
     except (FileNotFoundError, SyntaxError):
         pass
-    print(f'Match {repeat} between {white.__name__} on white and {black.__name__} on black')
+    print(f'\nMatch {repeat} between {white.__name__} on white and {black.__name__} on black')
     # -------- turns and time -------
     black_moves = white_moves = 0
     black_time_taken = white_time_taken = 0
@@ -154,25 +153,46 @@ def match(white, black, repeat):
     to_return['not from file'] = True
     return to_return
 
+
+def print_tournament_results():
+    print('\n------------------------ tournament results ------------------------')
+    print(f'The tournament has taken {time.perf_counter()-tournamentStartTime:.1f} seconds so far')
+    print('All the matches played in the tournament so far are shown below')
+    for result in tournamentResults:
+        print(''.join('{:<16}'.format(r) for r in result), sep='\t')
+    print('\nThe total scores are:')
+    competitors.sort(key=lambda c: c.tournamentScore_, reverse=True)
+    for player in competitors:
+        if player.matchesPlayed_ == 0:
+            continue
+        print(
+            f'{player.__name__: <16}'
+            f'scored {100*player.tournamentScore_/player.matchesPlayed_:.1f}% '
+            f'{player.tournamentScore_}/{player.matchesPlayed_} '
+            f'taking on average {player.totalTime_/player.totalMoves_:.3f} seconds')
+
 minimise = False
 
 tournamentResults = [('white', 'black', 'result', 'moves', 'time', 'explanation')]
 for player in competitors:
+    player.matchesPlayed_ = 0
+    player.tournamentScore_ = 0
     player.totalMoves_ = 0
     player.totalTime_ = 0
-    player.tournamentScore_ = 0
 
 tournamentStartTime = time.perf_counter()
-for white in competitors:
-    for black in competitors:
-        for repeat in range(1, matchRepeats+1):
+for repeat in range(1, 10):
+    for white in competitors:
+        for black in competitors:
             if white == black:
                 continue
             result = match(white, black, repeat)
             score = result['score']
+            white.matchesPlayed_ += 1
             white.tournamentScore_ += score
             white.totalMoves_ += result['white_moves']
             white.totalTime_ += result['white_time_taken']
+            black.matchesPlayed_ += 1
             black.tournamentScore_ += (1 - score)
             black.totalMoves_ += result['black_moves']
             black.totalTime_ += result['black_time_taken']
@@ -182,20 +202,8 @@ for white in competitors:
             tournamentResults.append(
                 (white.__name__, black.__name__, score, result['black_moves'] + result['white_moves'],
                  '{:.3f}'.format(result['black_time_taken'] + result['white_time_taken']), result['cause']))
-
-print('\nAll the matches played in the tournament are shown below')
-
-for result in tournamentResults:
-    print(''.join('{:<16}'.format(r) for r in result), sep='\t')
-
-print('\nThe tournament took: {:.1f} seconds'.format(time.perf_counter()-tournamentStartTime))
-print('Each of the {} competitors has played {} games\n'.format(
-    len(competitors), 2*len(competitors)-2))
-
-competitors.sort(key=lambda c: c.tournamentScore_, reverse=True)
-for player in competitors:
-    print('{} scored {}/{} taking on average {:.3f} seconds'.format(
-        player.__name__, player.tournamentScore_, 2*len(competitors)-2, player.totalTime_/player.totalMoves_))
+            if time.perf_counter() > tournamentStartTime + 3:
+                print_tournament_results()
 
 if os.name == 'posix':
     # it can take a while to run and I want to do other things in the mean time
