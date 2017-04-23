@@ -155,7 +155,7 @@ def f3(a,b,c,d,e):
         if(e!=7):
             if(a[d+1][e+1][0]==1):
                 f=copy.deepcopy(a)
-                if(d==1):
+                if(d==6):
                     f[d+1][e+1]=[0,'q']
                 else:
                     f[d+1][e+1]=[0,'p']
@@ -168,7 +168,7 @@ def f3(a,b,c,d,e):
         if(e!=0):
             if(a[d+1][e-1][0]==1):
                 f=copy.deepcopy(a)
-                if(d==1):
+                if(d==6):
                     f[d+1][e-1]=[0,'q']
                 else:
                     f[d+1][e-1]=[0,'p']
