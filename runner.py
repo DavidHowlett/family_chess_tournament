@@ -9,9 +9,10 @@ import David_AI_v8 as ai
 
 initialTime = 5
 timePerMove = 1
-turnsToPlayFor = 300
+turnsToPlayFor = 250
 extraRepeatTime = 0.1
 competitorNames = [
+    'David_AI_v9',
     'David_AI_v8',
     'David_AI_v7',
     'David_AI_v6',
@@ -101,8 +102,8 @@ def match(white, black, repeat):
     for turn in range(1, 1+turnsToPlayFor):
         player_is_white = turn % 2
         start_time = time.process_time()
-        white_time = initialTime + white_moves * (timePerMove + repeat * extraRepeatTime) - white_time_taken
-        black_time = initialTime + black_moves * (timePerMove + repeat * extraRepeatTime) - black_time_taken
+        white_time = initialTime + white_moves * (timePerMove + (repeat - 1) * extraRepeatTime) - white_time_taken
+        black_time = initialTime + black_moves * (timePerMove + (repeat - 1) * extraRepeatTime) - black_time_taken
         try:
             chosen_move = (white if player_is_white else black).main(
                 copy.deepcopy(history), white_time, black_time)
@@ -120,11 +121,11 @@ def match(white, black, repeat):
         run_time = time.process_time() - start_time
         if player_is_white:
             white_time_taken += run_time
-            white_time = initialTime + white_moves * (timePerMove + repeat * extraRepeatTime) - white_time_taken
+            white_time = initialTime + white_moves * (timePerMove + (repeat - 1) * extraRepeatTime) - white_time_taken
             white_moves += 1
         else:
             black_time_taken += run_time
-            black_time = initialTime + black_moves * (timePerMove + repeat * extraRepeatTime) - black_time_taken
+            black_time = initialTime + black_moves * (timePerMove + (repeat - 1) * extraRepeatTime) - black_time_taken
             black_moves += 1
         print_state(turn, chosen_move, run_time, white_time, black_time, white, black)
         if white_time < 0:
