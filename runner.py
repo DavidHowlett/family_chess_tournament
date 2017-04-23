@@ -20,13 +20,14 @@ competitorNames = [
     'David_AI_v3',
     'David_AI_v2',
     'David_AI_v1',
+    'Iain_AI_v2',
+    'Iain_AI_v1',
     'Michael_AI_v1_3',
     'Michael_AI_v1_2',
     'Michael_AI_v1_1',
     'Michael_AI_v1_0',
     'Robert_AI',
-    'Iain_AI_v2',
-    'Iain_AI_v1',
+    'no_search',
     'no_move_AI',
     'random_AI',
     # 'Human_player'
@@ -47,13 +48,13 @@ P P P P P P P P
 R N B Q K B N R'''
 
 
-def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining):
+def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining, white, black):
     if minimise:
         print('{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}\t'.format(
             _turn, int(ai.evaluate(ai.to_array(board))), 'white' if _turn % 2 else 'black', run_time,
             white_time_remaining, black_time_remaining))
     else:
-        print('----- move {} -----'.format(_turn))
+        print(f'----- {white.__name__} vs {black.__name__} move {_turn} -----')
         print('\n'.join(' '.join(piece for piece in row)for row in board.__reversed__()) + '\n')
         print('{} took: {:.3f} seconds'.format('white' if _turn % 2 else 'black', run_time))
         print('white time: {:.3f}'.format(white_time_remaining))
@@ -125,7 +126,7 @@ def match(white, black, repeat):
             black_time_taken += run_time
             black_time = initialTime + black_moves * (timePerMove + repeat * extraRepeatTime) - black_time_taken
             black_moves += 1
-        print_state(turn, chosen_move, run_time, white_time, black_time)
+        print_state(turn, chosen_move, run_time, white_time, black_time, white, black)
         if white_time < 0:
             to_return = {'score': 0, 'cause': 'Black won due to white running out of time'}
             break

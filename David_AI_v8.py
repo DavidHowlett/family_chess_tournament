@@ -2,6 +2,8 @@
 A board is represented by 128 char array
 
 ToDo:
+    - change positional scoring according to the game's phase
+    - score moves towards enemy king more highly
     - score repeated positions differently as they lead to draws
     - create isCheck function
     - use isCheck in castling
@@ -11,8 +13,6 @@ ToDo:
     - make runner end the game when there are no legal moves (stalemate)
     - en passant
     - switch to negamax
-    - change positional scoring according to the game's phase
-    - score moves towards enemy king more highly
     - aspiration search
 """
 from time import perf_counter as now
