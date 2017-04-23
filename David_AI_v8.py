@@ -155,7 +155,7 @@ def move(board, pos1, pos2):
 
 def moves(board, _player_is_white: bool):
     """This generates a list of all possible game states after one move.
-    Preferred moves should be later in the returned list."""
+    It does not check for whether the king is in check."""
     for pos1 in valid_pos:
         piece = board[pos1]
         if piece in 'KQRBN' if _player_is_white else piece in 'kqrbn':
@@ -310,10 +310,6 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # then try to guess the best order to try moves
         possible_moves = list(possible_moves)
         possible_moves.sort(key=lambda _move: _move[1], reverse=player_is_white)
-    if not possible_moves:
-        # this correctly scores stalemates
-        # it only works on lists, not generators
-        return 0
     current_best_score = (-99999) if player_is_white else 99999
     for possible_move, diff in possible_moves:
         move_score = current_cscore + diff
