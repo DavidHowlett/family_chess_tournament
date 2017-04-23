@@ -20,6 +20,7 @@ competitorNames = [
     'David_AI_v3',
     'David_AI_v2',
     'David_AI_v1',
+    'Michael_AI_v1_3',
     'Michael_AI_v1_2',
     'Michael_AI_v1_1',
     'Michael_AI_v1_0',
@@ -161,13 +162,18 @@ def print_tournament_results():
     for result in tournamentResults:
         print(''.join('{:<16}'.format(r) for r in result), sep='\t')
     print('\nThe total scores are:')
-    competitors.sort(key=lambda c: c.tournamentScore_, reverse=True)
+    for player in competitors:
+        if player.matchesPlayed_:
+            player.percentage_score_ = 100*player.tournamentScore_/player.matchesPlayed_
+        else:
+            player.percentage_score_ = 0
+    competitors.sort(key=lambda c: c.percentage_score_, reverse=True)
     for player in competitors:
         if player.matchesPlayed_ == 0:
             continue
         print(
             f'{player.__name__: <16}'
-            f'scored {100*player.tournamentScore_/player.matchesPlayed_:.1f}% '
+            f'scored {player.percentage_score_:.1f}% '
             f'{player.tournamentScore_}/{player.matchesPlayed_} '
             f'taking on average {player.totalTime_/player.totalMoves_:.3f} seconds')
 
