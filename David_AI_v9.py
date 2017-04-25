@@ -487,11 +487,10 @@ def main(given_history, white_time, black_time):
             # print('check mate is expected')
             break
     print(f'search depth: {depth}-{depth+1}')
-    print(f'expected score: {best_score}')
+    print(f'expected score: {best_score:.1f}')
     # if I am losing badly and in a loop then call a draw
     if (((best_score < -400) if player_is_white else (best_score > 400)) and
             len(history) > 9 and history[-1] == history[-5] == history[-9]):
-        print(history)
         raise ThreeFoldRepetition
     assert len(best_move) == 128
     return from_array(best_move)

@@ -5,7 +5,7 @@ from array import array
 import hashlib
 import inspect
 import shared
-import David_AI_v8 as ai
+import David_AI_v9 as ai
 
 initialTime = 5
 timePerMove = 1
@@ -49,18 +49,18 @@ P P P P P P P P
 R N B Q K B N R'''
 
 
-def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining, white, black):
+def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining, white, black, repeat):
     if minimise:
         print('{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}\t'.format(
             _turn, int(ai.evaluate(ai.to_array(board))), 'white' if _turn % 2 else 'black', run_time,
             white_time_remaining, black_time_remaining))
     else:
-        print(f'----- {white.__name__} vs {black.__name__} move {_turn} -----')
+        print(f'----- {white.__name__} vs {black.__name__} match {repeat} move {_turn} -----')
         print('\n'.join(' '.join(piece for piece in row)for row in board.__reversed__()) + '\n')
         print('{} took: {:.3f} seconds'.format('white' if _turn % 2 else 'black', run_time))
         print('white time: {:.3f}'.format(white_time_remaining))
         print('black time: {:.3f}'.format(black_time_remaining))
-        print('score: {}'.format(ai.evaluate(ai.to_array(board))))
+        print('score: {:.1f}'.format(ai.evaluate(ai.to_array(board))))
         print()
 
 
@@ -127,7 +127,7 @@ def match(white, black, repeat):
             black_time_taken += run_time
             black_time = initialTime + black_moves * (timePerMove + (repeat - 1) * extraRepeatTime) - black_time_taken
             black_moves += 1
-        print_state(turn, chosen_move, run_time, white_time, black_time, white, black)
+        print_state(turn, chosen_move, run_time, white_time, black_time, white, black, repeat)
         if white_time < 0:
             to_return = {'score': 0, 'cause': 'Black won due to white running out of time'}
             break
@@ -189,7 +189,7 @@ for player in competitors:
     player.totalTime_ = 0
 
 tournamentStartTime = time.perf_counter()
-for repeat in range(1, 10):
+for repeat in range(1, 1000):
     for white in competitors:
         for black in competitors:
             if white == black:
