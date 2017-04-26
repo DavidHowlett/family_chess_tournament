@@ -50,6 +50,7 @@ R N B Q K B N R'''
 
 
 def print_state(_turn, board, run_time, white_time_remaining, black_time_remaining, white, black, repeat):
+    ai.recalculate_position_values(ai.to_array(board))
     if minimise:
         print('{}\t{}\t{}\t{:.3f}\t{:.3f}\t{:.3f}\t'.format(
             _turn, int(ai.evaluate(ai.to_array(board))), 'white' if _turn % 2 else 'black', run_time,
@@ -180,7 +181,6 @@ def print_tournament_results():
             f'taking on average {player.totalTime_/player.totalMoves_:.3f} seconds')
 
 minimise = False
-
 tournamentResults = [('white', 'black', 'result', 'moves', 'time', 'explanation')]
 for player in competitors:
     player.matchesPlayed_ = 0
