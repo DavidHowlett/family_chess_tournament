@@ -83,7 +83,7 @@ def match(white, black, repeat):
     history = [[[piece for piece in line] for line in initialBoard.replace(' ', '').split()]]
     history[0].reverse()
 
-    to_return = {'score': 0.5, 'cause': 'Draw due to reaching {} turns'.format(turnsToPlayFor)}
+    to_record = {'score': 0.5, 'cause': 'Draw due to reaching {} turns'.format(turnsToPlayFor)}
     for turn in range(1, 1+turnsToPlayFor):
         player_is_white = turn % 2
         start_time = time.process_time()
@@ -93,14 +93,14 @@ def match(white, black, repeat):
             chosen_move = (white if player_is_white else black).main(
                 copy.deepcopy(history), white_time, black_time)
         except shared.StalemateException:
-            to_return = {'score': 0.5, 'cause': 'Draw due to stalemate'}
+            to_record = {'score': 0.5, 'cause': 'Draw due to stalemate'}
             break
         except shared.ThreeFoldRepetition:
-            to_return = {'score': 0.5, 'cause': '{} called a draw with the threefold repetition rule'.format(
+            to_record = {'score': 0.5, 'cause': '{} called a draw with the threefold repetition rule'.format(
                 'White' if player_is_white else 'Black')}
             break
         except shared.FiftyMoveException:
-            to_return = {'score': 0.5, 'cause': '{} called a draw with the 50 move rule'.format(
+            to_record = {'score': 0.5, 'cause': '{} called a draw with the 50 move rule'.format(
                 'White' if player_is_white else 'Black')}
             break
         run_time = time.process_time() - start_time
@@ -114,26 +114,31 @@ def match(white, black, repeat):
             black_moves += 1
         print_state(turn, chosen_move, run_time, white_time, black_time, white, black, repeat)
         if white_time < 0:
-            to_return = {'score': 0, 'cause': 'Black won due to white running out of time'}
+            to_record = {'score': 0, 'cause': 'Black won due to white running out of time'}
             break
         if black_time < 0:
-            to_return = {'score': 1, 'cause': 'White won due to black running out of time'}
+            to_record = {'score': 1, 'cause': 'White won due to black running out of time'}
             break
         if not any(any(piece == 'K' for piece in row) for row in chosen_move):
-            to_return = {'score': 0, 'cause': 'Black won by taking the king'}
+            to_record = {'score': 0, 'cause': 'Black won by taking the king'}
             break
         if not any(any(piece == 'k' for piece in row) for row in chosen_move):
-            to_return = {'score': 1, 'cause': 'White won by taking the king'}
+            to_record = {'score': 1, 'cause': 'White won by taking the king'}
             break
         if chosen_move not in legal_moves(history, player_is_white):
             if player_is_white:
-                to_return = {'score': 0, 'cause': 'Black won because white made an illegal move'}
+                to_record = {'score': 0, 'cause': 'Black won because white made an illegal move'}
             else:
-                to_return = {'score': 1, 'cause': 'White won because black made an illegal move'}
+                to_record = {'score': 1, 'cause': 'White won because black made an illegal move'}
             break
         # once the move has been shown valid add it to the history
         history.append(chosen_move)
-    open(make_file_name(white, black, repeat), 'w').write(current_versions+str(to_return))
+    to_record['white_time_taken'] = white_time_taken
+    to_record['black_time_taken'] = black_time_taken
+    to_record['white_moves'] = white_moves
+    to_record['black_moves'] = black_moves
+    print(to_record['cause'])
+    open(make_file_name(white, black, repeat), 'w').write(current_versions+str(to_record))
 
 if __name__ == '__main__':
     tournamentStartTime = time.perf_counter()
