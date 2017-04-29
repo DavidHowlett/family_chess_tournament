@@ -15,7 +15,15 @@ p . p . . . p p
 . K . . . . . .
 . . . . r . . .
 . . . . . . . .'''
-x = list([[piece for piece in row.replace(' ', '')] for row in stalemate.split('\n')].__reversed__())
+Knight_Fight = '''r . b q k b . r
+p p p p p p p p
+. . . . . N . .
+. . . . . . . .
+. . . . . . . .
+. . . . P . . .
+P P n P . P P P
+R . B Q K B N R'''
+x = list([[piece for piece in row.replace(' ', '')] for row in Knight_Fight.split('\n')].__reversed__())
 
 # print(x)
 for depth in range(1, 4):
