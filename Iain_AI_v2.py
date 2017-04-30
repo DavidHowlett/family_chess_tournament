@@ -51,8 +51,8 @@ Position_Scores = {
         [-30, 0, 10, 15, 15, 10, 0, -30],
         [-30, 5, 15, 20, 20, 15, 5, -30],
         [-30, 0, 15, 20, 20, 15, 0, -30],
-        [-30, 5, 10, 15, 15, 10, 5, -30],
-        [-40, -20, 0, 5, 5, 0, -20, -40],
+        [-30,   5,  10,  15,  15,  10,   5, -30],
+        [-40, -20,   0,   5,   5,   0, -20, -40],
         [-50, -40, -30, -30, -30, -30, -40, -50]],
     'B': [
         [-20,-10,-10,-10,-10,-10,-10,-20],
@@ -77,7 +77,7 @@ Position_Scores = {
         [-10, 0, 0, 0, 0, 0, 0, -10],
         [-10, 0, 5, 5, 5, 5, 0, -10],
         [-5, 0, 5, 5, 5, 5, 0, -5],
-        [0, 0, 5, 5, 5, 5, 0, -5],
+        [ 0, 0, 5, 5, 5, 5, 0, -5],
         [-10, 5, 5, 5, 5, 5, 0, -10],
         [-10, 0, 5, 0, 0, 0, 0, -10],
         [-20, -10, -10, -5, -5, -10, -10, -20]],
@@ -110,6 +110,13 @@ def score(board):
     return points
 
 
+def move(board, y, x, new_y, new_x):
+    new_board = copy.deepcopy(board)
+    new_board[new_y][new_x] = new_board[y][x]
+    new_board[y][x] = '.'
+    return new_board
+
+
 def moves(board, white_turn):
     legal_moves = []
     for y in range(8):
@@ -123,15 +130,9 @@ def moves(board, white_turn):
                             new_x = x + x_move_direction * distance
                             if 0 <= new_y <= 7 and 0 <= new_x <= 7:
                                 if board[new_y][new_x] == '.':
-                                    new_board = copy.deepcopy(board)
-                                    new_board[y][x] = '.'
-                                    new_board[new_y][new_x] = piece
-                                    legal_moves.append(new_board)
+                                    legal_moves.append(move(board, y, x, new_y, new_x))
                                 elif board[new_y][new_x].islower():
-                                    new_board = copy.deepcopy(board)
-                                    new_board[y][x] = '.'
-                                    new_board[new_y][new_x] = piece
-                                    legal_moves.append(new_board)
+                                    legal_moves.append(move(board, y, x, new_y, new_x))
                                     break
                                 else:
                                     break
@@ -142,25 +143,13 @@ def moves(board, white_turn):
                                 break
                 if piece == 'P' and y <= 6:
                     if board[y+1][x] == '.':
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y+1][x] = 'P'
-                        legal_moves.append(new_board)
-                        if board[y+2][x] == '.' and y == 1:
-                            new_board = copy.deepcopy(board)
-                            new_board[y][x] = '.'
-                            new_board[y+2][x] = 'P'
-                            legal_moves.append(new_board)
+                        legal_moves.append(move(board, y, x, y+1, x))
+                        if y == 1 and board[y+2][x] == '.':
+                            legal_moves.append(move(board, y, x, y+2, x))
                     if x < 7 and board[y+1][x+1].islower():
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y+1][x+1] = 'P'
-                        legal_moves.append(new_board)
+                        legal_moves.append(move(board, y, x, y+1, x+1))
                     if x > 0 and board[y+1][x-1].islower():
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y+1][x-1] = 'P'
-                        legal_moves.append(new_board)
+                        legal_moves.append(move(board, y, x, y+1, x-1))
             else:
                 if piece in 'kqrbn':
                     for y_move_direction, x_move_direction in PIECE_MOVE_DIRECTION[piece]:
@@ -169,15 +158,9 @@ def moves(board, white_turn):
                             new_x = x + x_move_direction * distance
                             if 0 <= new_y <= 7 and 0 <= new_x <= 7:
                                 if board[new_y][new_x] == '.':
-                                    new_board = copy.deepcopy(board)
-                                    new_board[y][x] = '.'
-                                    new_board[new_y][new_x] = piece
-                                    legal_moves.append(new_board)
+                                    legal_moves.append(move(board, y, x, new_y, new_x))
                                 elif board[new_y][new_x].isupper():
-                                    new_board = copy.deepcopy(board)
-                                    new_board[y][x] = '.'
-                                    new_board[new_y][new_x] = piece
-                                    legal_moves.append(new_board)
+                                    legal_moves.append(move(board, y, x, new_y, new_x))
                                     break
                                 else:
                                     break
@@ -188,25 +171,13 @@ def moves(board, white_turn):
                                 break
                 if piece == 'p' and y >= 1:
                     if board[y-1][x] == '.':
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y-1][x] = 'p'
-                        legal_moves.append(new_board)
-                        if board[y-2][x] == '.' and y == 6:
-                            new_board = copy.deepcopy(board)
-                            new_board[y][x] = '.'
-                            new_board[y-2][x] = 'p'
-                            legal_moves.append(new_board)
+                        legal_moves.append(move(board, y, x, y-1, x))
+                        if y == 6 and board[y-2][x] == '.':
+                            legal_moves.append(move(board, y, x, y-2, x))
                     if x < 7 and board[y-1][x+1].isupper():
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y-1][x+1] = 'p'
-                        legal_moves.append(new_board)
+                        legal_moves.append(move(board, y, x, y-1, x+1))
                     if x > 0 and board[y-1][x-1].isupper():
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y-1][x-1] = 'p'
-                        legal_moves.append(new_board)
+                        legal_moves.append(move(board, y, x, y-1, x-1))
     return legal_moves
 
 
