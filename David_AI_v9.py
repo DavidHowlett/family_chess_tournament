@@ -333,6 +333,12 @@ def moves(board, _player_is_white: bool):
             yield castle(board, 7+7*16, 4+7*16, 5+7*16, 6+7*16)
 
 
+def legal_moves(board, _player_is_white):
+    for move_, diff in moves(board, _player_is_white):
+        if not is_check(move_, _player_is_white):
+            yield move_, diff
+
+
 def castle(board, old_rook_location, old_king_location, new_rook_location, new_king_location):
     board = copy(board)
     board[new_rook_location] = rook = board[old_rook_location]
@@ -380,7 +386,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # This also stops my engine trading my king now for your king later.
         # I also search deeper then normal if a take is made
         # Note that the comparison is ordered for evaluation speed
-        if depth >= 1 and (depth >= 2 or abs(diff) > 0.5) and abs(diff) < 1000:
+        if depth >= 1 and (depth >= 2 or abs(diff) > 50) and abs(diff) < 1000:
             # this does not always use move ordering :-( todo
             move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
@@ -696,4 +702,11 @@ changed piece square tables
 64724			4		0.225	4808
 339102			5		1.388	63499
 201605 moves made per second
+fixed bug in quiescence search
+42			1		0.000	0
+225			2		0.001	44
+6428			3		0.024	412
+20035			4		0.082	2098
+225990			5		0.963	15892
+211275 moves made per second
 '''
