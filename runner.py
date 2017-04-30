@@ -102,9 +102,6 @@ def match(white, black, repeat):
         try:
             chosen_move = (white if player_is_white else black).main(
                 copy.deepcopy(history), white_time, black_time)
-        except shared.StalemateException:
-            to_record = {'score': 0.5, 'cause': 'Draw due to stalemate'}
-            break
         except shared.ThreeFoldRepetition:
             to_record = {'score': 0.5, 'cause': '{} called a draw with the threefold repetition rule'.format(
                 'White' if player_is_white else 'Black')}
