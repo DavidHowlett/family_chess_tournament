@@ -32,14 +32,22 @@ p p p p n k p p
 P . . P B N . .
 . P . . P P P P
 R . . Q K B . R'''
-x = list([[piece for piece in row.replace(' ', '')] for row in difficultPosition.split('\n')].__reversed__())
+promotionPosition = '''r . r . . . . .
+. P . P . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . p . p .
+. . . . . R . R'''
+x = list([[piece for piece in row.replace(' ', '')] for row in promotionPosition.split('\n')].__reversed__())
 
 # print(x)
-for depth in range(1, 4):
+for depth in range(1, 5):
     start_time = time.perf_counter()
     best_move, best_score = Iain_AI_v2.search(x, False, depth)
     end_time = time.perf_counter()
-    print(depth, best_score,end_time - start_time)#, best_move)
+    print(depth, best_score,end_time - start_time, best_move)
 
 ''' performance before optimisation
 1 80 0.00220390942092681
@@ -57,4 +65,9 @@ moved score calculation
 1 80 0.002009505371031876
 2 -205 0.07904118619844507
 3 25 2.540729857226953
+removed deepcopy
+1 80 0.00011613041895171445
+2 -205 0.00410338173704801
+3 25 0.14609174623899446
+4 -125 5.050977404292655
 '''

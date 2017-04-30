@@ -9,6 +9,7 @@ P P P P P P P P
 R N B Q K B N R
 
 things todo in order of importance:
+    check that all moves are generated for pawn promotion positions 
     Pawn Promotion
     implement increasing depth search
     implement time management
@@ -113,7 +114,9 @@ def score(board):
 
 
 def move(board, y, x, new_y, new_x):
-    new_board = copy.deepcopy(board)
+    new_board = board.copy()
+    new_board[y] = new_board[y].copy()
+    new_board[new_y] = new_board[new_y].copy()
     new_board[new_y][new_x] = board[y][x]
     new_board[y][x] = '.'
     return new_board
@@ -132,14 +135,16 @@ def moves(board, white_turn):
                             new_x = x + x_move_direction * distance
                             if 0 <= new_y <= 7 and 0 <= new_x <= 7:
                                 if board[new_y][new_x] == '.':
-                                    legal_moves.append((move(board, y, x, new_y, new_x),
-                                                        Piece_score[piece][new_y][new_x] -
-                                                        Piece_score[piece][y][x]))
+                                    legal_moves.append((
+                                        move(board, y, x, new_y, new_x),
+                                        Piece_score[piece][new_y][new_x] -
+                                        Piece_score[piece][y][x]))
                                 elif board[new_y][new_x].islower():
-                                    legal_moves.append((move(board, y, x, new_y, new_x),
-                                                        Piece_score[piece][new_y][new_x] -
-                                                        Piece_score[piece][y][x] -
-                                                        Piece_score[board[new_y][new_x]][new_y][new_x]))
+                                    legal_moves.append((
+                                        move(board, y, x, new_y, new_x),
+                                        Piece_score[piece][new_y][new_x] -
+                                        Piece_score[piece][y][x] -
+                                        Piece_score[board[new_y][new_x]][new_y][new_x]))
                                     break
                                 else:
                                     break
@@ -150,23 +155,61 @@ def moves(board, white_turn):
                                 break
                 if piece == 'P' and y <= 6:
                     if board[y+1][x] == '.':
-                        legal_moves.append((move(board, y, x, y+1, x),
-                                            Piece_score[piece][y+1][x] -
-                                            Piece_score[piece][y][x]))
                         if y == 1 and board[y+2][x] == '.':
-                            legal_moves.append((move(board, y, x, y+2, x),
-                                                Piece_score[piece][y+2][x] -
+                            legal_moves.append(
+                                (move(board, y, x, y+2, x),
+                                 Piece_score[piece][y+2][x] -
+                                 Piece_score[piece][y][x]))
+                        elif y == 6:
+                            new_board = board.copy()
+                            new_board[y] = new_board[y].copy()
+                            new_board[y+1] = new_board[y+1].copy()
+                            new_board[y+1][x] = 'Q'
+                            new_board[y][x] = '.'
+                            legal_moves.append((
+                                new_board,
+                                Piece_score['Q'][y+1][x] -
+                                Piece_score[piece][y][x]))
+                        else:
+                            legal_moves.append((move(board, y, x, y + 1, x),
+                                                Piece_score[piece][y + 1][x] -
                                                 Piece_score[piece][y][x]))
                     if x < 7 and board[y+1][x+1].islower():
-                        legal_moves.append((move(board, y, x, y+1, x+1),
-                                            Piece_score[piece][y+1][x+1] -
-                                            Piece_score[piece][y][x] -
-                                            Piece_score[board[y+1][x+1]][y+1][x+1]))
+                        if y == 6:
+                            new_board = board.copy()
+                            new_board[y] = new_board[y].copy()
+                            new_board[y+1] = new_board[y+1].copy()
+                            new_board[y+1][x+1] = 'Q'
+                            new_board[y][x] = '.'
+                            legal_moves.append((
+                                new_board,
+                                Piece_score['Q'][y+1][x+1] -
+                                Piece_score[piece][y][x] -
+                                Piece_score[board[y+1][x+1]][y+1][x+1]))
+                        else:
+                            legal_moves.append((
+                                move(board, y, x, y+1, x+1),
+                                Piece_score[piece][y+1][x+1] -
+                                Piece_score[piece][y][x] -
+                                Piece_score[board[y+1][x+1]][y+1][x+1]))
                     if x > 0 and board[y+1][x-1].islower():
-                        legal_moves.append((move(board, y, x, y+1, x-1),
-                                            Piece_score[piece][y+1][x-1] -
-                                            Piece_score[piece][y][x] -
-                                            Piece_score[board[y+1][x-1]][y+1][x-1]))
+                        if y == 6:
+                            new_board = board.copy()
+                            new_board[y] = new_board[y].copy()
+                            new_board[y+1] = new_board[y+1].copy()
+                            new_board[y+1][x-1] = 'Q'
+                            new_board[y][x] = '.'
+                            legal_moves.append((
+                                new_board,
+                                Piece_score['Q'][y+1][x-1] -
+                                Piece_score[piece][y][x] -
+                                Piece_score[board[y+1][x-1]][y+1][x-1]))
+                        else:
+                            legal_moves.append((
+                                move(board, y, x, y+1, x-1),
+                                Piece_score[piece][y+1][x-1] -
+                                Piece_score[piece][y][x] -
+                                Piece_score[board[y+1][x-1]][y+1][x-1]))
             else:
                 if piece in 'kqrbn':
                     for y_move_direction, x_move_direction in PIECE_MOVE_DIRECTION[piece]:
@@ -193,23 +236,62 @@ def moves(board, white_turn):
                                 break
                 if piece == 'p' and y >= 1:
                     if board[y-1][x] == '.':
-                        legal_moves.append((move(board, y, x, y-1, x),
-                                            Piece_score[piece][y-1][x] -
-                                            Piece_score[piece][y][x]))
                         if y == 6 and board[y-2][x] == '.':
-                            legal_moves.append((move(board, y, x, y-2, x),
-                                                Piece_score[piece][y-2][x] -
-                                                Piece_score[piece][y][x]))
+                            legal_moves.append((
+                                move(board, y, x, y-2, x),
+                                Piece_score[piece][y-2][x] -
+                                Piece_score[piece][y][x]))
+                        elif y == 1:
+                            new_board = board.copy()
+                            new_board[y] = new_board[y].copy()
+                            new_board[y-1] = new_board[y-1].copy()
+                            new_board[y-1][x] = 'q'
+                            new_board[y][x] = '.'
+                            legal_moves.append((
+                                new_board,
+                                Piece_score['q'][y-1][x] -
+                                Piece_score[piece][y][x]))
+                        else:
+                            legal_moves.append((
+                                move(board, y, x, y - 1, x),
+                                Piece_score[piece][y - 1][x] -
+                                Piece_score[piece][y][x]))
                     if x < 7 and board[y-1][x+1].isupper():
-                        legal_moves.append((move(board, y, x, y-1, x+1),
-                                            Piece_score[piece][y-1][x+1] -
-                                            Piece_score[piece][y][x] -
-                                            Piece_score[board[y-1][x+1]][y-1][x+1]))
+                        if y == 1:
+                            new_board = board.copy()
+                            new_board[y] = new_board[y].copy()
+                            new_board[y-1] = new_board[y-1].copy()
+                            new_board[y-1][x+1] = 'q'
+                            new_board[y][x] = '.'
+                            legal_moves.append((
+                                new_board,
+                                Piece_score['q'][y-1][x+1] -
+                                Piece_score[piece][y][x] -
+                                Piece_score[board[y - 1][x + 1]][y - 1][x + 1]))
+                        else:
+                            legal_moves.append((
+                                move(board, y, x, y - 1, x + 1),
+                                Piece_score[piece][y - 1][x + 1] -
+                                Piece_score[piece][y][x] -
+                                Piece_score[board[y - 1][x + 1]][y - 1][x + 1]))
                     if x > 0 and board[y-1][x-1].isupper():
-                        legal_moves.append((move(board, y, x, y-1, x-1),
-                                            Piece_score[piece][y-1][x-1] -
-                                            Piece_score[piece][y][x] -
-                                            Piece_score[board[y-1][x-1]][y-1][x-1]))
+                        if y == 1:
+                            new_board = board.copy()
+                            new_board[y] = new_board[y].copy()
+                            new_board[y-1] = new_board[y-1].copy()
+                            new_board[y-1][x-1] = 'q'
+                            new_board[y][x] = '.'
+                            legal_moves.append((
+                                new_board,
+                                Piece_score['q'][y-1][x-1] -
+                                Piece_score[piece][y][x] -
+                                Piece_score[board[y-1][x-1]][y-1][x-1]))
+                        else:
+                            legal_moves.append((
+                                move(board, y, x, y-1, x-1),
+                                Piece_score[piece][y-1][x-1] -
+                                Piece_score[piece][y][x] -
+                                Piece_score[board[y-1][x-1]][y-1][x-1]))
     return legal_moves
 
 
@@ -219,7 +301,7 @@ def search(board, white_turn, depth):
     best_score = -99_900_000  # this will only matter if there are no moves and avoids crashing runner
     best_move = board
     for move_, score_difference in moves(board, white_turn):
-        # assert abs(score_difference + score_board - score(move_)) < 0.1
+        assert abs(score_difference + score_board - score(move_)) < 0.1
         current_score = score_difference + score_board if white_turn else -(score_difference + score_board)
         if depth > 1 and abs(current_score) < 1_000_000:
             current_score = -search(move_, not white_turn, depth - 1)[1]

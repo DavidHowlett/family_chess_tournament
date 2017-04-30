@@ -7,7 +7,7 @@ David_AI_v5     scored 82.3% 354.0/430 taking on average 0.993 seconds
 David_AI_v6     scored 81.7% 361.0/442 taking on average 0.938 seconds
 David_AI_v4     scored 78.5% 325.0/414 taking on average 0.961 seconds
 David_AI_v3     scored 62.2% 267.0/429 taking on average 1.443 seconds
-David_AI_v2     scored 59.9% 257.0/429 taking on average 0.202 seconds
+David_AI_v2     scored 59.9% 257.0/429 taking on
 Iain_AI_v2      scored 54.6% 233.5/428 taking on average 1.443 seconds
 Michael_AI_v1_3 scored 39.4% 157.0/398 taking on average 0.823 seconds
 Michael_AI_v1_2 scored 39.3% 181.0/460 taking on average 0.788 seconds
