@@ -10,7 +10,6 @@ ToDo:
     - aspiration search
 """
 from time import perf_counter as now
-from copy import copy
 from array import array
 from itertools import count
 from shared import ThreeFoldRepetition
@@ -21,7 +20,7 @@ PIECE_MOVE_DIRECTION = {
     'N': (1+2*16, 1-2*16, -1+2*16, -1-2*16, 2+16, 2-16, -2+16, -2-16)}
 PIECE_MOVE_DIRECTION['K'] = PIECE_MOVE_DIRECTION['R'] + PIECE_MOVE_DIRECTION['B']
 PIECE_MOVE_DIRECTION['Q'] = PIECE_MOVE_DIRECTION['K']
-for _piece in copy(PIECE_MOVE_DIRECTION):
+for _piece in list(PIECE_MOVE_DIRECTION):
     PIECE_MOVE_DIRECTION[_piece.lower()] = PIECE_MOVE_DIRECTION[_piece]
 PIECE_VALUE = {
     '.': 0,
@@ -181,7 +180,7 @@ def move(board, pos1, pos2):
     global total_moves
     """returns a board with a move made"""
     total_moves += 1
-    board = copy(board)
+    board = board[:]
     # add piece to destination
     board[pos2] = board[pos1]
     # remove piece from source
@@ -249,7 +248,7 @@ def moves(board, _player_is_white: bool):
                     if pos2 >= (7*16) if _player_is_white else pos2 < 8:
                         # then the end of the board has been reached and promotion is needed
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
-                            after_pawn_replacement = copy(after_pawn_move)
+                            after_pawn_replacement = after_pawn_move[:]
                             after_pawn_replacement[pos2] = replacement_piece
                             yield(
                                 after_pawn_replacement,
@@ -273,7 +272,7 @@ def moves(board, _player_is_white: bool):
                     after_pawn_move = move(board, pos1, pos2)
                     # add each possible promotion to _moves
                     for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
-                        after_pawn_replacement = copy(after_pawn_move)
+                        after_pawn_replacement = after_pawn_move[:]
                         after_pawn_replacement[pos2] = replacement_piece
                         yield(
                             after_pawn_replacement,
@@ -330,7 +329,7 @@ def legal_moves(board, _player_is_white):
 
 
 def castle(board, old_rook_location, old_king_location, new_rook_location, new_king_location):
-    board = copy(board)
+    board = board[:]
     board[new_rook_location] = rook = board[old_rook_location]
     board[new_king_location] = king = board[old_king_location]
     board[old_rook_location] = board[old_king_location] = '.'
@@ -709,4 +708,11 @@ added legal move checking
 25431			4		0.056	2098
 232735			5		0.859	15892
 244626 moves made per second
+removed slow call to copy
+1391			1		0.007	0
+2923			2		0.007	44
+10475			3		0.081	412
+25431			4		0.071	2098
+232735			5		0.674	15892
+276847 moves made per second
 '''
