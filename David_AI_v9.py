@@ -116,7 +116,23 @@ transpositionTable = dict()
 total_moves = 0
 time_out_point = now() + 100
 history = []
-position_value = None
+
+initialPosition = '''
+r n b q k b n r
+p p p p p p p p
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+P P P P P P P P
+R N B Q K B N R'''
+initialPosition = initialPosition.replace(' ', '').split().__reversed__()
+initialPosition = array('u', ''.join(row+'_'*8 for row in initialPosition))
+
+
+def is_check(board, for_white):
+    """If for_white is true this returns whether white is in check."""
+    return any(abs(diff) > 1000 for _, diff in moves(board, not for_white))
 
 
 def evaluate(board)->float:
@@ -147,6 +163,9 @@ def recalculate_position_values(board):
         for row in POSITION_VALUE_READABLE[piece_]:
             position_value[piece_.lower()].extend(
                 [-PIECE_VALUE[piece_]-value for value in row.__reversed__()]+[None]*8)
+
+# it is better that the position values are given some sensible default values
+recalculate_position_values(initialPosition)
 
 
 def move(board, pos1, pos2):
@@ -652,4 +671,10 @@ implemented castling & changed move generation order
 315452			5		1.253	60681
 211089 moves made per second
 changed piece square tables
+42			1		0.000	0
+254			2		0.002	67
+8371			3		0.067	2075
+64724			4		0.225	4808
+339102			5		1.388	63499
+201605 moves made per second
 '''

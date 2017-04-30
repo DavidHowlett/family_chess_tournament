@@ -57,6 +57,10 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
     print('white time: {:.3f}'.format(white_time_remaining))
     print('black time: {:.3f}'.format(black_time_remaining))
     print('score: {:.1f}'.format(ai.evaluate(ai.to_array(board))))
+    if ai.is_check(ai.to_array(board), True):
+        print('white is in check')
+    if ai.is_check(ai.to_array(board), False):
+        print('black is in check')
     print()
 
 
