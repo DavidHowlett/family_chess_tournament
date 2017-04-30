@@ -73,6 +73,12 @@ def make_file_name(white, black, repeat):
     return rf'results/{white.__name__} vs {black.__name__} repeat {repeat}.txt'
 
 
+def source_hash(player):
+    # this line makes things the same on windows and unix
+    normalised_source = '\n'.join(inspect.getsource(player).split())
+    return hashlib.sha256(normalised_source.encode()).hexdigest()
+
+
 def match(white, black, repeat):
     """This plays a single match between the white and black players and records the result."""
     print(f'\nMatch {repeat} between {white.__name__} on white and {black.__name__} on black')
@@ -149,8 +155,7 @@ if __name__ == '__main__':
                     continue
                 file_name = make_file_name(white, black, repeat)
                 current_versions = (
-                    f'{hashlib.sha256(inspect.getsource(white).encode()).hexdigest()} vs '
-                    f'{hashlib.sha256(inspect.getsource(black).encode()).hexdigest()} repeat {repeat}\n')
+                    f'{source_hash(white)} vs {source_hash(black)} repeat {repeat}\n')
                 try:
                     file = open(file_name)
                     previous_versions = file.readline()
