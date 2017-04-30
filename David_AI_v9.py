@@ -4,12 +4,7 @@ A board is represented by 128 char array
 ToDo:
     - score moves towards enemy king more highly
     - score repeated positions differently as they lead to draws
-    - create isCheck function
     - use isCheck in castling
-    - add strict legal move generation function (look for check and stalemate)
-    - create isStalemate function
-    - make runner end the game when there is checkmate
-    - make runner end the game when there are no legal moves (stalemate)
     - en passant
     - switch to negamax
     - aspiration search
