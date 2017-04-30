@@ -101,8 +101,8 @@ for piece in list(Position_Scores):
 for piece in Position_Scores:
     Position_Scores[piece] = [[value + PIECE_VALUE[piece] for value in row] for row in Position_Scores[piece]]
 
-
 def score(board):
+    """This returns the current score of the board for white"""
     points = 0
     for y in range(8):
         for x in range(8):
@@ -182,6 +182,7 @@ def moves(board, white_turn):
 
 
 def search(board, white_turn, depth):
+    """returns a score for itself"""
     best_score = -99_900_000  # this will only matter if there are no moves and avoids crashing runner
     best_move = board
     for move in moves(board, white_turn):

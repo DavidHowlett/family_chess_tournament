@@ -39,10 +39,14 @@ for depth in range(1, 4):
     start_time = time.perf_counter()
     best_move, best_score = Iain_AI_v2.search(x, False, depth)
     end_time = time.perf_counter()
-    print(depth, best_score,end_time - start_time, best_move)
+    print(depth, best_score,end_time - start_time)#, best_move)
 
 ''' performance before optimisation
 1 80 0.00220390942092681
 2 -205 0.09845219473448505
 3 25 3.126428370698206
+created move function
+1 80 0.002263578584288147
+2 -205 0.0991942096530591
+3 25 3.123364391239797
 '''
