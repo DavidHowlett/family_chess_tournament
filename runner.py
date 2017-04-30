@@ -12,25 +12,25 @@ timePerMove = 1
 turnsToPlayFor = 250
 extraRepeatTime = 0.1
 competitorNames = [
-    # 'David_AI_v9',
-    # 'David_AI_v8',
-    # 'David_AI_v7',
-    # 'David_AI_v6',
-    # 'David_AI_v5',
-    # 'David_AI_v4',
-    # 'David_AI_v3',
+    'David_AI_v9',
+    'David_AI_v8',
+    'David_AI_v7',
+    'David_AI_v6',
+    'David_AI_v5',
+    'David_AI_v4',
+    'David_AI_v3',
     'David_AI_v2',
-    # 'David_AI_v1',
+    'David_AI_v1',
     'Iain_AI_v2',
-    # 'Iain_AI_v1',
-    # 'Michael_AI_v1_3',
-    # 'Michael_AI_v1_2',
-    # 'Michael_AI_v1_1',
-    # 'Michael_AI_v1_0',
-    # 'Robert_AI',
-    # 'no_search',
-    # 'no_move_AI',
-    # 'random_AI',
+    'Iain_AI_v1',
+    'Michael_AI_v1_3',
+    'Michael_AI_v1_2',
+    'Michael_AI_v1_1',
+    'Michael_AI_v1_0',
+    'Robert_AI',
+    'no_search',
+    'no_move_AI',
+    'random_AI',
     # 'Human_player'
 ]
 for name in competitorNames:
@@ -67,7 +67,7 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
 def legal_moves(history, player_is_white):
     """"Generates a list of legal moves. Missing castling, en-passant."""
     board = ai.to_array(history)[-1]
-    moves = list(ai.moves(board, player_is_white))
+    moves = list(ai.legal_moves(board, player_is_white))
     assert type(moves[0][0]) == array
     moves = [ai.from_array(move) for move, _score in moves]
     return moves

@@ -16,7 +16,7 @@ Not implemented yet:
     - en passant
 
 """
-from shared import StalemateException, ThreeFoldRepetition
+from shared import ThreeFoldRepetition
 
 PIECE_VALUE = {
     '.': 0,
@@ -168,8 +168,6 @@ def main(history, white_time, black_time):
     initial_state = [history[-1], player_is_white, initial_score, 0, None, None]
     calculate_tree(initial_state, global_depth)
     possible_moves = initial_state[5]
-    if not possible_moves:
-        raise StalemateException
     if my_score < 0.5:
         # if I am losing and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:

@@ -15,7 +15,6 @@
 
 import sys
 import time
-from shared import StalemateException
 
 # Define global rules
 board_size = 8
@@ -172,6 +171,11 @@ def pawn_value(base_val, move_dir):
     def piece_value(posn):
         return base_val * value_matrix[posn[0]][posn[1]]
     return piece_value
+
+
+class StalemateException(Exception):
+    """To be thrown when a stalemate is encountered."""
+    pass
 
 
 def search(depth, old_state, player):

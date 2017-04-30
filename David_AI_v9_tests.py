@@ -75,15 +75,15 @@ p . . . . . . p
 . . . . . . . .
 P . . . . . . P
 R . . . K . . R''',
-    'currentBug': '''
-. . . . . r k r
-. p . . . . . p
-p . . . . . . .
-. . . . . p . .
-. . n N . B . .
-. . N . . . . P
-P K . . . P P .
-. . . R . . . R'''
+    'findCheckMate': '''
+. . . . . . k .
+. . . R . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . p
+. . . . . . . P
+P . P . . P P .
+. . . . . R K .'''
 }
 
 for key in boards:
@@ -110,9 +110,13 @@ assert ai.position_value['N'][3+4*16] == -ai.position_value['n'][3+4*16]
 assert ai.position_value['P'][16] < ai.position_value['P'][5*16]
 assert ai.position_value['p'][6*16] > ai.position_value['p'][2*16]
 assert ai.position_value['P'][4*16] < ai.position_value['P'][4+4*16]
+# the king can be taken in 5 ply
+assert ai.search(boards['findCheckMate'], 4, ai.evaluate(boards['findCheckMate']), True, -99999, 99999)[1] < 10000
+assert ai.search(boards['findCheckMate'], 5, ai.evaluate(boards['findCheckMate']), True, -99999, 99999)[1] > 10000
 
 
 def performance_test():
+    ai.transpositionTable = dict()
     ai.total_moves = 0
     _board = boards['difficultPosition']
     test_start_time = now()
@@ -123,7 +127,5 @@ def performance_test():
         # print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
     print('{} moves made per second'.format(int(ai.total_moves/(now()-test_start_time))))
 
-
-ai.transpositionTable = dict()
 performance_test()
 

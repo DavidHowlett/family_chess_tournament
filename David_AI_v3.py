@@ -16,7 +16,7 @@ Not implemented yet:
 
 """
 from time import perf_counter as now
-from shared import StalemateException, ThreeFoldRepetition
+from shared import ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
     'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
@@ -207,8 +207,6 @@ def main(history, white_time, black_time):
     available_time = white_time if player_is_white else black_time
     score = simple_score(history[-1])
     possible_moves = moves(history[-1], player_is_white)
-    if not possible_moves:
-        raise StalemateException
     if (score < -10) if player_is_white else (score > 10):
         # if I am losing badly and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:
