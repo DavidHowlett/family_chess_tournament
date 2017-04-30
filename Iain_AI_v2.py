@@ -10,7 +10,6 @@ R N B Q K B N R
 
 things todo in order of importance:
     Pawn Promotion
-    add positional scoring for all pieces
     implement increasing depth search
     implement time management
     implement pawn double move 
@@ -147,6 +146,11 @@ def moves(board, white_turn):
                         new_board[y][x] = '.'
                         new_board[y+1][x] = 'P'
                         legal_moves.append(new_board)
+                        if board[y+2][x] == '.' and y == 1:
+                            new_board = copy.deepcopy(board)
+                            new_board[y][x] = '.'
+                            new_board[y+2][x] = 'P'
+                            legal_moves.append(new_board)
                     if x < 7 and board[y+1][x+1].islower():
                         new_board = copy.deepcopy(board)
                         new_board[y][x] = '.'
@@ -188,6 +192,11 @@ def moves(board, white_turn):
                         new_board[y][x] = '.'
                         new_board[y-1][x] = 'p'
                         legal_moves.append(new_board)
+                        if board[y-2][x] == '.' and y == 6:
+                            new_board = copy.deepcopy(board)
+                            new_board[y][x] = '.'
+                            new_board[y-2][x] = 'p'
+                            legal_moves.append(new_board)
                     if x < 7 and board[y-1][x+1].isupper():
                         new_board = copy.deepcopy(board)
                         new_board[y][x] = '.'
@@ -205,10 +214,9 @@ def search(board, white_turn, depth):
     best_score = -99_900_000  # this will only matter if there are no moves and avoids crashing runner
     best_move = board
     for move in moves(board, white_turn):
-        if depth > 1:
+        current_score = score(move) if white_turn else -score(move)
+        if depth > 1 and abs(current_score) < 1_000_000:
             current_score = -search(move, not white_turn, depth - 1)[1]
-        else:
-            current_score = score(move) if white_turn else -score(move)
         if current_score > best_score:
             best_move = move
             best_score = current_score

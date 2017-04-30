@@ -19,13 +19,13 @@ Knight_Fight = '''r . b q k b . r
 p p p p p p p p
 . . . . . N . .
 . . . . . . . .
-. . . . . . . .
+. . . n . . . .
 . . . . P . . .
-P P n P . P P P
+P P P P . P P P
 R . B Q K B N R'''
 x = list([[piece for piece in row.replace(' ', '')] for row in Knight_Fight.split('\n')].__reversed__())
 
 # print(x)
 for depth in range(1, 4):
-    best_move, best_score = Iain_AI_v2.search(x, True, depth)
+    best_move, best_score = Iain_AI_v2.search(x, False, depth)
     print(depth, best_score, best_move)
