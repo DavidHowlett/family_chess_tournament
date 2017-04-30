@@ -57,6 +57,15 @@ P . . k p . . .
 . . . p . . P .
 . . . . . . . P
 . . . . K . N R''',
+    'kingThreat': '''
+r . . . . . . .
+p . . . . . . .
+P . . . p . . .
+. . . . k . . .
+. . . . Q . . .
+. . . p . . P .
+. . . . . . . P
+. . . . K . N R''',
     'castlingPosition': '''
 r . . . k . . r
 p . . . . . . p
@@ -92,6 +101,10 @@ assert len(list(ai.moves(boards['pawnTakePosition2'], True))) == 3
 assert len(list(ai.moves(boards['pawnTakePosition2'], False))) == 2
 assert len(list(ai.moves(boards['castlingPosition'], True))) == 16
 assert len(list(ai.moves(boards['castlingPosition'], False))) == 16
+assert not ai.is_check(boards['kingSavePosition'], True)
+assert not ai.is_check(boards['kingSavePosition'], False)
+assert not ai.is_check(boards['kingThreat'], True)
+assert ai.is_check(boards['kingThreat'], False)
 assert ai.position_value['N'][3+4*16] == ai.position_value['N'][4+3*16]
 assert ai.position_value['N'][3+4*16] == -ai.position_value['n'][3+4*16]
 assert ai.position_value['P'][16] < ai.position_value['P'][5*16]

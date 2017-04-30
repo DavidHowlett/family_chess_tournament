@@ -123,17 +123,20 @@ def match(white, black, repeat):
             black_time = initialTime + black_moves * (timePerMove + (repeat - 1) * extraRepeatTime) - black_time_taken
             black_moves += 1
         print_state(turn, chosen_move, run_time, white_time, black_time, white, black, repeat)
+        if ai.is_checkmate(ai.to_array(chosen_move), True):
+            to_record = {'score': 0, 'cause': 'Black won by checkmate'}
+            break
+        if ai.is_checkmate(ai.to_array(chosen_move), False):
+            to_record = {'score': 1, 'cause': 'White won by checkmate'}
+            break
+        if ai.is_stalemate(ai.to_array(chosen_move)):
+            to_record = {'score': 0.5, 'cause': 'Draw due to stalemate'}
+            break
         if white_time < 0:
             to_record = {'score': 0, 'cause': 'Black won due to white running out of time'}
             break
         if black_time < 0:
             to_record = {'score': 1, 'cause': 'White won due to black running out of time'}
-            break
-        if not any(any(piece == 'K' for piece in row) for row in chosen_move):
-            to_record = {'score': 0, 'cause': 'Black won by taking the king'}
-            break
-        if not any(any(piece == 'k' for piece in row) for row in chosen_move):
-            to_record = {'score': 1, 'cause': 'White won by taking the king'}
             break
         if chosen_move not in legal_moves(history, player_is_white):
             if player_is_white:

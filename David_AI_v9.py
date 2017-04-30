@@ -135,6 +135,25 @@ def is_check(board, for_white):
     return any(abs(diff) > 1000 for _, diff in moves(board, not for_white))
 
 
+def is_checkmate(board, whites_turn):
+    """If for_white is true this returns whether white is in checkmate."""
+    return (
+        is_check(board, whites_turn) and
+        all(is_check(move_, whites_turn) for move_, _ in moves(board, whites_turn)))
+
+
+# todo this should be built on legal move generation
+def is_stalemate(board):
+    """Returns true if either side has no leagal moves"""
+    white_cant_move = (
+        (not is_check(board, True)) and
+        all(is_check(move_, True) for move_, _ in moves(board, True)))
+    black_cant_move = (
+        (not is_check(board, False)) and
+        all(is_check(move_, False) for move_, _ in moves(board, False)))
+    return white_cant_move or black_cant_move
+
+
 def evaluate(board)->float:
     return sum(position_value[board[x + 16 * y]][x + 16 * y] for x in range(8) for y in range(8))
 
