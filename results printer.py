@@ -4,25 +4,25 @@ from runner import competitors, make_file_name
 
 
 competitorNames = [
-    'David_AI_v9',
-    'David_AI_v8',
-    'David_AI_v7',
-    'David_AI_v6',
-    'David_AI_v5',
-    'David_AI_v4',
-    'David_AI_v3',
+    # 'David_AI_v9',
+    # 'David_AI_v8',
+    # 'David_AI_v7',
+    # 'David_AI_v6',
+    # 'David_AI_v5',
+    # 'David_AI_v4',
+    # 'David_AI_v3',
     'David_AI_v2',
-    'David_AI_v1',
+    # 'David_AI_v1',
     'Iain_AI_v2',
-    'Iain_AI_v1',
-    'Michael_AI_v1_3',
-    'Michael_AI_v1_2',
-    'Michael_AI_v1_1',
-    'Michael_AI_v1_0',
-    'Robert_AI',
-    'no_search',
-    'no_move_AI',
-    'random_AI',
+    # 'Iain_AI_v1',
+    # 'Michael_AI_v1_3',
+    # 'Michael_AI_v1_2',
+    # 'Michael_AI_v1_1',
+    # 'Michael_AI_v1_0',
+    # 'Robert_AI',
+    # 'no_search',
+    # 'no_move_AI',
+    # 'random_AI',
     # 'Human_player'
 ]
 
@@ -37,7 +37,7 @@ for player in competitors:
     player.totalTime_ = 0
 
 tournamentResults = [('white', 'black', 'result', 'moves', 'time', 'explanation')]
-for repeat in range(1, 50):
+for repeat in range(1, 100):
     for white in competitors:
         for black in competitors:
             if white == black:
@@ -49,11 +49,11 @@ for repeat in range(1, 50):
                 current_versions = (
                     f'{hashlib.sha256(inspect.getsource(white).encode()).hexdigest()} vs '
                     f'{hashlib.sha256(inspect.getsource(black).encode()).hexdigest()} repeat {repeat}\n')
-                if current_versions == previous_versions:
-                    # then return the previous result
-                    result = eval(file.readline())
+                if current_versions != previous_versions:
+                    continue
             except (FileNotFoundError, SyntaxError):
                 continue
+            result = eval(file.readline())
             score = result['score']
             white.matchesPlayed_ += 1
             white.tournamentScore_ += score
@@ -71,8 +71,8 @@ for repeat in range(1, 50):
 print('\n------------------------ tournament results ------------------------')
 print(f'The tournament has taken {sum(c.totalTime_ for c in competitors):.1f} seconds so far')
 print('All the matches played in the tournament so far are shown below')
-# for result in tournamentResults:
-#    print(''.join('{:<16}'.format(r) for r in result), sep='\t')
+for result in tournamentResults:
+    print(''.join('{:<16}'.format(r) for r in result), sep='\t')
 print('\nThe total scores are:')
 for player in competitors:
     if player.matchesPlayed_:
@@ -87,4 +87,5 @@ for player in competitors:
         f'{player.__name__: <16}'
         f'scored {player.percentage_score_:.1f}% '
         f'{player.tournamentScore_}/{player.matchesPlayed_} '
+        # f'with {player.totalMoves_} moves, '
         f'taking on average {player.totalTime_/player.totalMoves_:.3f} seconds')

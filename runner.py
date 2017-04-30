@@ -12,25 +12,25 @@ timePerMove = 1
 turnsToPlayFor = 250
 extraRepeatTime = 0.1
 competitorNames = [
-    'David_AI_v9',
-    'David_AI_v8',
-    'David_AI_v7',
-    'David_AI_v6',
-    'David_AI_v5',
-    'David_AI_v4',
-    'David_AI_v3',
+    # 'David_AI_v9',
+    # 'David_AI_v8',
+    # 'David_AI_v7',
+    # 'David_AI_v6',
+    # 'David_AI_v5',
+    # 'David_AI_v4',
+    # 'David_AI_v3',
     'David_AI_v2',
-    'David_AI_v1',
+    # 'David_AI_v1',
     'Iain_AI_v2',
-    'Iain_AI_v1',
-    'Michael_AI_v1_3',
-    'Michael_AI_v1_2',
-    'Michael_AI_v1_1',
-    'Michael_AI_v1_0',
-    'Robert_AI',
-    'no_search',
-    'no_move_AI',
-    'random_AI',
+    # 'Iain_AI_v1',
+    # 'Michael_AI_v1_3',
+    # 'Michael_AI_v1_2',
+    # 'Michael_AI_v1_1',
+    # 'Michael_AI_v1_0',
+    # 'Robert_AI',
+    # 'no_search',
+    # 'no_move_AI',
+    # 'random_AI',
     # 'Human_player'
 ]
 for name in competitorNames:
@@ -148,12 +148,12 @@ if __name__ == '__main__':
                 if white == black:
                     continue
                 file_name = make_file_name(white, black, repeat)
+                current_versions = (
+                    f'{hashlib.sha256(inspect.getsource(white).encode()).hexdigest()} vs '
+                    f'{hashlib.sha256(inspect.getsource(black).encode()).hexdigest()} repeat {repeat}\n')
                 try:
                     file = open(file_name)
                     previous_versions = file.readline()
-                    current_versions = (
-                        f'{hashlib.sha256(inspect.getsource(white).encode()).hexdigest()} vs '
-                        f'{hashlib.sha256(inspect.getsource(black).encode()).hexdigest()} repeat {repeat}\n')
                     if current_versions == previous_versions:
                         # then skip this match
                         continue

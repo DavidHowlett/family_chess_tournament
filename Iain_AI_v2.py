@@ -9,11 +9,11 @@ P P P P P P P P
 R N B Q K B N R
 
 things todo in order of importance:
-    write tests & debug (there are definitely bugs in the code)
-    add positional scoring for all pieces
+    Pawn Promotion
     implement increasing depth search
     implement time management
-    implement pawn double move
+    implement pawn double move 
+    
 """
 import copy
 import time
@@ -35,30 +35,88 @@ PIECE_VALUE = {
     'k': -20_000_000, 'q': -900, 'r': -500, 'b': -300, 'n': -300, 'p': -100
 }
 
-# knight
-Knight_position_scores = [
-    [-50, -40, -30, -30, -30, -30, -40, -50],
-    [-40, -20,  0,  0,  0,  0, -20, -40],
-    [-30,  0, 10, 15, 15, 10,  0, -30],
-    [-30,  5, 15, 20, 20, 15,  5, -30],
-    [-30,  0, 15, 20, 20, 15,  0, -30],
-    [-30,  5, 10, 15, 15, 10,  5, -30],
-    [-40, -20,  0,  5,  5,  0, -20, -40],
-    [-50, -40, -30, -30, -30, -30, -40, -50]]
+Position_Scores = {
+    'P': [
+        [ 0,  0,  0,  0,  0,  0,  0,  0],
+        [50, 50, 50, 50, 50, 50, 50, 50],
+        [10, 10, 20, 30, 30, 20, 10, 10],
+        [5,  5, 10, 25, 25, 10,  5,  5],
+        [0,  0,  0, 20, 20,  0,  0,  0],
+        [5, -5,-10,  0,  0,-10, -5,  5],
+        [5, 10, 10,-20,-20, 10, 10,  5],
+        [0,  0,  0,  0,  0,  0,  0,  0]],
+    'N': [
+        [-50, -40, -30, -30, -30, -30, -40, -50],
+        [-40, -20, 0, 0, 0, 0, -20, -40],
+        [-30, 0, 10, 15, 15, 10, 0, -30],
+        [-30, 5, 15, 20, 20, 15, 5, -30],
+        [-30, 0, 15, 20, 20, 15, 0, -30],
+        [-30,   5,  10,  15,  15,  10,   5, -30],
+        [-40, -20,   0,   5,   5,   0, -20, -40],
+        [-50, -40, -30, -30, -30, -30, -40, -50]],
+    'B': [
+        [-20,-10,-10,-10,-10,-10,-10,-20],
+        [-10,  0,  0,  0,  0,  0,  0,-10],
+        [-10,  0,  5, 10, 10,  5,  0,-10],
+        [-10,  5,  5, 10, 10,  5,  5,-10],
+        [-10,  0, 10, 10, 10, 10,  0,-10],
+        [-10, 10, 10, 10, 10, 10, 10,-10],
+        [-10,  5,  0,  0,  0,  0,  5,-10],
+        [-20,-10,-10,-10,-10,-10,-10,-20]],
+    'R': [
+        [0,  0,  0,  0,  0,  0,  0,  0],
+        [5, 10, 10, 10, 10, 10, 10,  5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [-5,  0,  0,  0,  0,  0,  0, -5],
+        [0,  0,  0,  5,  5,  0,  0,  0]],
+    'Q': [
+        [-20, -10, -10, -5, -5, -10, -10, -20],
+        [-10, 0, 0, 0, 0, 0, 0, -10],
+        [-10, 0, 5, 5, 5, 5, 0, -10],
+        [-5, 0, 5, 5, 5, 5, 0, -5],
+        [ 0, 0, 5, 5, 5, 5, 0, -5],
+        [-10, 5, 5, 5, 5, 5, 0, -10],
+        [-10, 0, 5, 0, 0, 0, 0, -10],
+        [-20, -10, -10, -5, -5, -10, -10, -20]],
+    'K': [
+        [-30, -40, -40, -50, -50, -40, -40, -30],
+        [-30, -40, -40, -50, -50, -40, -40, -30],
+        [-30, -40, -40, -50, -50, -40, -40, -30],
+        [-30, -40, -40, -50, -50, -40, -40, -30],
+        [-20, -30, -30, -40, -40, -30, -30, -20],
+        [-10, -20, -20, -20, -20, -20, -20, -10],
+        [20, 20, 0, 0, 0, 0, 20, 20],
+        [20, 30, 10, 0, 0, 10, 30, 20]],
+    '.': [[0 for _ in range(8)] for _ in range(8)]
+}
+
+for piece in list(Position_Scores):
+    Position_Scores[piece.lower()] = [[-value for value in row] for row in Position_Scores[piece]]
+    Position_Scores[piece] = list(Position_Scores[piece].__reversed__())
+
+# This adds piece value to positional value to increase speed
+Piece_score = dict()
+for piece in Position_Scores:
+    Piece_score[piece] = [[value + PIECE_VALUE[piece] for value in row] for row in Position_Scores[piece]]
 
 
 def score(board):
+    """This returns the current score of the board for white"""
     points = 0
     for y in range(8):
         for x in range(8):
-            piece = board[y][x]
-            points += PIECE_VALUE[piece]
-            if piece.isupper():
-                points += Knight_position_scores[y][x]
-            if piece.islower():
-                points -= Knight_position_scores[y][x]
-    # print(points)
+            points += Piece_score[board[y][x]][y][x]
     return points
+
+
+def move(board, y, x, new_y, new_x):
+    new_board = copy.deepcopy(board)
+    new_board[new_y][new_x] = board[y][x]
+    new_board[y][x] = '.'
+    return new_board
 
 
 def moves(board, white_turn):
@@ -74,15 +132,14 @@ def moves(board, white_turn):
                             new_x = x + x_move_direction * distance
                             if 0 <= new_y <= 7 and 0 <= new_x <= 7:
                                 if board[new_y][new_x] == '.':
-                                    new_board = copy.deepcopy(board)
-                                    new_board[y][x] = '.'
-                                    new_board[new_y][new_x] = piece
-                                    legal_moves.append(new_board)
+                                    legal_moves.append((move(board, y, x, new_y, new_x),
+                                                        Piece_score[piece][new_y][new_x] -
+                                                        Piece_score[piece][y][x]))
                                 elif board[new_y][new_x].islower():
-                                    new_board = copy.deepcopy(board)
-                                    new_board[y][x] = '.'
-                                    new_board[new_y][new_x] = piece
-                                    legal_moves.append(new_board)
+                                    legal_moves.append((move(board, y, x, new_y, new_x),
+                                                        Piece_score[piece][new_y][new_x] -
+                                                        Piece_score[piece][y][x] -
+                                                        Piece_score[board[new_y][new_x]][new_y][new_x]))
                                     break
                                 else:
                                     break
@@ -93,20 +150,23 @@ def moves(board, white_turn):
                                 break
                 if piece == 'P' and y <= 6:
                     if board[y+1][x] == '.':
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y+1][x] = 'P'
-                        legal_moves.append(new_board)
+                        legal_moves.append((move(board, y, x, y+1, x),
+                                            Piece_score[piece][y+1][x] -
+                                            Piece_score[piece][y][x]))
+                        if y == 1 and board[y+2][x] == '.':
+                            legal_moves.append((move(board, y, x, y+2, x),
+                                                Piece_score[piece][y+2][x] -
+                                                Piece_score[piece][y][x]))
                     if x < 7 and board[y+1][x+1].islower():
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y+1][x+1] = 'P'
-                        legal_moves.append(new_board)
+                        legal_moves.append((move(board, y, x, y+1, x+1),
+                                            Piece_score[piece][y+1][x+1] -
+                                            Piece_score[piece][y][x] -
+                                            Piece_score[board[y+1][x+1]][y+1][x+1]))
                     if x > 0 and board[y+1][x-1].islower():
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y+1][x-1] = 'P'
-                        legal_moves.append(new_board)
+                        legal_moves.append((move(board, y, x, y+1, x-1),
+                                            Piece_score[piece][y+1][x-1] -
+                                            Piece_score[piece][y][x] -
+                                            Piece_score[board[y+1][x-1]][y+1][x-1]))
             else:
                 if piece in 'kqrbn':
                     for y_move_direction, x_move_direction in PIECE_MOVE_DIRECTION[piece]:
@@ -115,15 +175,14 @@ def moves(board, white_turn):
                             new_x = x + x_move_direction * distance
                             if 0 <= new_y <= 7 and 0 <= new_x <= 7:
                                 if board[new_y][new_x] == '.':
-                                    new_board = copy.deepcopy(board)
-                                    new_board[y][x] = '.'
-                                    new_board[new_y][new_x] = piece
-                                    legal_moves.append(new_board)
+                                    legal_moves.append((move(board, y, x, new_y, new_x),
+                                                        Piece_score[piece][new_y][new_x] -
+                                                        Piece_score[piece][y][x]))
                                 elif board[new_y][new_x].isupper():
-                                    new_board = copy.deepcopy(board)
-                                    new_board[y][x] = '.'
-                                    new_board[new_y][new_x] = piece
-                                    legal_moves.append(new_board)
+                                    legal_moves.append((move(board, y, x, new_y, new_x),
+                                                        Piece_score[piece][new_y][new_x] -
+                                                        Piece_score[piece][y][x] -
+                                                        Piece_score[board[new_y][new_x]][new_y][new_x]))
                                     break
                                 else:
                                     break
@@ -134,33 +193,38 @@ def moves(board, white_turn):
                                 break
                 if piece == 'p' and y >= 1:
                     if board[y-1][x] == '.':
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y-1][x] = 'p'
-                        legal_moves.append(new_board)
+                        legal_moves.append((move(board, y, x, y-1, x),
+                                            Piece_score[piece][y-1][x] -
+                                            Piece_score[piece][y][x]))
+                        if y == 6 and board[y-2][x] == '.':
+                            legal_moves.append((move(board, y, x, y-2, x),
+                                                Piece_score[piece][y-2][x] -
+                                                Piece_score[piece][y][x]))
                     if x < 7 and board[y-1][x+1].isupper():
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y-1][x+1] = 'p'
-                        legal_moves.append(new_board)
+                        legal_moves.append((move(board, y, x, y-1, x+1),
+                                            Piece_score[piece][y-1][x+1] -
+                                            Piece_score[piece][y][x] -
+                                            Piece_score[board[y-1][x+1]][y-1][x+1]))
                     if x > 0 and board[y-1][x-1].isupper():
-                        new_board = copy.deepcopy(board)
-                        new_board[y][x] = '.'
-                        new_board[y-1][x-1] = 'p'
-                        legal_moves.append(new_board)
+                        legal_moves.append((move(board, y, x, y-1, x-1),
+                                            Piece_score[piece][y-1][x-1] -
+                                            Piece_score[piece][y][x] -
+                                            Piece_score[board[y-1][x-1]][y-1][x-1]))
     return legal_moves
 
 
 def search(board, white_turn, depth):
+    score_board = score(board)
+    """returns a score for itself"""
     best_score = -99_900_000  # this will only matter if there are no moves and avoids crashing runner
     best_move = board
-    for move in moves(board, white_turn):
-        if depth > 1:
-            current_score = -search(move, not white_turn, depth - 1)[1]
-        else:
-            current_score = score(move) if white_turn else -score(move)
+    for move_, score_difference in moves(board, white_turn):
+        # assert abs(score_difference + score_board - score(move_)) < 0.1
+        current_score = score_difference + score_board if white_turn else -(score_difference + score_board)
+        if depth > 1 and abs(current_score) < 1_000_000:
+            current_score = -search(move_, not white_turn, depth - 1)[1]
         if current_score > best_score:
-            best_move = move
+            best_move = move_
             best_score = current_score
         # print(current_score, best_score, best_move)
     return best_move, best_score
