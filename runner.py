@@ -57,6 +57,10 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
     print('white time: {:.3f}'.format(white_time_remaining))
     print('black time: {:.3f}'.format(black_time_remaining))
     print('score: {:.1f}'.format(ai.evaluate(ai.to_array(board))))
+    if ai.is_check(ai.to_array(board), True):
+        print('white is in check')
+    if ai.is_check(ai.to_array(board), False):
+        print('black is in check')
     print()
 
 
@@ -71,6 +75,12 @@ def legal_moves(history, player_is_white):
 
 def make_file_name(white, black, repeat):
     return rf'results/{white.__name__} vs {black.__name__} repeat {repeat}.txt'
+
+
+def source_hash(player):
+    # this line makes things the same on windows and unix
+    normalised_source = '\n'.join(inspect.getsource(player).split())
+    return hashlib.sha256(normalised_source.encode()).hexdigest()
 
 
 def match(white, black, repeat):
@@ -113,17 +123,20 @@ def match(white, black, repeat):
             black_time = initialTime + black_moves * (timePerMove + (repeat - 1) * extraRepeatTime) - black_time_taken
             black_moves += 1
         print_state(turn, chosen_move, run_time, white_time, black_time, white, black, repeat)
+        if ai.is_checkmate(ai.to_array(chosen_move), True):
+            to_record = {'score': 0, 'cause': 'Black won by checkmate'}
+            break
+        if ai.is_checkmate(ai.to_array(chosen_move), False):
+            to_record = {'score': 1, 'cause': 'White won by checkmate'}
+            break
+        if ai.is_stalemate(ai.to_array(chosen_move)):
+            to_record = {'score': 0.5, 'cause': 'Draw due to stalemate'}
+            break
         if white_time < 0:
             to_record = {'score': 0, 'cause': 'Black won due to white running out of time'}
             break
         if black_time < 0:
             to_record = {'score': 1, 'cause': 'White won due to black running out of time'}
-            break
-        if not any(any(piece == 'K' for piece in row) for row in chosen_move):
-            to_record = {'score': 0, 'cause': 'Black won by taking the king'}
-            break
-        if not any(any(piece == 'k' for piece in row) for row in chosen_move):
-            to_record = {'score': 1, 'cause': 'White won by taking the king'}
             break
         if chosen_move not in legal_moves(history, player_is_white):
             if player_is_white:
@@ -149,8 +162,7 @@ if __name__ == '__main__':
                     continue
                 file_name = make_file_name(white, black, repeat)
                 current_versions = (
-                    f'{hashlib.sha256(inspect.getsource(white).encode()).hexdigest()} vs '
-                    f'{hashlib.sha256(inspect.getsource(black).encode()).hexdigest()} repeat {repeat}\n')
+                    f'{source_hash(white)} vs {source_hash(black)} repeat {repeat}\n')
                 try:
                     file = open(file_name)
                     previous_versions = file.readline()

@@ -1,6 +1,6 @@
 import hashlib
 import inspect
-from runner import competitors, make_file_name
+from runner import competitors, make_file_name, source_hash
 
 
 competitorNames = [
@@ -47,8 +47,7 @@ for repeat in range(1, 100):
                 file = open(make_file_name(white, black, repeat))
                 previous_versions = file.readline()
                 current_versions = (
-                    f'{hashlib.sha256(inspect.getsource(white).encode()).hexdigest()} vs '
-                    f'{hashlib.sha256(inspect.getsource(black).encode()).hexdigest()} repeat {repeat}\n')
+                    f'{source_hash(white)} vs {source_hash(black)} repeat {repeat}\n')
                 if current_versions != previous_versions:
                     continue
             except (FileNotFoundError, SyntaxError):
