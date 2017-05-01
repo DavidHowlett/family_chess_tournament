@@ -111,6 +111,15 @@ def match(white, black, repeat):
                 'White' if player_is_white else 'Black')}
             break
         run_time = time.process_time() - start_time
+        assert isinstance(chosen_move, list)
+        assert len(chosen_move) == 8
+        for row in chosen_move:
+            assert isinstance(row, list)
+            assert len(row) == 8
+            for char in row:
+                assert isinstance(char, str)
+                assert len(char) == 1
+                assert char in 'KQRBNP.pnbrqk'
         if player_is_white:
             white_time_taken += run_time
             white_time = initialTime + white_moves * (timePerMove + (repeat - 1) * extraRepeatTime) - white_time_taken
