@@ -4,18 +4,12 @@ A board is represented by 128 char array
 ToDo:
     - score moves towards enemy king more highly
     - score repeated positions differently as they lead to draws
-    - create isCheck function
     - use isCheck in castling
-    - add strict legal move generation function (look for check and stalemate)
-    - create isStalemate function
-    - make runner end the game when there is checkmate
-    - make runner end the game when there are no legal moves (stalemate)
     - en passant
     - switch to negamax
     - aspiration search
 """
 from time import perf_counter as now
-from copy import copy
 from array import array
 from itertools import count
 from shared import ThreeFoldRepetition
@@ -26,7 +20,7 @@ PIECE_MOVE_DIRECTION = {
     'N': (1+2*16, 1-2*16, -1+2*16, -1-2*16, 2+16, 2-16, -2+16, -2-16)}
 PIECE_MOVE_DIRECTION['K'] = PIECE_MOVE_DIRECTION['R'] + PIECE_MOVE_DIRECTION['B']
 PIECE_MOVE_DIRECTION['Q'] = PIECE_MOVE_DIRECTION['K']
-for _piece in copy(PIECE_MOVE_DIRECTION):
+for _piece in list(PIECE_MOVE_DIRECTION):
     PIECE_MOVE_DIRECTION[_piece.lower()] = PIECE_MOVE_DIRECTION[_piece]
 PIECE_VALUE = {
     '.': 0,
@@ -115,6 +109,8 @@ assert len(valid_pos) == 64
 transpositionTable = dict()
 total_moves = 0
 time_out_point = now() + 100
+# I think my program can win half the time when 4 pawns down
+contempt = 400
 history = []
 
 initialPosition = '''
@@ -142,16 +138,9 @@ def is_checkmate(board, whites_turn):
         all(is_check(move_, whites_turn) for move_, _ in moves(board, whites_turn)))
 
 
-# todo this should be built on legal move generation
 def is_stalemate(board):
-    """Returns true if either side has no leagal moves"""
-    white_cant_move = (
-        (not is_check(board, True)) and
-        all(is_check(move_, True) for move_, _ in moves(board, True)))
-    black_cant_move = (
-        (not is_check(board, False)) and
-        all(is_check(move_, False) for move_, _ in moves(board, False)))
-    return white_cant_move or black_cant_move
+    """Returns true if either side has no legal moves"""
+    return len(list(legal_moves(board, True))) == 0 or len(list(legal_moves(board, False))) == 0
 
 
 def evaluate(board)->float:
@@ -191,7 +180,7 @@ def move(board, pos1, pos2):
     global total_moves
     """returns a board with a move made"""
     total_moves += 1
-    board = copy(board)
+    board = board[:]
     # add piece to destination
     board[pos2] = board[pos1]
     # remove piece from source
@@ -259,7 +248,7 @@ def moves(board, _player_is_white: bool):
                     if pos2 >= (7*16) if _player_is_white else pos2 < 8:
                         # then the end of the board has been reached and promotion is needed
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
-                            after_pawn_replacement = copy(after_pawn_move)
+                            after_pawn_replacement = after_pawn_move[:]
                             after_pawn_replacement[pos2] = replacement_piece
                             yield(
                                 after_pawn_replacement,
@@ -283,7 +272,7 @@ def moves(board, _player_is_white: bool):
                     after_pawn_move = move(board, pos1, pos2)
                     # add each possible promotion to _moves
                     for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
-                        after_pawn_replacement = copy(after_pawn_move)
+                        after_pawn_replacement = after_pawn_move[:]
                         after_pawn_replacement[pos2] = replacement_piece
                         yield(
                             after_pawn_replacement,
@@ -333,8 +322,14 @@ def moves(board, _player_is_white: bool):
             yield castle(board, 7+7*16, 4+7*16, 5+7*16, 6+7*16)
 
 
+def legal_moves(board, _player_is_white):
+    for move_, diff in moves(board, _player_is_white):
+        if not is_check(move_, _player_is_white):
+            yield move_, diff
+
+
 def castle(board, old_rook_location, old_king_location, new_rook_location, new_king_location):
-    board = copy(board)
+    board = board[:]
     board[new_rook_location] = rook = board[old_rook_location]
     board[new_king_location] = king = board[old_king_location]
     board[old_rook_location] = board[old_king_location] = '.'
@@ -380,7 +375,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # This also stops my engine trading my king now for your king later.
         # I also search deeper then normal if a take is made
         # Note that the comparison is ordered for evaluation speed
-        if depth >= 1 and (depth >= 2 or abs(diff) > 0.5) and abs(diff) < 1000:
+        if depth >= 1 and (depth >= 2 or abs(diff) > 50) and abs(diff) < 1000:
             # this does not always use move ordering :-( todo
             move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
@@ -419,12 +414,15 @@ def estimated_score(board, previous_cscore, diff, player_is_white):
 def search(board, depth, current_cscore, player_is_white, alpha, beta):
     """Implements top level node in alpha_beta tree search, returns a best move"""
     # assert depth > 0
-    possible_moves = list(moves(board, player_is_white))
+    possible_moves = list(legal_moves(board, player_is_white))
     possible_moves.sort(
         key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
         reverse=player_is_white)
     for possible_move, diff in possible_moves:
-        if depth == 1:
+        if possible_move in history:
+            # this scores draws pessimistically
+            move_score = -contempt if player_is_white else contempt
+        elif depth == 1:
             move_score = current_cscore + diff
             # assert abs(move_score - evaluate(possible_move)) < 0.001
         else:
@@ -438,6 +436,52 @@ def search(board, depth, current_cscore, player_is_white, alpha, beta):
                 beta = move_score
                 best_move = possible_move
     return best_move, alpha if player_is_white else beta
+
+
+def main(given_history, white_time, black_time):
+    global transpositionTable
+    global time_out_point
+    global history
+    start_time = now()
+    history = to_array(given_history)
+    current_board = history[-1]
+    assert len(current_board) == 128
+    assert type(history[-1]) == type(current_board)
+    if len(history) < 3:
+        transpositionTable = dict()
+    player_is_white = len(history) % 2 == 1
+    available_time = white_time if player_is_white else black_time
+    time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
+    recalculate_position_values(current_board)
+    current_score = evaluate(current_board)
+    best_move = None
+    alpha = -99999
+    beta = 99999
+    for depth in range(1, 99):
+        search_start_time = now()
+        try:
+            best_move, best_score = search(current_board, depth, current_score, player_is_white, alpha, beta)
+            # the transposition table write is inside the try: to ensure it is only written when the search completes
+            transpositionTable[current_board.tobytes()] = best_score, 'exact', depth
+        except TimeoutError:
+            print('internal timeout')
+            break
+        search_run_time = now() - search_start_time
+        # print(f'{depth}  {search_run_time:.3f}')
+        time_remaining = available_time - (now() - start_time)
+        if time_remaining < search_run_time * 40:
+            break
+        if abs(best_score) > 10000:
+            # print('check mate is expected')
+            break
+    print(f'search depth: {depth}-{depth+1}')
+    print(f'expected score: {best_score:.1f}')
+    # if I am losing badly and in a loop then call a draw
+    if (((best_score < -contempt) if player_is_white else (best_score > contempt)) and
+            len(history) > 9 and history[-1] == history[-5] == history[-9]):
+        raise ThreeFoldRepetition
+    assert len(best_move) == 128
+    return from_array(best_move)
 
 
 def to_array(given_history: [[str]] or [[[str]]]) -> array or [array]:
@@ -485,52 +529,6 @@ def from_array(given_history: array or [array]) -> [[str]] or [[[str]]]:
     assert type(_history[0]) == list
     assert type(_history[0][0]) == list
     return _history
-
-
-def main(given_history, white_time, black_time):
-    global transpositionTable
-    global time_out_point
-    global history
-    start_time = now()
-    history = to_array(given_history)
-    current_board = history[-1]
-    assert len(current_board) == 128
-    assert type(history[-1]) == type(current_board)
-    if len(history) < 3:
-        transpositionTable = dict()
-    player_is_white = len(history) % 2 == 1
-    available_time = white_time if player_is_white else black_time
-    time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
-    recalculate_position_values(current_board)
-    current_score = evaluate(current_board)
-    best_move = None
-    alpha = -99999
-    beta = 99999
-    for depth in range(1, 99):
-        search_start_time = now()
-        try:
-            best_move, best_score = search(current_board, depth, current_score, player_is_white, alpha, beta)
-            # the transposition table write is inside the try: to ensure it is only written when the search completes
-            transpositionTable[current_board.tobytes()] = best_score, 'exact', depth
-        except TimeoutError:
-            print('internal timeout')
-            break
-        search_run_time = now() - search_start_time
-        # print(f'{depth}  {search_run_time:.3f}')
-        time_remaining = available_time - (now() - start_time)
-        if time_remaining < search_run_time * 40:
-            break
-        if abs(best_score) > 10000:
-            # print('check mate is expected')
-            break
-    print(f'search depth: {depth}-{depth+1}')
-    print(f'expected score: {best_score:.1f}')
-    # if I am losing badly and in a loop then call a draw
-    if (((best_score < -400) if player_is_white else (best_score > 400)) and
-            len(history) > 9 and history[-1] == history[-5] == history[-9]):
-        raise ThreeFoldRepetition
-    assert len(best_move) == 128
-    return from_array(best_move)
 
 
 '''
@@ -696,4 +694,25 @@ changed piece square tables
 64724			4		0.225	4808
 339102			5		1.388	63499
 201605 moves made per second
+fixed bug in quiescence search
+42			1		0.000	0
+225			2		0.001	44
+6428			3		0.024	412
+20035			4		0.082	2098
+225990			5		0.963	15892
+211275 moves made per second
+added legal move checking
+1391			1		0.005	0
+2923			2		0.005	44
+10475			3		0.026	412
+25431			4		0.056	2098
+232735			5		0.859	15892
+244626 moves made per second
+removed slow call to copy
+1391			1		0.007	0
+2923			2		0.007	44
+10475			3		0.081	412
+25431			4		0.071	2098
+232735			5		0.674	15892
+276847 moves made per second
 '''

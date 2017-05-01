@@ -26,15 +26,12 @@ Using libraries that are not chess specific are allowed. For example TensorFlow 
 Each player gets 5 seconds initially and gets 1 additional second to make each move. 
 This ensures that all games finish quickly.
 
-The rules differ slightly from standard chess.
-
 A player loses if:
 - They make an illegal move
 - Their time remaining hits 0
-- Their king is taken (checking for the king being taken is a little easier then checking for checkmate)
 
-Currently the runner will call a draw after 300 moves to prevent infinite games. 
-This maximum may be increased in future. 
+Currently the runner will call a draw after 250 moves to prevent infinite games. 
+This maximum may be changed in future. 
 
 If a player wants to call a draw they should raise one of the exceptions in shared.py 
 Please only call draws when it is legal to do so.

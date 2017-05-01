@@ -16,7 +16,7 @@ Not implemented yet:
     - en passant
 
 """
-from shared import StalemateException, ThreeFoldRepetition
+from shared import ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
     'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
@@ -193,8 +193,6 @@ def main(history, white_time, black_time):
     initial_state = {'board': history[-1], 'white': player_is_white}
     calculate_tree(initial_state, global_depth)
     possible_moves = initial_state['children']
-    if not possible_moves:
-        raise StalemateException
     if my_simple_score < -0.5:
         # if I am losing and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:

@@ -13,7 +13,7 @@ score is the result of the evaluation function
 """
 from time import perf_counter as now
 import copy
-from shared import StalemateException, ThreeFoldRepetition
+from shared import ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
     'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
@@ -338,8 +338,6 @@ def main(history, white_time, black_time):
     # history = [[''.join(row) for row in board] for board in history]
     current_score = evaluate(history[-1])
     possible_moves = list(moves(history[-1], player_is_white))
-    if not possible_moves:
-        raise StalemateException
     if (current_score < -1100) if player_is_white else (current_score > 1100):
         # if I am losing badly and in a loop then call a draw
         if len(history) > 9 and history[-1] == history[-5] == history[-9]:

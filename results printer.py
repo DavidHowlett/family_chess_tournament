@@ -4,25 +4,25 @@ from runner import competitors, make_file_name, source_hash
 
 
 competitorNames = [
-    # 'David_AI_v9',
-    # 'David_AI_v8',
-    # 'David_AI_v7',
-    # 'David_AI_v6',
-    # 'David_AI_v5',
-    # 'David_AI_v4',
-    # 'David_AI_v3',
+    'David_AI_v9',
+    'David_AI_v8',
+    'David_AI_v7',
+    'David_AI_v6',
+    'David_AI_v5',
+    'David_AI_v4',
+    'David_AI_v3',
     'David_AI_v2',
-    # 'David_AI_v1',
+    'David_AI_v1',
     'Iain_AI_v2',
-    # 'Iain_AI_v1',
-    # 'Michael_AI_v1_3',
-    # 'Michael_AI_v1_2',
-    # 'Michael_AI_v1_1',
-    # 'Michael_AI_v1_0',
-    # 'Robert_AI',
-    # 'no_search',
-    # 'no_move_AI',
-    # 'random_AI',
+    'Iain_AI_v1',
+    'Michael_AI_v1_3',
+    'Michael_AI_v1_2',
+    'Michael_AI_v1_1',
+    'Michael_AI_v1_0',
+    'Robert_AI',
+    'no_search',
+    'no_move_AI',
+    'random_AI',
     # 'Human_player'
 ]
 
@@ -37,7 +37,7 @@ for player in competitors:
     player.totalTime_ = 0
 
 tournamentResults = [('white', 'black', 'result', 'moves', 'time', 'explanation')]
-for repeat in range(1, 100):
+for repeat in range(1, 50):
     for white in competitors:
         for black in competitors:
             if white == black:
