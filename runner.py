@@ -57,11 +57,6 @@ def print_state(_turn, board, run_time, white_time_remaining, black_time_remaini
     print('white time: {:.3f}'.format(white_time_remaining))
     print('black time: {:.3f}'.format(black_time_remaining))
     print('score: {:.1f}'.format(ai.evaluate(ai.to_array(board))))
-    if ai.is_check(ai.to_array(board), True):
-        print('white is in check')
-    if ai.is_check(ai.to_array(board), False):
-        print('black is in check')
-    print()
 
 
 def legal_moves(history, player_is_white):
@@ -129,6 +124,19 @@ def match(white, black, repeat):
             black_time = initialTime + black_moves * (timePerMove + (repeat - 1) * extraRepeatTime) - black_time_taken
             black_moves += 1
         print_state(turn, chosen_move, run_time, white_time, black_time, white, black, repeat)
+        if chosen_move not in legal_moves(history, player_is_white):
+            if player_is_white:
+                to_record = {'score': 0, 'cause': 'Black won because white made an illegal move'}
+            else:
+                to_record = {'score': 1, 'cause': 'White won because black made an illegal move'}
+            break
+        # is_check can fail if it is is handed an illegal move
+        # so these print statements are after the legal move check
+        if ai.is_check(ai.to_array(chosen_move), True):
+            print('white is in check')
+        if ai.is_check(ai.to_array(chosen_move), False):
+            print('black is in check')
+        print()
         if ai.is_checkmate(ai.to_array(chosen_move), True):
             to_record = {'score': 0, 'cause': 'Black won by checkmate'}
             break
@@ -143,12 +151,6 @@ def match(white, black, repeat):
             break
         if black_time < 0:
             to_record = {'score': 1, 'cause': 'White won due to black running out of time'}
-            break
-        if chosen_move not in legal_moves(history, player_is_white):
-            if player_is_white:
-                to_record = {'score': 0, 'cause': 'Black won because white made an illegal move'}
-            else:
-                to_record = {'score': 1, 'cause': 'White won because black made an illegal move'}
             break
         # once the move has been shown valid add it to the history
         history.append(chosen_move)
