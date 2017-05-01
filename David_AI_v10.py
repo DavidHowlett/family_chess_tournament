@@ -378,7 +378,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # This also stops my engine trading my king now for your king later.
         # I also search deeper then normal if a take is made
         # Note that the comparison is ordered for evaluation speed
-        if depth >= 1 and (depth >= 2 or abs(diff) > 50) and abs(diff) < 1000:
+        if depth >= -1 and (depth >= 2 or abs(diff) > 50) and abs(diff) < 1000:
             # this does not always use move ordering :-( todo
             move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
@@ -718,4 +718,12 @@ removed slow call to copy
 25431			4		0.071	2098
 232735			5		0.674	15892
 276847 moves made per second
+v10 started
+q search now looks up to 3 moves ahead
+1391			1		0.004	0
+3210			2		0.005	67
+13671			3		0.029	674
+31071			4		0.053	2455
+180824			5		0.557	11857
+278830 moves made per second
 '''
