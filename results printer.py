@@ -1,5 +1,3 @@
-import hashlib
-import inspect
 from runner import competitors, make_file_name, source_hash
 
 

@@ -1,9 +1,9 @@
 """This player makes a random legal move each turn"""
-import David_AI_v3
+import David_AI_v9 as ai
 import random
 
 
 def main(history, _, __):
-    history = [[''.join(row) for row in board] for board in history]  # conversion to David's format
-    move = random.choice(David_AI_v3.moves(history[-1], len(history) % 2))[0]
-    return [[p for p in line] for line in move]
+    possible_moves = list(ai.legal_moves(ai.to_array(history[-1]), len(history) % 2))
+    move = random.choice(possible_moves)[0]
+    return ai.from_array(move)

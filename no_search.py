@@ -1,5 +1,5 @@
 """For fun I will try to write a player with no ability to search ahead, only an eval function"""
-import David_AI_v8 as ai
+import David_AI_v9 as ai
 from copy import copy
 
 PIECE_MOVE_DIRECTION = {
@@ -104,7 +104,7 @@ def main(given_history, white_time, black_time):
     player_is_white = len(history) % 2 == 1
     current_board = history[-1]
     best_score = -10**10
-    for move, diff in ai.moves(current_board, player_is_white):
+    for move, diff in ai.legal_moves(current_board, player_is_white):
         score = evaluate(move)
         if not player_is_white:
             score *= -1
