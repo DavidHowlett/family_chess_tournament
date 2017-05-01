@@ -40,14 +40,17 @@ promotionPosition = '''r . r . . . . .
 . . . . . . . .
 . . . . p . p .
 . . . . . R . R'''
-x = list([[piece for piece in row.replace(' ', '')] for row in promotionPosition.split('\n')].__reversed__())
-
+x = list([[piece for piece in row.replace(' ', '')] for row in difficultPosition.split('\n')].__reversed__())
+for move in Iain_AI_v2.moves(x, True):
+    print(move)
+print(len(Iain_AI_v2.moves(x, True)))
 # print(x)
 for depth in range(1, 5):
     start_time = time.perf_counter()
-    best_move, best_score = Iain_AI_v2.search(x, False, depth)
+    best_move, best_score = Iain_AI_v2.search(x, True, depth)
     end_time = time.perf_counter()
-    print(depth, best_score,end_time - start_time, best_move)
+    print(depth, best_score, end_time - start_time)  # , best_move)
+
 
 ''' performance before optimisation
 1 80 0.00220390942092681
@@ -70,4 +73,9 @@ removed deepcopy
 2 -205 0.00410338173704801
 3 25 0.14609174623899446
 4 -125 5.050977404292655
+Now searches single pawn advancements even when double advance is possible
+1 310 0.00013698256600105544
+2 5 0.00473279577567581
+3 240 0.15794250261052842
+4 5 5.883278342478872
 '''

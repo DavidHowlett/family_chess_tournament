@@ -155,12 +155,7 @@ def moves(board, white_turn):
                                 break
                 if piece == 'P' and y <= 6:
                     if board[y+1][x] == '.':
-                        if y == 1 and board[y+2][x] == '.':
-                            legal_moves.append(
-                                (move(board, y, x, y+2, x),
-                                 Piece_score[piece][y+2][x] -
-                                 Piece_score[piece][y][x]))
-                        elif y == 6:
+                        if y == 6:
                             new_board = board.copy()
                             new_board[y] = new_board[y].copy()
                             new_board[y+1] = new_board[y+1].copy()
@@ -174,6 +169,11 @@ def moves(board, white_turn):
                             legal_moves.append((move(board, y, x, y + 1, x),
                                                 Piece_score[piece][y + 1][x] -
                                                 Piece_score[piece][y][x]))
+                            if y == 1 and board[y+2][x] == '.':
+                                legal_moves.append(
+                                    (move(board, y, x, y+2, x),
+                                     Piece_score[piece][y+2][x] -
+                                     Piece_score[piece][y][x]))
                     if x < 7 and board[y+1][x+1].islower():
                         if y == 6:
                             new_board = board.copy()
@@ -236,12 +236,7 @@ def moves(board, white_turn):
                                 break
                 if piece == 'p' and y >= 1:
                     if board[y-1][x] == '.':
-                        if y == 6 and board[y-2][x] == '.':
-                            legal_moves.append((
-                                move(board, y, x, y-2, x),
-                                Piece_score[piece][y-2][x] -
-                                Piece_score[piece][y][x]))
-                        elif y == 1:
+                        if y == 1:
                             new_board = board.copy()
                             new_board[y] = new_board[y].copy()
                             new_board[y-1] = new_board[y-1].copy()
@@ -256,6 +251,11 @@ def moves(board, white_turn):
                                 move(board, y, x, y - 1, x),
                                 Piece_score[piece][y - 1][x] -
                                 Piece_score[piece][y][x]))
+                            if y == 6 and board[y-2][x] == '.':
+                                legal_moves.append((
+                                    move(board, y, x, y-2, x),
+                                    Piece_score[piece][y-2][x] -
+                                    Piece_score[piece][y][x]))
                     if x < 7 and board[y-1][x+1].isupper():
                         if y == 1:
                             new_board = board.copy()
@@ -301,7 +301,7 @@ def search(board, white_turn, depth):
     best_score = -99_900_000  # this will only matter if there are no moves and avoids crashing runner
     best_move = board
     for move_, score_difference in moves(board, white_turn):
-        assert abs(score_difference + score_board - score(move_)) < 0.1
+        # assert abs(score_difference + score_board - score(move_)) < 0.1
         current_score = score_difference + score_board if white_turn else -(score_difference + score_board)
         if depth > 1 and abs(current_score) < 1_000_000:
             current_score = -search(move_, not white_turn, depth - 1)[1]
