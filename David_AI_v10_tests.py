@@ -114,13 +114,20 @@ assert ai.position_value['P'][4*16] < ai.position_value['P'][4+4*16]
 assert ai.search(boards['findCheckMate'], 4, ai.evaluate(boards['findCheckMate']), True, -99999, 99999)[1] < 10000
 assert ai.search(boards['findCheckMate'], 5, ai.evaluate(boards['findCheckMate']), True, -99999, 99999)[1] > 10000
 
+start_time = now()
+ai.is_stalemate(boards['difficultPosition'])
+print(f'stalemate check takes: {now()-start_time}')
+start_time = now()
+ai.is_checkmate(boards['difficultPosition'], True)
+print(f'checkmate check takes: {now()-start_time}')
+
 
 def performance_test():
     ai.transpositionTable = dict()
     ai.total_moves = 0
     _board = boards['difficultPosition']
     test_start_time = now()
-    for depth in range(1, 6):
+    for depth in range(1, 9):
         start_time = now()
         best_move, _ = ai.search(_board, depth, ai.evaluate(_board), True, -99999, 99999)
         print('{}\t\t\t{}\t\t{:.3f}\t{}'.format(ai.total_moves, depth, now() - start_time, len(ai.transpositionTable)))
