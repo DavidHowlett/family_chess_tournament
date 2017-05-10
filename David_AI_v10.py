@@ -100,6 +100,12 @@ POSITION_VALUE_READABLE = {
         [-50, -30, -30, -30, -30, -30, -30, -50]],
     '.': [[0 for _ in range(8)] for _ in range(8)]
 }
+king_tropism = [
+    [5,  5,  5,  5, 5],
+    [5, 10, 10, 10, 5],
+    [5, 10, 15, 10, 5],
+    [5, 10, 10, 10, 5],
+    [5,  5,  5,  5, 5]]
 # The last 4 chars of the board contain the castling rights.
 # If the char is true then castling is allowed
 BOTTOM_LEFT_CASTLING = 124
@@ -174,6 +180,24 @@ def recalculate_position_values(board):
         for row in POSITION_VALUE_READABLE[piece_]:
             position_value[piece_.lower()].extend(
                 [-PIECE_VALUE[piece_]-value for value in row.__reversed__()]+[None]*8)
+    # to encourage moves towards the opponents king I score pieces near the enemy king more highly
+    for king in 'k', 'K':
+        king_pos = board.index(king)
+        for yd in range(-2, 3):
+            for xd in range(-2, 3):
+                position_to_increment = king_pos+xd+16*yd
+                if position_to_increment & 0x88:
+                    # don't modify positions that are off board
+                    continue
+                if king == 'k':
+                    added_score = king_tropism[yd+2][xd+2]
+                else:
+                    added_score = -king_tropism[yd+2][xd+2]
+                for piece in position_value:
+                    if piece in 'Kk':
+                        continue
+                    position_value[piece][position_to_increment] += added_score
+
 
 # it is better that the position values are given some sensible default values
 recalculate_position_values(initialPosition)
@@ -378,7 +402,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # This also stops my engine trading my king now for your king later.
         # I also search deeper then normal if a take is made
         # Note that the comparison is ordered for evaluation speed
-        if depth >= -1 and (depth >= 2 or abs(diff) > 50) and abs(diff) < 1000:
+        if depth >= 1 and (depth >= 2 or abs(diff) > 50) and abs(diff) < 1000:
             # this does not always use move ordering :-( todo
             move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
         if player_is_white:
@@ -719,11 +743,15 @@ removed slow call to copy
 232735			5		0.674	15892
 276847 moves made per second
 v10 started
-q search now looks up to 3 moves ahead
+added king tropism
 1391			1		0.004	0
-3210			2		0.005	67
-13671			3		0.029	674
-31071			4		0.053	2455
-180824			5		0.557	11857
-278830 moves made per second
+2923			2		0.005	44
+10461			3		0.022	412
+32098			4		0.070	2388
+245978			5		0.906	16885
+892322			6		2.227	81315
+4981449			7		14.666	341053
+18137202			8		53.629	1818450
+253564 moves made per second
+
 '''
