@@ -1,4 +1,4 @@
-As of the 10th of May ther results are:
+As of the 10th of May the results are:
 
 David_AI_v9     scored 90.6% 366.0/404 taking on average 1.075 seconds
 David_AI_v10    scored 89.6% 362.0/404 taking on average 1.051 seconds
