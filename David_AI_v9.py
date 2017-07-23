@@ -2,11 +2,12 @@
 A board is represented by 128 char array
 
 ToDo:
+    - ensure stalemates are scored correctly (I drew a game I should have won due to this bug)
     - keep a record of all the moves played in the results log, this enables me to look at how
         a game was won or lost after the fact
+    - score repeated positions differently as they lead to draws
     - experiment with deeper q search
     - score moves towards enemy king more highly
-    - score repeated positions differently as they lead to draws
     - use isCheck in castling
     - en passant
     - switch to negamax

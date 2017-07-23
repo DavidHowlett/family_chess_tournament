@@ -1,4 +1,4 @@
-from runner import competitors, make_file_name, source_hash
+from runner import make_file_name, source_hash
 
 
 competitorNames = [

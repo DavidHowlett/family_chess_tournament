@@ -1,0 +1,4 @@
+[package]
+name = "chess_engine"
+version = "0.1.0"
+authors = ["David Howlett <david.howlett3@gmail.com>"]
