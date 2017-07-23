@@ -12,7 +12,6 @@ timePerMove = 1
 turnsToPlayFor = 250
 extraRepeatTime = 0.1
 competitorNames = [
-    'David_AI_v10',
     'David_AI_v9',
     'David_AI_v8',
     'David_AI_v7',

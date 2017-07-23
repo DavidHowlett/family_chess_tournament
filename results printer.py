@@ -2,7 +2,6 @@ from runner import competitors, make_file_name, source_hash
 
 
 competitorNames = [
-    'David_AI_v10',
     'David_AI_v9',
     'David_AI_v8',
     'David_AI_v7',
