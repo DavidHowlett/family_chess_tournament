@@ -5,7 +5,6 @@ ToDo:
     - keep a record of all the moves played in the results log, this enables me to look at how
         a game was won or lost after the fact
     - experiment with deeper q search
-    - score moves towards enemy king more highly
     - score repeated positions differently as they lead to draws
     - use isCheck in castling
     - en passant
