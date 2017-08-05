@@ -5,3 +5,4 @@ fn main(){
     let board: [i8; 64] = [0;64];
     print!("{}\n", board[0]);
 }
+

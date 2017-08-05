@@ -7,7 +7,6 @@ ToDo:
         a game was won or lost after the fact
     - score repeated positions differently as they lead to draws
     - experiment with deeper q search
-    - score moves towards enemy king more highly
     - use isCheck in castling
     - en passant
     - switch to negamax

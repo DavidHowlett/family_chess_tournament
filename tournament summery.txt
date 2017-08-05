@@ -1,3 +1,26 @@
+As of the 10th of May the results are:
+
+David_AI_v9     scored 90.6% 366.0/404 taking on average 1.075 seconds
+David_AI_v10    scored 89.6% 362.0/404 taking on average 1.051 seconds
+David_AI_v8     scored 88.4% 357.0/404 taking on average 1.113 seconds
+David_AI_v7     scored 80.9% 327.0/404 taking on average 1.186 seconds
+David_AI_v5     scored 72.4% 283.0/391 taking on average 0.899 seconds
+David_AI_v6     scored 69.4% 280.5/404 taking on average 0.827 seconds
+David_AI_v4     scored 68.4% 264.0/386 taking on average 0.859 seconds
+David_AI_v3     scored 58.2% 224.0/385 taking on average 1.329 seconds
+David_AI_v2     scored 54.4% 209.5/385 taking on average 0.167 seconds
+Iain_AI_v2      scored 53.6% 206.5/385 taking on average 1.320 seconds
+Michael_AI_v1_3 scored 37.4% 144.0/385 taking on average 0.699 seconds
+Michael_AI_v1_0 scored 37.4% 144.0/385 taking on average 0.864 seconds
+Michael_AI_v1_1 scored 35.2% 135.5/385 taking on average 0.863 seconds
+Michael_AI_v1_2 scored 33.1% 127.5/385 taking on average 0.662 seconds
+David_AI_v1     scored 31.4% 121.0/385 taking on average 0.368 seconds
+Robert_AI       scored 30.6% 118.0/385 taking on average 0.291 seconds
+random_AI       scored 26.4% 101.5/385 taking on average 0.005 seconds
+no_search       scored 24.9% 96.0/385 taking on average 0.006 seconds
+Iain_AI_v1      scored 8.8% 34.0/385 taking on average 0.002 seconds
+no_move_AI      scored 0.0% 0/385 taking on average 0.000 seconds
+
 As of the 25th April the results are:
 
 David_AI_v9     scored 94.0% 417.5/444 taking on average 1.080 seconds
