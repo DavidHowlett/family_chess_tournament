@@ -175,6 +175,7 @@ def recalculate_position_values(board):
             position_value[piece_.lower()].extend(
                 [-PIECE_VALUE[piece_]-value for value in row.__reversed__()]+[None]*8)
 
+
 # it is better that the position values are given some sensible default values
 recalculate_position_values(initialPosition)
 
