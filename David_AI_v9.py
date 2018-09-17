@@ -40,9 +40,6 @@ POSITION_VALUE_READABLE = {
         [5, -5,-10,  0,  0,-10, -5,  5],
         [5, 10, 10,-20,-20, 10, 10,  5],
         [0,  0,  0,  0,  0,  0,  0,  0]],
-    # [[5*(x - (x * x / 7))+(0.02 * (y+2)**4)-10 for x in range(8)] for y in range(7, -1, -1)],
-    # print('\n'.join(' '.join('{}'.format(int(PAWN_POSITION_VALUE[y][x]))
-    #   for x in range(8))for y in range(8))+'\n')
     'N': [
         [-50, -40, -30, -30, -30, -30, -40, -50],
         [-40, -20, 0, 0, 0, 0, -20, -40],
@@ -719,4 +716,11 @@ removed slow call to copy
 25431			4		0.071	2098
 232735			5		0.674	15892
 276847 moves made per second
+waited roughly a year
+1391			1		0.003	0
+2923			2		0.004	44
+10475			3		0.019	412
+25431			4		0.040	2098
+232735			5		0.573	15892
+363754 moves made per second
 '''

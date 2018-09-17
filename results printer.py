@@ -1,7 +1,6 @@
 from runner import make_file_name, source_hash
 
-
-competitorNames = [
+all_competitors = [
     'David_AI_v9',
     'David_AI_v8',
     'David_AI_v7',
@@ -24,6 +23,15 @@ competitorNames = [
     # 'Human_player'
 ]
 
+bad_competitors = [
+    'Robert_AI',
+    'no_search',
+    'random_AI',
+]
+
+competitorNames = bad_competitors
+competitorNames = all_competitors
+
 for name in competitorNames:
     exec('import ' + name)
 
@@ -35,6 +43,9 @@ for player in competitors:
     player.totalTime_ = 0
 
 tournamentResults = [('white', 'black', 'result', 'moves', 'time', 'explanation')]
+white_wins = 0
+black_wins = 0
+draws = 0
 for repeat in range(1, 50):
     for white in competitors:
         for black in competitors:
@@ -52,6 +63,12 @@ for repeat in range(1, 50):
                 continue
             result = eval(file.readline())
             score = result['score']
+            if score == 1:
+                white_wins += 1
+            elif score == 0:
+                black_wins += 1
+            else:
+                draws += 1
             white.matchesPlayed_ += 1
             white.tournamentScore_ += score
             white.totalMoves_ += result['white_moves']
@@ -86,3 +103,5 @@ for player in competitors:
         f'{player.tournamentScore_}/{player.matchesPlayed_} '
         # f'with {player.totalMoves_} moves, '
         f'taking on average {player.totalTime_/player.totalMoves_:.3f} seconds')
+
+print(f'\nThere were {white_wins} white wins, {black_wins} black wins and {draws} draws')
