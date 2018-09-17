@@ -13,3 +13,5 @@ Icon\?
 **/*.rs.bk
 # User-specific PyCharm stuff:
 .idea/
+
+\.ipynb_checkpoints/
