@@ -19,8 +19,8 @@ from shared import ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
     'R': (1, 16, -1, -16),
-    'B': (1+16, 1-16, 16-1, -1-16),
-    'N': (1+2*16, 1-2*16, -1+2*16, -1-2*16, 2+16, 2-16, -2+16, -2-16)}
+    'B': (1 + 16, 1 - 16, 16 - 1, -1 - 16),
+    'N': (1 + 2 * 16, 1 - 2 * 16, -1 + 2 * 16, -1 - 2 * 16, 2 + 16, 2 - 16, -2 + 16, -2 - 16)}
 PIECE_MOVE_DIRECTION['K'] = PIECE_MOVE_DIRECTION['R'] + PIECE_MOVE_DIRECTION['B']
 PIECE_MOVE_DIRECTION['Q'] = PIECE_MOVE_DIRECTION['K']
 for _piece in list(PIECE_MOVE_DIRECTION):
@@ -104,7 +104,7 @@ BOTTOM_RIGHT_CASTLING = 125
 TOP_LEFT_CASTLING = 126
 TOP_RIGHT_CASTLING = 127
 # valid positions
-valid_pos = [x+16*y for x in range(8) for y in range(8)]
+valid_pos = [x + 16 * y for x in range(8) for y in range(8)]
 assert len(valid_pos) == 64
 transpositionTable = dict()
 total_moves = 0
@@ -123,7 +123,7 @@ p p p p p p p p
 P P P P P P P P
 R N B Q K B N R'''
 initialPosition = initialPosition.replace(' ', '').split().__reversed__()
-initialPosition = array('u', ''.join(row+'_'*8 for row in initialPosition))
+initialPosition = array('u', ''.join(row + '_' * 8 for row in initialPosition))
 
 
 def is_check(board, for_white):
@@ -134,8 +134,8 @@ def is_check(board, for_white):
 def is_checkmate(board, whites_turn):
     """If for_white is true this returns whether white is in checkmate."""
     return (
-        is_check(board, whites_turn) and
-        all(is_check(move_, whites_turn) for move_, _ in moves(board, whites_turn)))
+            is_check(board, whites_turn) and
+            all(is_check(move_, whites_turn) for move_, _ in moves(board, whites_turn)))
 
 
 def is_stalemate(board):
@@ -143,7 +143,7 @@ def is_stalemate(board):
     return len(list(legal_moves(board, True))) == 0 or len(list(legal_moves(board, False))) == 0
 
 
-def evaluate(board)->float:
+def evaluate(board) -> float:
     return sum(position_value[board[x + 16 * y]][x + 16 * y] for x in range(8) for y in range(8))
 
 
@@ -151,13 +151,13 @@ def recalculate_position_values(board):
     global position_value
     position_value = dict()
     # total_material is 48190 at the games start and can go as low as 40000 at the games end
-    total_material = sum(abs(PIECE_VALUE[board[x+16*y]]) for x in range(8) for y in range(8))
+    total_material = sum(abs(PIECE_VALUE[board[x + 16 * y]]) for x in range(8) for y in range(8))
     # game_phase should be 1 when the score is 48190 and should hit 0 when the score is 40600
-    game_phase = (total_material-40600)/7590
+    game_phase = (total_material - 40600) / 7590
     game_phase = max(game_phase, 0)
     POSITION_VALUE_READABLE['K'] = [[
         game_phase * POSITION_VALUE_READABLE['K_early'][y][x] +
-        (1-game_phase) * POSITION_VALUE_READABLE['K_late'][y][x]
+        (1 - game_phase) * POSITION_VALUE_READABLE['K_late'][y][x]
         for x in range(8)] for y in range(8)]
     for piece_ in POSITION_VALUE_READABLE:
         if piece_.startswith('K_'):
@@ -167,10 +167,10 @@ def recalculate_position_values(board):
         position_value[piece_.lower()] = []
         for row in POSITION_VALUE_READABLE[piece_].__reversed__():
             position_value[piece_].extend(
-                [PIECE_VALUE[piece_]+value for value in row]+[None]*8)
+                [PIECE_VALUE[piece_] + value for value in row] + [None] * 8)
         for row in POSITION_VALUE_READABLE[piece_]:
             position_value[piece_.lower()].extend(
-                [-PIECE_VALUE[piece_]-value for value in row.__reversed__()]+[None]*8)
+                [-PIECE_VALUE[piece_] - value for value in row.__reversed__()] + [None] * 8)
 
 
 # it is better that the position values are given some sensible default values
@@ -189,18 +189,18 @@ def move(board, pos1, pos2):
 
     # most moves don't affect castling rights so I do a fast set membership test
     if pos1 in {0, 4, 7,
-                0+7*16, 4+7*16, 7+7*16}:
+                0 + 7 * 16, 4 + 7 * 16, 7 + 7 * 16}:
         if pos1 == 0:
             board[BOTTOM_LEFT_CASTLING] = '\0'
         elif pos1 == 4:
             board[BOTTOM_LEFT_CASTLING] = board[BOTTOM_RIGHT_CASTLING] = '\0'
         elif pos1 == 7:
             board[BOTTOM_RIGHT_CASTLING] = '\0'
-        elif pos1 == 0+7*16:
+        elif pos1 == 0 + 7 * 16:
             board[TOP_LEFT_CASTLING] = '\0'
-        elif pos1 == 4+7*16:
+        elif pos1 == 4 + 7 * 16:
             board[TOP_LEFT_CASTLING] = board[TOP_RIGHT_CASTLING] = '\0'
-        elif pos1 == 7+7*16:
+        elif pos1 == 7 + 7 * 16:
             board[TOP_RIGHT_CASTLING] = '\0'
     return board
 
@@ -212,7 +212,7 @@ def moves(board, _player_is_white: bool):
         piece = board[pos1]
         if piece in 'KQRBN' if _player_is_white else piece in 'kqrbn':
             for direction in PIECE_MOVE_DIRECTION[piece]:
-                for pos2 in count(pos1+direction, direction):
+                for pos2 in count(pos1 + direction, direction):
                     if pos2 & 0x88:
                         # then it is a move off the board
                         break
@@ -239,25 +239,25 @@ def moves(board, _player_is_white: bool):
         # pawns are weird
         if piece == 'P' if _player_is_white else piece == 'p':
             # this section is for captures
-            for pos2 in (pos1+1+16, pos1-1+16) if _player_is_white else (pos1+1-16, pos1-1-16):
+            for pos2 in (pos1 + 1 + 16, pos1 - 1 + 16) if _player_is_white else (pos1 + 1 - 16, pos1 - 1 - 16):
                 if pos2 & 0x88:
                     continue
                 target_piece = board[pos2]
                 if target_piece.islower() if _player_is_white else target_piece.isupper():
                     # then a take is possible
                     after_pawn_move = move(board, pos1, pos2)
-                    if pos2 >= (7*16) if _player_is_white else pos2 < 8:
+                    if pos2 >= (7 * 16) if _player_is_white else pos2 < 8:
                         # then the end of the board has been reached and promotion is needed
                         for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
                             after_pawn_replacement = after_pawn_move[:]
                             after_pawn_replacement[pos2] = replacement_piece
-                            yield(
+                            yield (
                                 after_pawn_replacement,
                                 position_value[replacement_piece][pos2] -
                                 position_value[target_piece][pos2] -
                                 position_value[piece][pos1])
                     else:
-                        yield(
+                        yield (
                             after_pawn_move,
                             position_value[piece][pos2] -
                             position_value[target_piece][pos2] -
@@ -269,26 +269,26 @@ def moves(board, _player_is_white: bool):
             pos2 = pos1 + (16 if _player_is_white else -16)
             if board[pos2] == '.':
                 # check if pawn can be promoted
-                if pos2 >= (7*16) if _player_is_white else pos2 < 8:
+                if pos2 >= (7 * 16) if _player_is_white else pos2 < 8:
                     after_pawn_move = move(board, pos1, pos2)
                     # add each possible promotion to _moves
                     for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
                         after_pawn_replacement = after_pawn_move[:]
                         after_pawn_replacement[pos2] = replacement_piece
-                        yield(
+                        yield (
                             after_pawn_replacement,
                             position_value[replacement_piece][pos2] -
                             position_value[piece][pos1])
                 else:
-                    yield(
+                    yield (
                         move(board, pos1, pos2),
                         position_value[piece][pos2] -
                         position_value[piece][pos1])
                 # check if pawn can move forwards 2
-                if pos1 < 32 if _player_is_white else pos1 >= 6*16 :
+                if pos1 < 32 if _player_is_white else pos1 >= 6 * 16:
                     pos2 = pos1 + (32 if _player_is_white else -32)
                     if board[pos2] == '.':
-                        yield(
+                        yield (
                             move(board, pos1, pos2),
                             position_value[piece][pos2] -
                             position_value[piece][pos1])
@@ -309,18 +309,18 @@ def moves(board, _player_is_white: bool):
             yield castle(board, 7, 4, 5, 6)
     else:
         if (board[TOP_LEFT_CASTLING] and
-                board[0+7*16] == 'r' and
-                board[1+7*16] == '.' and
-                board[2+7*16] == '.' and
-                board[3+7*16] == '.' and
-                board[4+7*16] == 'k'):
-            yield castle(board, 0+7*16, 4+7*16, 3+7*16, 2+7*16)
+                board[0 + 7 * 16] == 'r' and
+                board[1 + 7 * 16] == '.' and
+                board[2 + 7 * 16] == '.' and
+                board[3 + 7 * 16] == '.' and
+                board[4 + 7 * 16] == 'k'):
+            yield castle(board, 0 + 7 * 16, 4 + 7 * 16, 3 + 7 * 16, 2 + 7 * 16)
         if (board[TOP_RIGHT_CASTLING] and
-                board[7+7*16] == 'r' and
-                board[6+7*16] == '.' and
-                board[5+7*16] == '.' and
-                board[4+7*16] == 'k'):
-            yield castle(board, 7+7*16, 4+7*16, 5+7*16, 6+7*16)
+                board[7 + 7 * 16] == 'r' and
+                board[6 + 7 * 16] == '.' and
+                board[5 + 7 * 16] == '.' and
+                board[4 + 7 * 16] == 'k'):
+            yield castle(board, 7 + 7 * 16, 4 + 7 * 16, 5 + 7 * 16, 6 + 7 * 16)
 
 
 def legal_moves(board, _player_is_white):
@@ -346,7 +346,7 @@ def castle(board, old_rook_location, old_king_location, new_rook_location, new_k
         position_value[king][old_king_location])
 
 
-def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
+def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta) -> int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
     # if abs(current_cscore - evaluate(board)) > 0.1:
     #    print(current_cscore, evaluate(board), board)
@@ -456,6 +456,7 @@ def main(given_history, white_time, black_time):
     recalculate_position_values(current_board)
     current_score = evaluate(current_board)
     best_move = None
+    best_score = None
     alpha = -99999
     beta = 99999
     for depth in range(1, 99):
@@ -489,7 +490,7 @@ def to_array(given_history: [[str]] or [[[str]]]) -> array or [array]:
     """Converts boards from a list of lists to arrays"""
     # shortcut the method if only given a single board
     if type(given_history[0][0]) == str:
-        return array('u', ''.join(''.join(row)+'_'*8 for row in given_history))
+        return array('u', ''.join(''.join(row) + '_' * 8 for row in given_history))
     assert len(given_history[0]) == 8
     assert len(given_history[0][0]) == 8
     _history = []
@@ -497,18 +498,18 @@ def to_array(given_history: [[str]] or [[[str]]]) -> array or [array]:
     castling_rights = array('u', '____')
     # incrementally update the castling rights
     for given_board in given_history:
-        board = array('u', ''.join(''.join(row)+'_'*8 for row in given_board))
+        board = array('u', ''.join(''.join(row) + '_' * 8 for row in given_board))
         if board[0] != 'R':
             castling_rights[0] = '\0'
         if board[4] != 'K':
             castling_rights[0] = castling_rights[1] = '\0'
         if board[7] != 'R':
             castling_rights[1] = '\0'
-        if board[0+7*16] != 'r':
+        if board[0 + 7 * 16] != 'r':
             castling_rights[2] = '\0'
-        if board[4+7*16] != 'k':
+        if board[4 + 7 * 16] != 'k':
             castling_rights[2] = castling_rights[3] = '\0'
-        if board[7+7*16] != 'r':
+        if board[7 + 7 * 16] != 'r':
             castling_rights[3] = '\0'
         board[-4:] = castling_rights
         _history.append(board)
