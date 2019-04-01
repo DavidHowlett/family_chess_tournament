@@ -108,8 +108,9 @@ valid_pos = [x + 16 * y for x in range(8) for y in range(8)]
 assert len(valid_pos) == 64
 transpositionTable = dict()
 total_moves = 0
-time_out_point = now() + 100
-# I think my program can win half the time when 4 pawns down
+# I set a time out point far in the future. In an actual match this will be overridden with something sensible
+time_out_point = now() + 10**10
+# I think my program can win about half the time when 4 pawns down when playing against it's current weak opponents
 contempt = 400
 history = []
 
@@ -365,7 +366,9 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta) -> in
     if depth > 1:
         if now() > time_out_point:
             raise TimeoutError
-        # then try to guess the best order to try moves
+        # When using alpha-beta search, trying the best moves first improves the efficiency of the search.
+        # The issue is that with the current design I need to generate moves to order them and generation is expensive.
+        # The compromise is to skip move ordering near the leaves.
         possible_moves = list(possible_moves)
         possible_moves.sort(key=lambda _move: _move[1], reverse=player_is_white)
     current_best_score = (-99999) if player_is_white else 99999
