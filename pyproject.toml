@@ -1,0 +1,9 @@
+[isort]
+line-length=140
+multi_line_output=3
+include_trailing_comma=true
+[ruff]
+line-length=140
+[docformatter]
+wrap-summaries = 140
+wrap-descriptions = 140
