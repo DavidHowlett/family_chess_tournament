@@ -4,7 +4,7 @@ circular dependencies is desirable."""
 
 
 class ThreeFoldRepetition(Exception):
-    """Throw this when you want to declare a draw due to the three fold repetition rule."""
+    """Throw this when you want to declare a draw due to the threefold repetition rule."""
 
     pass
 

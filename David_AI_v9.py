@@ -17,9 +17,11 @@ from array import array
 from itertools import count
 from time import perf_counter as now
 
+from typing import Dict, Tuple
+
 from shared import ThreeFoldRepetition
 
-PIECE_MOVE_DIRECTION = {
+PIECE_MOVE_DIRECTION: Dict[str, Tuple[int, ...]] = {
     "R": (1, 16, -1, -16),
     "B": (1 + 16, 1 - 16, 16 - 1, -1 - 16),
     "N": (
@@ -135,9 +137,9 @@ TOP_RIGHT_CASTLING = 127
 # valid positions
 valid_pos = [x + 16 * y for x in range(8) for y in range(8)]
 assert len(valid_pos) == 64
-transpositionTable = dict()
+transpositionTable = {}
 total_moves = 0
-# I set a time out point far in the future. In an actual match this will be overridden with something sensible
+# I set a time-out point far in the future. In an actual match this will be overridden with something sensible
 time_out_point = now() + 10**10
 # I think my program can win about half the time when 4 pawns down when playing against it's current weak opponents
 contempt = 400
@@ -170,10 +172,7 @@ def is_checkmate(board, whites_turn):
 
 def is_stalemate(board):
     """Returns true if either side has no legal moves"""
-    return (
-        len(list(legal_moves(board, True))) == 0
-        or len(list(legal_moves(board, False))) == 0
-    )
+    return not list(legal_moves(board, True)) or not list(legal_moves(board, False))
 
 
 def evaluate(board) -> float:
@@ -186,7 +185,7 @@ def evaluate(board) -> float:
 
 def recalculate_position_values(board):
     global position_value
-    position_value = dict()
+    position_value = {}
     # total_material is 48190 at the games start and can go as low as 40000 at the games end
     total_material = sum(
         abs(PIECE_VALUE[board[x + 16 * y]]) for x in range(8) for y in range(8)
@@ -468,15 +467,14 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta) -> in
                         # the score failed high
                         transpositionTable[key] = current_best_score, "high", depth
                         break
-        else:
-            if move_score < current_best_score:
-                current_best_score = move_score
-                if move_score < beta:
-                    beta = move_score
-                    if alpha >= beta:
-                        # the score failed low
-                        transpositionTable[key] = current_best_score, "low", depth
-                        break
+        elif move_score < current_best_score:
+            current_best_score = move_score
+            if move_score < beta:
+                beta = move_score
+                if alpha >= beta:
+                    # the score failed low
+                    transpositionTable[key] = current_best_score, "low", depth
+                    break
     else:
         # the score is exact and the earlier check of the table ensures that we are not overwriting
         # an entry of greater depth
@@ -522,10 +520,9 @@ def search(board, depth, current_cscore, player_is_white, alpha, beta):
             if move_score > alpha:
                 alpha = move_score
                 best_move = possible_move
-        else:
-            if move_score < beta:
-                beta = move_score
-                best_move = possible_move
+        elif move_score < beta:
+            beta = move_score
+            best_move = possible_move
     return best_move, alpha if player_is_white else beta
 
 
@@ -539,7 +536,7 @@ def main(given_history, white_time, black_time):
     assert len(current_board) == 128
     assert type(history[-1]) == type(current_board)
     if len(history) < 3:
-        transpositionTable = dict()
+        transpositionTable = {}
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
     time_out_point = (

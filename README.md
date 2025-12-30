@@ -1,10 +1,10 @@
 # Family AI chess tournament
 
-Christmas 2016 the 3 Howlett brothers competed to see who could produce the best chess AI.
+Christmas 2016 the three Howlett brothers competed to see who could produce the best chess AI.
 We agreed to build our AI's without looking at any of the existing literature or code on the subject.
 David, Robert and Micheal all produced functional chess AI's in python.
 David's AI was winning by the end of the christmas holidays.
-After the christmas holidays we looked at the existing literature.
+After the Christmas holidays, we looked at the existing literature.
 
 # How to play
 
@@ -21,7 +21,7 @@ Each player must provide a function called "main" that takes the
 history of the game so far and returns a new board with the chosen move.
 
 Using other people's chess code is not allowed. You must write your own AI.
-Using libraries that are not chess specific are allowed. For example TensorFlow is ok.
+Using libraries that are not chess-specific is allowed. For example, TensorFlow is ok.
 
 Each player gets 5 seconds initially and gets 1 additional second to make each move.
 This ensures that all games finish quickly.
@@ -30,8 +30,7 @@ A player loses if:
 - They make an illegal move
 - Their time remaining hits 0
 
-Currently the runner will call a draw after 250 moves to prevent infinite games.
-This maximum may be changed in future.
+Currently, the runner will call a draw after 250 moves to prevent i
 
 If a player wants to call a draw they should raise one of the exceptions in shared.py
 Please only call draws when it is legal to do so.

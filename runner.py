@@ -1,3 +1,4 @@
+import contextlib
 import copy
 import hashlib
 import inspect
@@ -35,7 +36,7 @@ competitorNames = [
     # 'Human_player'
 ]
 for name in competitorNames:
-    exec("import " + name)
+    exec(f"import {name}")
 
 competitors = [eval(name) for name in competitorNames]
 
@@ -64,10 +65,7 @@ def print_state(
     print(
         f"----- {white.__name__} vs {black.__name__} match {repeat} move {_turn} -----"
     )
-    print(
-        "\n".join(" ".join(piece for piece in row) for row in board.__reversed__())
-        + "\n"
-    )
+    print("\n".join(" ".join(row) for row in board.__reversed__()) + "\n")
     print("{} took: {:.3f} seconds".format("white" if _turn % 2 else "black", run_time))
     print("white time: {:.3f}".format(white_time_remaining))
     print("black time: {:.3f}".format(black_time_remaining))
@@ -102,14 +100,12 @@ def match(white, black, repeat):
     black_moves = white_moves = 0
     black_time_taken = white_time_taken = 0
 
-    history = [
-        [[piece for piece in line] for line in initialBoard.replace(" ", "").split()]
-    ]
+    history = [[list(line) for line in initialBoard.replace(" ", "").split()]]
     history[0].reverse()
 
     to_record = {
         "score": 0.5,
-        "cause": "Draw due to reaching {} turns".format(turnsToPlayFor),
+        "cause": f"Draw due to reaching {turnsToPlayFor} turns",
     }
     for turn in range(1, 1 + turnsToPlayFor):
         player_is_white = turn % 2
@@ -131,17 +127,13 @@ def match(white, black, repeat):
         except shared.ThreeFoldRepetition:
             to_record = {
                 "score": 0.5,
-                "cause": "{} called a draw with the threefold repetition rule".format(
-                    "White" if player_is_white else "Black"
-                ),
+                "cause": f"{'White' if player_is_white else 'Black'} called a draw with the threefold repetition rule",
             }
             break
         except shared.FiftyMoveException:
             to_record = {
                 "score": 0.5,
-                "cause": "{} called a draw with the 50 move rule".format(
-                    "White" if player_is_white else "Black"
-                ),
+                "cause": f"{'White' if player_is_white else 'Black'} called a draw with the 50 move rule",
             }
             break
         run_time = time.process_time() - start_time
@@ -236,14 +228,12 @@ if __name__ == "__main__":
                 current_versions = (
                     f"{source_hash(white)} vs {source_hash(black)} repeat {repeat}\n"
                 )
-                try:
+                with contextlib.suppress(FileNotFoundError, SyntaxError):
                     file = open(file_name)
                     previous_versions = file.readline()
                     if current_versions == previous_versions:
                         # then skip this match
                         continue
-                except (FileNotFoundError, SyntaxError):
-                    pass
                 match(white, black, repeat)
 
     if os.name == "posix":

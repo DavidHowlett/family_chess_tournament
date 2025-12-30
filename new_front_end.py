@@ -11,29 +11,22 @@ import time
 import David_AI_v9
 
 currentBoard = """
-r . . . . . r .
-. k . . . . . .
-p . . b . . . .
-. b . . . . . p
-P . . . P . . .
-. R . P N . . .
-. P . . . P P P
-R . . . . . K ."""
+r n b q k b n r
+p p p p p p p p
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+. . . . . . . .
+P P P P P P P P
+R N B Q K B N R"""
 
 playerIsWhite = True
 
 history = [
-    list(
-        [
-            [piece for piece in line] for line in currentBoard.replace(" ", "").split()
-        ].__reversed__()
-    )
+    list([list(line) for line in currentBoard.replace(" ", "").split()].__reversed__())
 ]
-history = history * ((not playerIsWhite) + 1)
+history *= (not playerIsWhite) + 1
 startTime = time.perf_counter()
 chosen_move = David_AI_v9.main(history, 10, 10)
 print("computation took", time.perf_counter() - startTime, "seconds")
-print(
-    "\n".join(" ".join(piece for piece in row) for row in chosen_move.__reversed__())
-    + "\n"
-)
+print(("\n".join(" ".join(row) for row in chosen_move.__reversed__()) + "\n"))

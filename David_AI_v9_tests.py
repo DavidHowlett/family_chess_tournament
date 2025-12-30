@@ -89,7 +89,7 @@ P . P . . P P .
 
 for key in boards:
     board = boards[key].replace(" ", "").split().__reversed__()
-    board = array("u", "".join(row + "_" * 8 for row in board))
+    board = array("w", "".join(row + "_" * 8 for row in board))
     assert len(board) == 128
     boards[key] = board
     # print(len(list(ai.moves(position, True))))
@@ -137,7 +137,7 @@ assert (
 
 
 def performance_test():
-    ai.transpositionTable = dict()
+    ai.transpositionTable = {}
     ai.total_moves = 0
     _board = boards["difficultPosition"]
     test_start_time = now()
@@ -152,11 +152,7 @@ def performance_test():
             )
         )
         # print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
-    print(
-        "{} moves made per second".format(
-            int(ai.total_moves / (now() - test_start_time))
-        )
-    )
+    print(f"{int(ai.total_moves / (now() - test_start_time))} moves made per second")
 
 
 performance_test()
