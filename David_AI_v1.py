@@ -16,98 +16,124 @@ Not implemented yet:
     - en passant
 
 """
+
 from shared import ThreeFoldRepetition
 
 PIECE_VALUE = {
-    '.': 0,
-    'K': 20, 'Q': 9, 'R': 5, 'B': 3.2, 'N': 3, 'P': 0.9,
-    'k': -20, 'q': -9, 'r': -5, 'b': -3.2, 'n': -3, 'p': -0.9}
+    ".": 0,
+    "K": 20,
+    "Q": 9,
+    "R": 5,
+    "B": 3.2,
+    "N": 3,
+    "P": 0.9,
+    "k": -20,
+    "q": -9,
+    "r": -5,
+    "b": -3.2,
+    "n": -3,
+    "p": -0.9,
+}
 PIECE_MOVE_DIRECTION = {
-    'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
-    'k': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'Q': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
-    'q': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'R': ((1, 0), (0, 1), (-1, 0), (0, -1)),
-    'r': ((1, 0), (0, 1), (-1, 0), (0, -1)),
-    'B': ((1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'b': ((1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'N': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
-    'n': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
+    "K": ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
+    "k": ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "Q": ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
+    "q": ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "R": ((1, 0), (0, 1), (-1, 0), (0, -1)),
+    "r": ((1, 0), (0, 1), (-1, 0), (0, -1)),
+    "B": ((1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "b": ((1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "N": ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
+    "n": ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
 }
 
 
-def move(board: [str], y1, x1, y2, x2)-> [str]:
+def move(board: [str], y1, x1, y2, x2) -> [str]:
     """returns a board with a move made"""
     board = board.copy()
     # add piece to destination
     line = board[y2]
-    board[y2] = line[:x2] + board[y1][x1] + line[x2 + 1:]
+    board[y2] = line[:x2] + board[y1][x1] + line[x2 + 1 :]
     # remove piece from source
     line = board[y1]
-    board[y1] = line[:x1] + '.' + line[x1 + 1:]
+    board[y1] = line[:x1] + "." + line[x1 + 1 :]
     return board
 
 
-def moves(board: [str], _player_is_white: bool)->[[str]]:
+def moves(board: [str], _player_is_white: bool) -> [[str]]:
     """This generates a list of all possible game states after one move.
     Preferred moves should be later in the returned list."""
     _moves = []
     for x in range(8):
         for y in range(8):
             piece = board[y][x]
-            if piece in 'KQRBN' if _player_is_white else piece in 'kqrbn':
+            if piece in "KQRBN" if _player_is_white else piece in "kqrbn":
                 for xd, yd in PIECE_MOVE_DIRECTION[piece]:
                     for i in range(1, 100):
-                        x2 = x+i*xd
-                        y2 = y+i*yd
+                        x2 = x + i * xd
+                        y2 = y + i * yd
                         if not (0 <= x2 <= 7 and 0 <= y2 <= 7):
                             # then it is a move off the board
                             break
                         target_piece = board[y2][x2]
-                        if target_piece.isupper() if _player_is_white else target_piece.islower():
+                        if (
+                            target_piece.isupper()
+                            if _player_is_white
+                            else target_piece.islower()
+                        ):
                             # then it is taking it's own piece
                             break
-                        if target_piece.islower() if _player_is_white else target_piece.isupper():
+                        if (
+                            target_piece.islower()
+                            if _player_is_white
+                            else target_piece.isupper()
+                        ):
                             # then it is taking an opponent's piece
                             _moves.append(move(board, y, x, y2, x2))
                             break
                         _moves.append(move(board, y, x, y2, x2))
-                        if piece in 'KkNn':
+                        if piece in "KkNn":
                             break
 
             # pawns are weird
-            if piece == 'P' if _player_is_white else piece == 'p':
+            if piece == "P" if _player_is_white else piece == "p":
                 pawn_moves = []
-                y2 = y+1 if _player_is_white else y-1
+                y2 = y + 1 if _player_is_white else y - 1
                 for x2 in (x - 1, x + 1):
                     if 0 <= x2 <= 7:
-                        if board[y2][x2].islower() if _player_is_white else board[y2][x2].isupper():
+                        if (
+                            board[y2][x2].islower()
+                            if _player_is_white
+                            else board[y2][x2].isupper()
+                        ):
                             # then a take is possible
                             pawn_moves.append((y2, x2))
                 # move forward by 1
-                if board[y2][x] == '.':
+                if board[y2][x] == ".":
                     # then the move is into an empty square
                     pawn_moves.append((y2, x))
                     # move forward by 2
                     if y == 1 if _player_is_white else y == 6:
                         y2 = y + 2 if _player_is_white else y - 2
-                        if board[y2][x] == '.':
+                        if board[y2][x] == ".":
                             _moves.append(move(board, y, x, y2, x))
                 for y2, x2 in pawn_moves:
                     after_pawn_move = move(board, y, x, y2, x2)
                     if y2 == 7 if _player_is_white else y2 == 0:
                         # then the end of the board has been reached and promotion is needed
-                        for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
+                        for replacement_piece in "QRBN" if _player_is_white else "qrbn":
                             after_pawn_replacement = board.copy()
                             line = after_pawn_replacement[y2]
-                            after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
+                            after_pawn_replacement[y2] = (
+                                line[:x2] + replacement_piece + line[x2 + 1 :]
+                            )
                             _moves.append(after_pawn_replacement)
                     else:
                         _moves.append(after_pawn_move)
     return _moves
 
 
-def simple_score(_board: [str])->float:
+def simple_score(_board: [str]) -> float:
     """This takes a gameState object and returns the current score of white"""
     _score = 0.0
     for row in _board:
@@ -116,7 +142,7 @@ def simple_score(_board: [str])->float:
     return _score
 
 
-def fancy_score(_board: [str])->float:
+def fancy_score(_board: [str]) -> float:
     """This takes a gameState object and returns the current score of white"""
     _score = 0.0
     for y in range(8):
@@ -124,18 +150,18 @@ def fancy_score(_board: [str])->float:
         for x in range(8):
             piece = line[x]
             _score += PIECE_VALUE[piece]
-            if piece == 'P':
+            if piece == "P":
                 _score += 0.1 * y
-            elif piece == 'p':
+            elif piece == "p":
                 _score += 0.1 * (y - 7)
     return _score
 
 
 def calculate_tree(state, depth):
-    """recursively calculates children of the given state """
+    """recursively calculates children of the given state"""
     children = []
     child_is_white = not state[1]
-    child_move_no = state[3]+1
+    child_move_no = state[3] + 1
     depth -= 1
     for board in moves(state[0], state[1]):
         child = [board, child_is_white, score(board), child_move_no, state, None]
@@ -153,7 +179,7 @@ def calculate_tree(state, depth):
 
 
 def main(history, white_time, black_time):
-    history = [[''.join(row) for row in board] for board in history]
+    history = [["".join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
     if player_is_white:
         my_time = white_time
@@ -186,11 +212,12 @@ def main(history, white_time, black_time):
     print(global_depth)
     return [[piece for piece in line] for line in final_board]
 
+
 # below are the settings for the algorithm
 global_depth = 3
 score = simple_score
 # score = fancy_score
-'''
+"""
 I use the time to calculate and score the first 4 moves as a benchmark for my algorithm.
 To get reliable figures wait for the CPU usage to fall below 10% before starting
 
@@ -202,4 +229,4 @@ False       simple_score    4       2.936
 True        simple_score    4       3.687
 True        simple_score    5       92.041
 True        simple_score    3       0.328
-'''
+"""

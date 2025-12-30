@@ -7,55 +7,69 @@ ToDo:
     - castling
     - en passant
     - aspiration search
-    - 
+    -
 note that the cscore only includes parts of the score that are cumulatively evaluated
 score is the result of the evaluation function
 """
-from time import perf_counter as now
+
 import copy
+from time import perf_counter as now
+
 from shared import ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
-    'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
-    'k': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'Q': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
-    'q': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'R': ((1, 0), (0, 1), (-1, 0), (0, -1)),
-    'r': ((1, 0), (0, 1), (-1, 0), (0, -1)),
-    'B': ((1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'b': ((1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'N': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
-    'n': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
+    "K": ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
+    "k": ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "Q": ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
+    "q": ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "R": ((1, 0), (0, 1), (-1, 0), (0, -1)),
+    "r": ((1, 0), (0, 1), (-1, 0), (0, -1)),
+    "B": ((1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "b": ((1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "N": ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
+    "n": ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
 }
 PIECE_VALUE = {
-    '.': 0,
-    'K': 20000, 'Q': 975, 'R': 500, 'B': 335, 'N': 325, 'P': 100,
-    'k': -20000, 'q': -975, 'r': -500, 'b': -335, 'n': -325, 'p': -100
+    ".": 0,
+    "K": 20000,
+    "Q": 975,
+    "R": 500,
+    "B": 335,
+    "N": 325,
+    "P": 100,
+    "k": -20000,
+    "q": -975,
+    "r": -500,
+    "b": -335,
+    "n": -325,
+    "p": -100,
 }
 
 POSITION_VALUE_READABLE = {
-    'P': [
-        [0,   0,  0,  0,  0,  0,  0,  0],
+    "P": [
+        [0, 0, 0, 0, 0, 0, 0, 0],
         [50, 50, 50, 50, 50, 50, 50, 50],
         [10, 10, 20, 30, 30, 20, 10, 10],
-        [5,   5, 10, 25, 25, 10,  5,  5],
-        [0,   0,  0,  2,  2,  0,  0,  0],
-        [5,  -5,-10,  0,  0,-10, -5,  5],
-        [5,  10, 10,-20,-20, 10, 10,  5],
-        [0,   0,  0,  0,  0,  0,  0,  0]],
+        [5, 5, 10, 25, 25, 10, 5, 5],
+        [0, 0, 0, 2, 2, 0, 0, 0],
+        [5, -5, -10, 0, 0, -10, -5, 5],
+        [5, 10, 10, -20, -20, 10, 10, 5],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+    ],
     # [[5*(x - (x * x / 7))+(0.02 * (y+2)**4)-10 for x in range(8)] for y in range(7, -1, -1)],
     # print('\n'.join(' '.join('{}'.format(int(PAWN_POSITION_VALUE[y][x]))
     #   for x in range(8))for y in range(8))+'\n')
-    'N': [
-        [-8,  -8, -8, -8, -8, -8, -8, -8],
-        [-8,   0, 0, 0, 0, 0, 0, -8],
-        [-8,   0, 4, 6, 6, 4, 0, -8],
-        [-8,   0, 6, 8, 8, 6, 0, -8],
-        [-8,   0, 6, 8, 8, 6, 0, -8],
-        [-8,   0, 4, 6, 6, 4, 0, -8],
-        [-8,   0, 1, 2, 2, 1, 0, -8],
-        [-16,-12, -8, -8, -8, -8, -12, -16]],
-    'B': [
+    "N": [
+        [-8, -8, -8, -8, -8, -8, -8, -8],
+        [-8, 0, 0, 0, 0, 0, 0, -8],
+        [-8, 0, 4, 6, 6, 4, 0, -8],
+        [-8, 0, 6, 8, 8, 6, 0, -8],
+        [-8, 0, 6, 8, 8, 6, 0, -8],
+        [-8, 0, 4, 6, 6, 4, 0, -8],
+        [-8, 0, 1, 2, 2, 1, 0, -8],
+        [-16, -12, -8, -8, -8, -8, -12, -16],
+    ],
+    "B": [
         [-4, -4, -4, -4, -4, -4, -4, -4],
         [-4, 0, 0, 0, 0, 0, 0, -4],
         [-4, 0, 2, 4, 4, 2, 0, -4],
@@ -63,8 +77,9 @@ POSITION_VALUE_READABLE = {
         [-4, 0, 4, 6, 6, 4, 0, -4],
         [-4, 1, 2, 4, 4, 2, 1, -4],
         [-4, 2, 1, 1, 1, 1, 2, -4],
-        [-4, -4, -12, -4, -4, -12, -4, -4]],
-    'R': [
+        [-4, -4, -12, -4, -4, -12, -4, -4],
+    ],
+    "R": [
         [5, 5, 5, 5, 5, 5, 5, 5],
         [-5, 0, 0, 0, 0, 0, 0, -5],
         [-5, 0, 0, 0, 0, 0, 0, -5],
@@ -72,8 +87,9 @@ POSITION_VALUE_READABLE = {
         [-5, 0, 0, 0, 0, 0, 0, -5],
         [-5, 0, 0, 0, 0, 0, 0, -5],
         [-5, 0, 0, 0, 0, 0, 0, -5],
-        [0, 0, 0, 2, 2, 0, 0, 0]],
-    'Q': [
+        [0, 0, 0, 2, 2, 0, 0, 0],
+    ],
+    "Q": [
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 1, 1, 1, 1, 0, 0],
         [0, 0, 1, 2, 2, 1, 0, 0],
@@ -81,17 +97,19 @@ POSITION_VALUE_READABLE = {
         [0, 0, 2, 3, 3, 2, 0, 0],
         [0, 0, 1, 2, 2, 1, 0, 0],
         [0, 0, 1, 1, 1, 1, 0, 0],
-        [-5, -5, -5, -5, -5, -5, -5, -5]],
-    'K': [
+        [-5, -5, -5, -5, -5, -5, -5, -5],
+    ],
+    "K": [
         [-40, -30, -50, -70, -70, -50, -30, -40],
         [-30, -20, -40, -60, -60, -40, -20, -30],
         [-20, -10, -30, -50, -50, -30, -10, -20],
         [-10, 0, -20, -40, -40, -20, 0, -10],
         [0, 10, -10, -30, -30, -10, 10, 0],
         [10, 20, 0, -20, -20, 0, 20, 10],
-        [30, 40, 20, 0,   0, 20, 40, 30],
-        [40, 50, 30, 10, 10, 30, 50, 40]],
-    '.': [[0 for _ in range(8)] for _ in range(8)]
+        [30, 40, 20, 0, 0, 20, 40, 30],
+        [40, 50, 30, 10, 10, 30, 50, 40],
+    ],
+    ".": [[0 for _ in range(8)] for _ in range(8)],
 }
 POSITION_VALUE = dict()
 for piece_ in POSITION_VALUE_READABLE:
@@ -104,7 +122,7 @@ total_moves = 0
 time_out_point = now() + 100
 
 
-def evaluate(_board: [str])->float:
+def evaluate(_board: [str]) -> float:
     _score = 0.0
     for y in range(8):
         for x in range(8):
@@ -118,12 +136,12 @@ def piece_count(board):
     total = 0
     for row in board:
         for piece in row:
-            if piece != '.':
+            if piece != ".":
                 total += 1
     return total
 
 
-def move(board: [str], y1, x1, y2, x2)-> [str]:
+def move(board: [str], y1, x1, y2, x2) -> [str]:
     global total_moves
     """returns a board with a move made"""
     total_moves += 1
@@ -133,7 +151,7 @@ def move(board: [str], y1, x1, y2, x2)-> [str]:
     board[y2][x2] = board[y1][x1]
     # remove piece from source
     board[y1] = board[y1].copy()
-    board[y1][x1] = '.'
+    board[y1][x1] = "."
     return board
 
 
@@ -143,109 +161,135 @@ def moves(board: [str], _player_is_white: bool):
     for x in range(8):
         for y in range(8):
             piece = board[y][x]
-            if piece in 'KQRBN' if _player_is_white else piece in 'kqrbn':
+            if piece in "KQRBN" if _player_is_white else piece in "kqrbn":
                 for xd, yd in PIECE_MOVE_DIRECTION[piece]:
                     for i in range(1, 100):
-                        x2 = x+i*xd
-                        y2 = y+i*yd
+                        x2 = x + i * xd
+                        y2 = y + i * yd
                         if not (0 <= x2 <= 7 and 0 <= y2 <= 7):
                             # then it is a move off the board
                             break
                         target_piece = board[y2][x2]
-                        if target_piece == '.':
+                        if target_piece == ".":
                             # then it is moving into an empty square
                             yield (
                                 move(board, y, x, y2, x2),
-                                POSITION_VALUE[piece][y2][x2] -
-                                POSITION_VALUE[piece][y][x])
-                        elif target_piece.islower() if _player_is_white else target_piece.isupper():
+                                POSITION_VALUE[piece][y2][x2]
+                                - POSITION_VALUE[piece][y][x],
+                            )
+                        elif (
+                            target_piece.islower()
+                            if _player_is_white
+                            else target_piece.isupper()
+                        ):
                             # then it is taking an opponent's piece
                             yield (
                                 move(board, y, x, y2, x2),
-                                POSITION_VALUE[piece][y2][x2] -
-                                POSITION_VALUE[target_piece][y2][x2] -
-                                POSITION_VALUE[piece][y][x] -
-                                PIECE_VALUE[target_piece])
+                                POSITION_VALUE[piece][y2][x2]
+                                - POSITION_VALUE[target_piece][y2][x2]
+                                - POSITION_VALUE[piece][y][x]
+                                - PIECE_VALUE[target_piece],
+                            )
                             break
                         else:
                             # then it is taking it's own piece
                             break
-                        if piece in 'KkNn':
+                        if piece in "KkNn":
                             break
 
             # pawns are weird
-            if piece == 'P' if _player_is_white else piece == 'p':
-                y2 = y+1 if _player_is_white else y-1
+            if piece == "P" if _player_is_white else piece == "p":
+                y2 = y + 1 if _player_is_white else y - 1
                 # check if a take is possible
                 for x2 in (x - 1, x + 1):
                     if 0 <= x2 <= 7:
                         target_piece = board[y2][x2]
-                        if target_piece.islower() if _player_is_white else target_piece.isupper():
+                        if (
+                            target_piece.islower()
+                            if _player_is_white
+                            else target_piece.isupper()
+                        ):
                             # then a take is possible
                             after_pawn_move = move(board, y, x, y2, x2)
                             if y2 == 7 if _player_is_white else y2 == 0:
                                 # then the end of the board has been reached and promotion is needed
-                                for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
+                                for replacement_piece in (
+                                    "QRBN" if _player_is_white else "qrbn"
+                                ):
                                     after_pawn_replacement = after_pawn_move.copy()
-                                    after_pawn_replacement[y2] = after_pawn_replacement[y2].copy()
+                                    after_pawn_replacement[y2] = after_pawn_replacement[
+                                        y2
+                                    ].copy()
                                     after_pawn_replacement[y2][x2] = replacement_piece
-                                    yield(
+                                    yield (
                                         after_pawn_replacement,
-                                        PIECE_VALUE[replacement_piece] -
-                                        PIECE_VALUE[target_piece] -
-                                        PIECE_VALUE[piece] +
-                                        POSITION_VALUE[replacement_piece][y2][x2] -
-                                        POSITION_VALUE[target_piece][y2][x2] -
-                                        POSITION_VALUE[piece][y][x])
+                                        PIECE_VALUE[replacement_piece]
+                                        - PIECE_VALUE[target_piece]
+                                        - PIECE_VALUE[piece]
+                                        + POSITION_VALUE[replacement_piece][y2][x2]
+                                        - POSITION_VALUE[target_piece][y2][x2]
+                                        - POSITION_VALUE[piece][y][x],
+                                    )
                             else:
-                                yield(
+                                yield (
                                     after_pawn_move,
-                                    POSITION_VALUE[piece][y2][x2] -
-                                    POSITION_VALUE[target_piece][y2][x2] -
-                                    POSITION_VALUE[piece][y][x] -
-                                    PIECE_VALUE[target_piece])
+                                    POSITION_VALUE[piece][y2][x2]
+                                    - POSITION_VALUE[target_piece][y2][x2]
+                                    - POSITION_VALUE[piece][y][x]
+                                    - PIECE_VALUE[target_piece],
+                                )
                 # check if pawn can move forwards 1
-                if board[y2][x] == '.':
+                if board[y2][x] == ".":
                     # check if pawn can be promoted
                     if y2 == 7 if _player_is_white else y2 == 0:
                         after_pawn_move = move(board, y, x, y2, x)
                         # add each possible promotion to _moves
-                        for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
+                        for replacement_piece in "QRBN" if _player_is_white else "qrbn":
                             after_pawn_replacement = after_pawn_move.copy()
-                            after_pawn_replacement[y2] = after_pawn_replacement[y2].copy()
+                            after_pawn_replacement[y2] = after_pawn_replacement[
+                                y2
+                            ].copy()
                             after_pawn_replacement[y2][x] = replacement_piece
-                            yield(
+                            yield (
                                 after_pawn_replacement,
-                                PIECE_VALUE[replacement_piece] -
-                                PIECE_VALUE[piece] +
-                                POSITION_VALUE[replacement_piece][y2][x] -
-                                POSITION_VALUE[piece][y][x])
+                                PIECE_VALUE[replacement_piece]
+                                - PIECE_VALUE[piece]
+                                + POSITION_VALUE[replacement_piece][y2][x]
+                                - POSITION_VALUE[piece][y][x],
+                            )
                     else:
-                        yield(
+                        yield (
                             move(board, y, x, y2, x),
-                            POSITION_VALUE[piece][y2][x] -
-                            POSITION_VALUE[piece][y][x])
+                            POSITION_VALUE[piece][y2][x] - POSITION_VALUE[piece][y][x],
+                        )
                     # check if pawn can move forwards 2
                     if y == 1 if _player_is_white else y == 6:
                         y2 = y + 2 if _player_is_white else y - 2
-                        if board[y2][x] == '.':
-                            yield(
+                        if board[y2][x] == ".":
+                            yield (
                                 move(board, y, x, y2, x),
-                                POSITION_VALUE[piece][y2][x] -
-                                POSITION_VALUE[piece][y][x])
+                                POSITION_VALUE[piece][y2][x]
+                                - POSITION_VALUE[piece][y][x],
+                            )
 
 
-def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
+def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta) -> int:
     """Implements alpha beta tree search, returns a score. This fails soft."""
     # assert abs(current_cscore - evaluate(board)) < 0.001
     # lookup the current node to see if it has already been searched
-    key = ''.join(piece for row in board for piece in row) + ('w' if player_is_white else 'b')
+    key = "".join(piece for row in board for piece in row) + (
+        "w" if player_is_white else "b"
+    )
     if key in transpositionTable:
         node_score, node_type, node_search_depth = transpositionTable[key]
         if node_search_depth >= depth:
-            if (node_type == 'exact' or
-                    node_type == 'high' and node_score >= beta or
-                    node_type == 'low' and node_score <= alpha):
+            if (
+                node_type == "exact"
+                or node_type == "high"
+                and node_score >= beta
+                or node_type == "low"
+                and node_score <= alpha
+            ):
                 return node_score
 
     possible_moves = moves(board, player_is_white)
@@ -269,7 +313,9 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
         # Note that the comparison is ordered for evaluation speed
         if depth >= 1 and (depth >= 2 or abs(diff) > 50) and abs(diff) < 1000:
             # this does not always use move ordering :-( todo
-            move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
+            move_score = alpha_beta(
+                possible_move, depth - 1, move_score, not player_is_white, alpha, beta
+            )
         if player_is_white:
             if move_score > current_best_score:
                 current_best_score = move_score
@@ -277,7 +323,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
                     alpha = move_score
                     if alpha >= beta:
                         # the score failed high
-                        transpositionTable[key] = current_best_score, 'high', depth
+                        transpositionTable[key] = current_best_score, "high", depth
                         break
         else:
             if move_score < current_best_score:
@@ -286,18 +332,20 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta)->int:
                     beta = move_score
                     if alpha >= beta:
                         # the score failed low
-                        transpositionTable[key] = current_best_score, 'low', depth
+                        transpositionTable[key] = current_best_score, "low", depth
                         break
     else:
         # the score is exact and the earlier check of the table ensures that we are not overwriting
         # an entry of greater depth
-        transpositionTable[key] = current_best_score, 'exact', depth
+        transpositionTable[key] = current_best_score, "exact", depth
     assert key in transpositionTable
     return current_best_score
 
 
 def estimated_score(board, previous_cscore, diff, player_is_white):
-    key = ''.join(piece for row in board for piece in row) + ('w' if player_is_white else 'b')
+    key = "".join(piece for row in board for piece in row) + (
+        "w" if player_is_white else "b"
+    )
     if key in transpositionTable:
         return transpositionTable[key][0]
     else:
@@ -308,14 +356,24 @@ def search(possible_moves, depth, current_cscore, player_is_white, alpha, beta):
     """Implements top level node in alpha_beta tree search, returns a best move"""
     # assert depth > 0
     possible_moves.sort(
-        key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
-        reverse=player_is_white)
+        key=lambda _move: estimated_score(
+            _move[0], current_cscore, _move[1], player_is_white
+        ),
+        reverse=player_is_white,
+    )
     for possible_move, diff in possible_moves:
         if depth == 1:
             move_score = current_cscore + diff
             # assert abs(move_score - evaluate(possible_move)) < 0.001
         else:
-            move_score = alpha_beta(possible_move, depth - 1, current_cscore + diff, not player_is_white, alpha, beta)
+            move_score = alpha_beta(
+                possible_move,
+                depth - 1,
+                current_cscore + diff,
+                not player_is_white,
+                alpha,
+                beta,
+            )
         if player_is_white:
             if move_score > alpha:
                 alpha = move_score
@@ -334,7 +392,9 @@ def main(history, white_time, black_time):
     start_time = now()
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
-    time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
+    time_out_point = (
+        start_time + available_time - 0.5
+    )  # always hold 0.5 seconds in reserve
     # history = [[''.join(row) for row in board] for board in history]
     current_score = evaluate(history[-1])
     possible_moves = list(moves(history[-1], player_is_white))
@@ -355,9 +415,11 @@ def main(history, white_time, black_time):
     for depth in range(1, 10):
         search_start_time = now()
         try:
-            best_move, best_score = search(possible_moves, depth, current_score, player_is_white, alpha, beta)
+            best_move, best_score = search(
+                possible_moves, depth, current_score, player_is_white, alpha, beta
+            )
         except TimeoutError:
-            print('internal timeout')
+            print("internal timeout")
             break
         search_run_time = now() - search_start_time
         # print(f'{depth}  {search_run_time:.3f}')
@@ -367,12 +429,12 @@ def main(history, white_time, black_time):
         if abs(best_score) > 10000:
             # print('check mate is expected')
             break
-    print(f'search depth: {depth}-{depth+1}')
-    print(f'expected score: {best_score}')
+    print(f"search depth: {depth}-{depth + 1}")
+    print(f"expected score: {best_score}")
     return best_move  # [[piece for piece in line] for line in best_move]
 
 
-'''
+"""
 At this point David_AI_v4 wins 16/16 games
 changed position scoring to make David_AI_v5
 this also causes the search of more moves for the benchmark position
@@ -473,4 +535,4 @@ switched back to using lists of lists
 311780			5		1.751	59593
 152995 leaves searched per second
 
-'''
+"""

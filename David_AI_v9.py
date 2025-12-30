@@ -1,4 +1,4 @@
-"""This chess engine was written by David for fun. 
+"""This chess engine was written by David for fun.
 A board is represented by 128 char array
 
 ToDo:
@@ -12,35 +12,58 @@ ToDo:
     - switch to negamax
     - aspiration search
 """
-from time import perf_counter as now
+
 from array import array
 from itertools import count
+from time import perf_counter as now
+
 from shared import ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
-    'R': (1, 16, -1, -16),
-    'B': (1 + 16, 1 - 16, 16 - 1, -1 - 16),
-    'N': (1 + 2 * 16, 1 - 2 * 16, -1 + 2 * 16, -1 - 2 * 16, 2 + 16, 2 - 16, -2 + 16, -2 - 16)}
-PIECE_MOVE_DIRECTION['K'] = PIECE_MOVE_DIRECTION['R'] + PIECE_MOVE_DIRECTION['B']
-PIECE_MOVE_DIRECTION['Q'] = PIECE_MOVE_DIRECTION['K']
+    "R": (1, 16, -1, -16),
+    "B": (1 + 16, 1 - 16, 16 - 1, -1 - 16),
+    "N": (
+        1 + 2 * 16,
+        1 - 2 * 16,
+        -1 + 2 * 16,
+        -1 - 2 * 16,
+        2 + 16,
+        2 - 16,
+        -2 + 16,
+        -2 - 16,
+    ),
+}
+PIECE_MOVE_DIRECTION["K"] = PIECE_MOVE_DIRECTION["R"] + PIECE_MOVE_DIRECTION["B"]
+PIECE_MOVE_DIRECTION["Q"] = PIECE_MOVE_DIRECTION["K"]
 for _piece in list(PIECE_MOVE_DIRECTION):
     PIECE_MOVE_DIRECTION[_piece.lower()] = PIECE_MOVE_DIRECTION[_piece]
 PIECE_VALUE = {
-    '.': 0,
-    'K': 20000, 'Q': 900, 'R': 500, 'B': 330, 'N': 320, 'P': 100,
-    'k': -20000, 'q': -900, 'r': -500, 'b': -330, 'n': -320, 'p': -100
+    ".": 0,
+    "K": 20000,
+    "Q": 900,
+    "R": 500,
+    "B": 330,
+    "N": 320,
+    "P": 100,
+    "k": -20000,
+    "q": -900,
+    "r": -500,
+    "b": -330,
+    "n": -320,
+    "p": -100,
 }
 POSITION_VALUE_READABLE = {
-    'P': [
-        [ 0,  0,  0,  0,  0,  0,  0,  0],
+    "P": [
+        [0, 0, 0, 0, 0, 0, 0, 0],
         [50, 50, 50, 50, 50, 50, 50, 50],
         [10, 10, 20, 30, 30, 20, 10, 10],
-        [5,  5, 10, 25, 25, 10,  5,  5],
-        [0,  0,  0, 20, 20,  0,  0,  0],
-        [5, -5,-10,  0,  0,-10, -5,  5],
-        [5, 10, 10,-20,-20, 10, 10,  5],
-        [0,  0,  0,  0,  0,  0,  0,  0]],
-    'N': [
+        [5, 5, 10, 25, 25, 10, 5, 5],
+        [0, 0, 0, 20, 20, 0, 0, 0],
+        [5, -5, -10, 0, 0, -10, -5, 5],
+        [5, 10, 10, -20, -20, 10, 10, 5],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+    ],
+    "N": [
         [-50, -40, -30, -30, -30, -30, -40, -50],
         [-40, -20, 0, 0, 0, 0, -20, -40],
         [-30, 0, 10, 15, 15, 10, 0, -30],
@@ -48,26 +71,29 @@ POSITION_VALUE_READABLE = {
         [-30, 0, 15, 20, 20, 15, 0, -30],
         [-30, 5, 10, 15, 15, 10, 5, -30],
         [-40, -20, 0, 5, 5, 0, -20, -40],
-        [-50, -40, -30, -30, -30, -30, -40, -50]],
-    'B': [
-        [-20,-10,-10,-10,-10,-10,-10,-20],
-        [-10,  0,  0,  0,  0,  0,  0,-10],
-        [-10,  0,  5, 10, 10,  5,  0,-10],
-        [-10,  5,  5, 10, 10,  5,  5,-10],
-        [-10,  0, 10, 10, 10, 10,  0,-10],
-        [-10, 10, 10, 10, 10, 10, 10,-10],
-        [-10,  5,  0,  0,  0,  0,  5,-10],
-        [-20,-10,-10,-10,-10,-10,-10,-20]],
-    'R': [
-        [0,  0,  0,  0,  0,  0,  0,  0],
-        [5, 10, 10, 10, 10, 10, 10,  5],
-        [-5,  0,  0,  0,  0,  0,  0, -5],
-        [-5,  0,  0,  0,  0,  0,  0, -5],
-        [-5,  0,  0,  0,  0,  0,  0, -5],
-        [-5,  0,  0,  0,  0,  0,  0, -5],
-        [-5,  0,  0,  0,  0,  0,  0, -5],
-        [0,  0,  0,  5,  5,  0,  0,  0]],
-    'Q': [
+        [-50, -40, -30, -30, -30, -30, -40, -50],
+    ],
+    "B": [
+        [-20, -10, -10, -10, -10, -10, -10, -20],
+        [-10, 0, 0, 0, 0, 0, 0, -10],
+        [-10, 0, 5, 10, 10, 5, 0, -10],
+        [-10, 5, 5, 10, 10, 5, 5, -10],
+        [-10, 0, 10, 10, 10, 10, 0, -10],
+        [-10, 10, 10, 10, 10, 10, 10, -10],
+        [-10, 5, 0, 0, 0, 0, 5, -10],
+        [-20, -10, -10, -10, -10, -10, -10, -20],
+    ],
+    "R": [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [5, 10, 10, 10, 10, 10, 10, 5],
+        [-5, 0, 0, 0, 0, 0, 0, -5],
+        [-5, 0, 0, 0, 0, 0, 0, -5],
+        [-5, 0, 0, 0, 0, 0, 0, -5],
+        [-5, 0, 0, 0, 0, 0, 0, -5],
+        [-5, 0, 0, 0, 0, 0, 0, -5],
+        [0, 0, 0, 5, 5, 0, 0, 0],
+    ],
+    "Q": [
         [-20, -10, -10, -5, -5, -10, -10, -20],
         [-10, 0, 0, 0, 0, 0, 0, -10],
         [-10, 0, 5, 5, 5, 5, 0, -10],
@@ -75,9 +101,10 @@ POSITION_VALUE_READABLE = {
         [0, 0, 5, 5, 5, 5, 0, -5],
         [-10, 5, 5, 5, 5, 5, 0, -10],
         [-10, 0, 5, 0, 0, 0, 0, -10],
-        [-20, -10, -10, -5, -5, -10, -10, -20]],
+        [-20, -10, -10, -5, -5, -10, -10, -20],
+    ],
     # this should change with the game's phase
-    'K_early': [
+    "K_early": [
         [-30, -40, -40, -50, -50, -40, -40, -30],
         [-30, -40, -40, -50, -50, -40, -40, -30],
         [-30, -40, -40, -50, -50, -40, -40, -30],
@@ -85,8 +112,9 @@ POSITION_VALUE_READABLE = {
         [-20, -30, -30, -40, -40, -30, -30, -20],
         [-10, -20, -20, -20, -20, -20, -20, -10],
         [20, 20, 0, 0, 0, 0, 20, 20],
-        [20, 30, 10, 0, 0, 10, 30, 20]],
-    'K_late': [
+        [20, 30, 10, 0, 0, 10, 30, 20],
+    ],
+    "K_late": [
         [-50, -40, -30, -20, -20, -30, -40, -50],
         [-30, -20, -10, 0, 0, -10, -20, -30],
         [-30, -10, 20, 30, 30, 20, -10, -30],
@@ -94,8 +122,9 @@ POSITION_VALUE_READABLE = {
         [-30, -10, 30, 40, 40, 30, -10, -30],
         [-30, -10, 20, 30, 30, 20, -10, -30],
         [-30, -30, 0, 0, 0, 0, -30, -30],
-        [-50, -30, -30, -30, -30, -30, -30, -50]],
-    '.': [[0 for _ in range(8)] for _ in range(8)]
+        [-50, -30, -30, -30, -30, -30, -30, -50],
+    ],
+    ".": [[0 for _ in range(8)] for _ in range(8)],
 }
 # The last 4 chars of the board contain the castling rights.
 # If the char is true then castling is allowed
@@ -114,7 +143,7 @@ time_out_point = now() + 10**10
 contempt = 400
 history = []
 
-initialPosition = '''
+initialPosition = """
 r n b q k b n r
 p p p p p p p p
 . . . . . . . .
@@ -122,9 +151,9 @@ p p p p p p p p
 . . . . . . . .
 . . . . . . . .
 P P P P P P P P
-R N B Q K B N R'''
-initialPosition = initialPosition.replace(' ', '').split().__reversed__()
-initialPosition = array('u', ''.join(row + '_' * 8 for row in initialPosition))
+R N B Q K B N R"""
+initialPosition = initialPosition.replace(" ", "").split().__reversed__()
+initialPosition = array("u", "".join(row + "_" * 8 for row in initialPosition))
 
 
 def is_check(board, for_white):
@@ -134,44 +163,60 @@ def is_check(board, for_white):
 
 def is_checkmate(board, whites_turn):
     """If for_white is true this returns whether white is in checkmate."""
-    return (
-            is_check(board, whites_turn) and
-            all(is_check(move_, whites_turn) for move_, _ in moves(board, whites_turn)))
+    return is_check(board, whites_turn) and all(
+        is_check(move_, whites_turn) for move_, _ in moves(board, whites_turn)
+    )
 
 
 def is_stalemate(board):
     """Returns true if either side has no legal moves"""
-    return len(list(legal_moves(board, True))) == 0 or len(list(legal_moves(board, False))) == 0
+    return (
+        len(list(legal_moves(board, True))) == 0
+        or len(list(legal_moves(board, False))) == 0
+    )
 
 
 def evaluate(board) -> float:
-    return sum(position_value[board[x + 16 * y]][x + 16 * y] for x in range(8) for y in range(8))
+    return sum(
+        position_value[board[x + 16 * y]][x + 16 * y]
+        for x in range(8)
+        for y in range(8)
+    )
 
 
 def recalculate_position_values(board):
     global position_value
     position_value = dict()
     # total_material is 48190 at the games start and can go as low as 40000 at the games end
-    total_material = sum(abs(PIECE_VALUE[board[x + 16 * y]]) for x in range(8) for y in range(8))
+    total_material = sum(
+        abs(PIECE_VALUE[board[x + 16 * y]]) for x in range(8) for y in range(8)
+    )
     # game_phase should be 1 when the score is 48190 and should hit 0 when the score is 40600
     game_phase = (total_material - 40600) / 7590
     game_phase = max(game_phase, 0)
-    POSITION_VALUE_READABLE['K'] = [[
-        game_phase * POSITION_VALUE_READABLE['K_early'][y][x] +
-        (1 - game_phase) * POSITION_VALUE_READABLE['K_late'][y][x]
-        for x in range(8)] for y in range(8)]
+    POSITION_VALUE_READABLE["K"] = [
+        [
+            game_phase * POSITION_VALUE_READABLE["K_early"][y][x]
+            + (1 - game_phase) * POSITION_VALUE_READABLE["K_late"][y][x]
+            for x in range(8)
+        ]
+        for y in range(8)
+    ]
     for piece_ in POSITION_VALUE_READABLE:
-        if piece_.startswith('K_'):
+        if piece_.startswith("K_"):
             # then it is not an actual piece
             continue
         position_value[piece_] = []
         position_value[piece_.lower()] = []
         for row in POSITION_VALUE_READABLE[piece_].__reversed__():
             position_value[piece_].extend(
-                [PIECE_VALUE[piece_] + value for value in row] + [None] * 8)
+                [PIECE_VALUE[piece_] + value for value in row] + [None] * 8
+            )
         for row in POSITION_VALUE_READABLE[piece_]:
             position_value[piece_.lower()].extend(
-                [-PIECE_VALUE[piece_] - value for value in row.__reversed__()] + [None] * 8)
+                [-PIECE_VALUE[piece_] - value for value in row.__reversed__()]
+                + [None] * 8
+            )
 
 
 # it is better that the position values are given some sensible default values
@@ -186,23 +231,22 @@ def move(board, pos1, pos2):
     # add piece to destination
     board[pos2] = board[pos1]
     # remove piece from source
-    board[pos1] = '.'
+    board[pos1] = "."
 
     # most moves don't affect castling rights so I do a fast set membership test
-    if pos1 in {0, 4, 7,
-                0 + 7 * 16, 4 + 7 * 16, 7 + 7 * 16}:
+    if pos1 in {0, 4, 7, 0 + 7 * 16, 4 + 7 * 16, 7 + 7 * 16}:
         if pos1 == 0:
-            board[BOTTOM_LEFT_CASTLING] = '\0'
+            board[BOTTOM_LEFT_CASTLING] = "\0"
         elif pos1 == 4:
-            board[BOTTOM_LEFT_CASTLING] = board[BOTTOM_RIGHT_CASTLING] = '\0'
+            board[BOTTOM_LEFT_CASTLING] = board[BOTTOM_RIGHT_CASTLING] = "\0"
         elif pos1 == 7:
-            board[BOTTOM_RIGHT_CASTLING] = '\0'
+            board[BOTTOM_RIGHT_CASTLING] = "\0"
         elif pos1 == 0 + 7 * 16:
-            board[TOP_LEFT_CASTLING] = '\0'
+            board[TOP_LEFT_CASTLING] = "\0"
         elif pos1 == 4 + 7 * 16:
-            board[TOP_LEFT_CASTLING] = board[TOP_RIGHT_CASTLING] = '\0'
+            board[TOP_LEFT_CASTLING] = board[TOP_RIGHT_CASTLING] = "\0"
         elif pos1 == 7 + 7 * 16:
-            board[TOP_RIGHT_CASTLING] = '\0'
+            board[TOP_RIGHT_CASTLING] = "\0"
     return board
 
 
@@ -211,116 +255,140 @@ def moves(board, _player_is_white: bool):
     It does not check for whether the king is in check."""
     for pos1 in valid_pos:
         piece = board[pos1]
-        if piece in 'KQRBN' if _player_is_white else piece in 'kqrbn':
+        if piece in "KQRBN" if _player_is_white else piece in "kqrbn":
             for direction in PIECE_MOVE_DIRECTION[piece]:
                 for pos2 in count(pos1 + direction, direction):
                     if pos2 & 0x88:
                         # then it is a move off the board
                         break
                     target_piece = board[pos2]
-                    if target_piece == '.':
+                    if target_piece == ".":
                         # then it is moving into an empty square
                         yield (
                             move(board, pos1, pos2),
-                            position_value[piece][pos2] -
-                            position_value[piece][pos1])
-                    elif target_piece.islower() if _player_is_white else target_piece.isupper():
+                            position_value[piece][pos2] - position_value[piece][pos1],
+                        )
+                    elif (
+                        target_piece.islower()
+                        if _player_is_white
+                        else target_piece.isupper()
+                    ):
                         # then it is taking an opponent's piece
                         yield (
                             move(board, pos1, pos2),
-                            position_value[piece][pos2] -
-                            position_value[target_piece][pos2] -
-                            position_value[piece][pos1])
+                            position_value[piece][pos2]
+                            - position_value[target_piece][pos2]
+                            - position_value[piece][pos1],
+                        )
                         break
                     else:
                         # then it is taking it's own piece
                         break
-                    if piece in 'KkNn':
+                    if piece in "KkNn":
                         break
         # pawns are weird
-        if piece == 'P' if _player_is_white else piece == 'p':
+        if piece == "P" if _player_is_white else piece == "p":
             # this section is for captures
-            for pos2 in (pos1 + 1 + 16, pos1 - 1 + 16) if _player_is_white else (pos1 + 1 - 16, pos1 - 1 - 16):
+            for pos2 in (
+                (pos1 + 1 + 16, pos1 - 1 + 16)
+                if _player_is_white
+                else (pos1 + 1 - 16, pos1 - 1 - 16)
+            ):
                 if pos2 & 0x88:
                     continue
                 target_piece = board[pos2]
-                if target_piece.islower() if _player_is_white else target_piece.isupper():
+                if (
+                    target_piece.islower()
+                    if _player_is_white
+                    else target_piece.isupper()
+                ):
                     # then a take is possible
                     after_pawn_move = move(board, pos1, pos2)
                     if pos2 >= (7 * 16) if _player_is_white else pos2 < 8:
                         # then the end of the board has been reached and promotion is needed
-                        for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
+                        for replacement_piece in "QRBN" if _player_is_white else "qrbn":
                             after_pawn_replacement = after_pawn_move[:]
                             after_pawn_replacement[pos2] = replacement_piece
                             yield (
                                 after_pawn_replacement,
-                                position_value[replacement_piece][pos2] -
-                                position_value[target_piece][pos2] -
-                                position_value[piece][pos1])
+                                position_value[replacement_piece][pos2]
+                                - position_value[target_piece][pos2]
+                                - position_value[piece][pos1],
+                            )
                     else:
                         yield (
                             after_pawn_move,
-                            position_value[piece][pos2] -
-                            position_value[target_piece][pos2] -
-                            position_value[piece][pos1])
+                            position_value[piece][pos2]
+                            - position_value[target_piece][pos2]
+                            - position_value[piece][pos1],
+                        )
 
             # Check if pawn can move forwards 1
             # Note that there is no need to check for moving off the edge of the board
             # due to pawns on the back row always being promoted.
             pos2 = pos1 + (16 if _player_is_white else -16)
-            if board[pos2] == '.':
+            if board[pos2] == ".":
                 # check if pawn can be promoted
                 if pos2 >= (7 * 16) if _player_is_white else pos2 < 8:
                     after_pawn_move = move(board, pos1, pos2)
                     # add each possible promotion to _moves
-                    for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
+                    for replacement_piece in "QRBN" if _player_is_white else "qrbn":
                         after_pawn_replacement = after_pawn_move[:]
                         after_pawn_replacement[pos2] = replacement_piece
                         yield (
                             after_pawn_replacement,
-                            position_value[replacement_piece][pos2] -
-                            position_value[piece][pos1])
+                            position_value[replacement_piece][pos2]
+                            - position_value[piece][pos1],
+                        )
                 else:
                     yield (
                         move(board, pos1, pos2),
-                        position_value[piece][pos2] -
-                        position_value[piece][pos1])
+                        position_value[piece][pos2] - position_value[piece][pos1],
+                    )
                 # check if pawn can move forwards 2
                 if pos1 < 32 if _player_is_white else pos1 >= 6 * 16:
                     pos2 = pos1 + (32 if _player_is_white else -32)
-                    if board[pos2] == '.':
+                    if board[pos2] == ".":
                         yield (
                             move(board, pos1, pos2),
-                            position_value[piece][pos2] -
-                            position_value[piece][pos1])
+                            position_value[piece][pos2] - position_value[piece][pos1],
+                        )
     # TODO this should check if the king is moving into, out of or through check
     if _player_is_white:
-        if (board[BOTTOM_LEFT_CASTLING] and
-                board[0] == 'R' and
-                board[1] == '.' and
-                board[2] == '.' and
-                board[3] == '.' and
-                board[4] == 'K'):
+        if (
+            board[BOTTOM_LEFT_CASTLING]
+            and board[0] == "R"
+            and board[1] == "."
+            and board[2] == "."
+            and board[3] == "."
+            and board[4] == "K"
+        ):
             yield castle(board, 0, 4, 3, 2)
-        if (board[BOTTOM_RIGHT_CASTLING] and
-                board[7] == 'R' and
-                board[6] == '.' and
-                board[5] == '.' and
-                board[4] == 'K'):
+        if (
+            board[BOTTOM_RIGHT_CASTLING]
+            and board[7] == "R"
+            and board[6] == "."
+            and board[5] == "."
+            and board[4] == "K"
+        ):
             yield castle(board, 7, 4, 5, 6)
     else:
-        if (board[TOP_LEFT_CASTLING] and
-                board[0 + 7 * 16] == 'r' and
-                board[1 + 7 * 16] == '.' and
-                board[2 + 7 * 16] == '.' and
-                board[3 + 7 * 16] == '.' and
-                board[4 + 7 * 16] == 'k'):
+        if (
+            board[TOP_LEFT_CASTLING]
+            and board[0 + 7 * 16] == "r"
+            and board[1 + 7 * 16] == "."
+            and board[2 + 7 * 16] == "."
+            and board[3 + 7 * 16] == "."
+            and board[4 + 7 * 16] == "k"
+        ):
             yield castle(board, 0 + 7 * 16, 4 + 7 * 16, 3 + 7 * 16, 2 + 7 * 16)
-        if (board[TOP_RIGHT_CASTLING] and
-                board[7 + 7 * 16] == 'r' and
-                board[6 + 7 * 16] == '.' and
-                board[5 + 7 * 16] == '.' and
-                board[4 + 7 * 16] == 'k'):
+        if (
+            board[TOP_RIGHT_CASTLING]
+            and board[7 + 7 * 16] == "r"
+            and board[6 + 7 * 16] == "."
+            and board[5 + 7 * 16] == "."
+            and board[4 + 7 * 16] == "k"
+        ):
             yield castle(board, 7 + 7 * 16, 4 + 7 * 16, 5 + 7 * 16, 6 + 7 * 16)
 
 
@@ -330,21 +398,24 @@ def legal_moves(board, _player_is_white):
             yield move_, diff
 
 
-def castle(board, old_rook_location, old_king_location, new_rook_location, new_king_location):
+def castle(
+    board, old_rook_location, old_king_location, new_rook_location, new_king_location
+):
     board = board[:]
     board[new_rook_location] = rook = board[old_rook_location]
     board[new_king_location] = king = board[old_king_location]
-    board[old_rook_location] = board[old_king_location] = '.'
+    board[old_rook_location] = board[old_king_location] = "."
     if old_king_location == 4:
-        board[BOTTOM_LEFT_CASTLING] = board[BOTTOM_RIGHT_CASTLING] = '\0'
+        board[BOTTOM_LEFT_CASTLING] = board[BOTTOM_RIGHT_CASTLING] = "\0"
     else:
-        board[TOP_LEFT_CASTLING] = board[TOP_RIGHT_CASTLING] = '\0'
+        board[TOP_LEFT_CASTLING] = board[TOP_RIGHT_CASTLING] = "\0"
     return (
         board,
-        position_value[rook][new_rook_location] +
-        position_value[king][new_king_location] -
-        position_value[rook][old_rook_location] -
-        position_value[king][old_king_location])
+        position_value[rook][new_rook_location]
+        + position_value[king][new_king_location]
+        - position_value[rook][old_rook_location]
+        - position_value[king][old_king_location],
+    )
 
 
 def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta) -> int:
@@ -353,13 +424,17 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta) -> in
     #    print(current_cscore, evaluate(board), board)
     # assert len(board) == 128
     # lookup the current node to see if it has already been searched
-    key = board.tobytes() + (b'w' if player_is_white else b'b')
+    key = board.tobytes() + (b"w" if player_is_white else b"b")
     if key in transpositionTable:
         node_score, node_type, node_search_depth = transpositionTable[key]
         if node_search_depth >= depth:
-            if (node_type == 'exact' or
-                    node_type == 'high' and node_score >= beta or
-                    node_type == 'low' and node_score <= alpha):
+            if (
+                node_type == "exact"
+                or node_type == "high"
+                and node_score >= beta
+                or node_type == "low"
+                and node_score <= alpha
+            ):
                 return node_score
 
     possible_moves = moves(board, player_is_white)
@@ -381,7 +456,9 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta) -> in
         # Note that the comparison is ordered for evaluation speed
         if depth >= 1 and (depth >= 2 or abs(diff) > 50) and abs(diff) < 1000:
             # this does not always use move ordering :-( todo
-            move_score = alpha_beta(possible_move, depth - 1, move_score, not player_is_white, alpha, beta)
+            move_score = alpha_beta(
+                possible_move, depth - 1, move_score, not player_is_white, alpha, beta
+            )
         if player_is_white:
             if move_score > current_best_score:
                 current_best_score = move_score
@@ -389,7 +466,7 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta) -> in
                     alpha = move_score
                     if alpha >= beta:
                         # the score failed high
-                        transpositionTable[key] = current_best_score, 'high', depth
+                        transpositionTable[key] = current_best_score, "high", depth
                         break
         else:
             if move_score < current_best_score:
@@ -398,17 +475,17 @@ def alpha_beta(board, depth, current_cscore, player_is_white, alpha, beta) -> in
                     beta = move_score
                     if alpha >= beta:
                         # the score failed low
-                        transpositionTable[key] = current_best_score, 'low', depth
+                        transpositionTable[key] = current_best_score, "low", depth
                         break
     else:
         # the score is exact and the earlier check of the table ensures that we are not overwriting
         # an entry of greater depth
-        transpositionTable[key] = current_best_score, 'exact', depth
+        transpositionTable[key] = current_best_score, "exact", depth
     return current_best_score
 
 
 def estimated_score(board, previous_cscore, diff, player_is_white):
-    key = board.tobytes() + (b'w' if player_is_white else b'b')
+    key = board.tobytes() + (b"w" if player_is_white else b"b")
     if key in transpositionTable:
         return transpositionTable[key][0]
     else:
@@ -420,8 +497,11 @@ def search(board, depth, current_cscore, player_is_white, alpha, beta):
     # assert depth > 0
     possible_moves = list(legal_moves(board, player_is_white))
     possible_moves.sort(
-        key=lambda _move: estimated_score(_move[0], current_cscore, _move[1], player_is_white),
-        reverse=player_is_white)
+        key=lambda _move: estimated_score(
+            _move[0], current_cscore, _move[1], player_is_white
+        ),
+        reverse=player_is_white,
+    )
     for possible_move, diff in possible_moves:
         if possible_move in history:
             # this scores draws pessimistically
@@ -430,7 +510,14 @@ def search(board, depth, current_cscore, player_is_white, alpha, beta):
             move_score = current_cscore + diff
             # assert abs(move_score - evaluate(possible_move)) < 0.001
         else:
-            move_score = alpha_beta(possible_move, depth - 1, current_cscore + diff, not player_is_white, alpha, beta)
+            move_score = alpha_beta(
+                possible_move,
+                depth - 1,
+                current_cscore + diff,
+                not player_is_white,
+                alpha,
+                beta,
+            )
         if player_is_white:
             if move_score > alpha:
                 alpha = move_score
@@ -455,7 +542,9 @@ def main(given_history, white_time, black_time):
         transpositionTable = dict()
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
-    time_out_point = start_time + available_time - 0.5  # always hold 0.5 seconds in reserve
+    time_out_point = (
+        start_time + available_time - 0.5
+    )  # always hold 0.5 seconds in reserve
     recalculate_position_values(current_board)
     current_score = evaluate(current_board)
     best_move = None
@@ -465,11 +554,13 @@ def main(given_history, white_time, black_time):
     for depth in range(1, 99):
         search_start_time = now()
         try:
-            best_move, best_score = search(current_board, depth, current_score, player_is_white, alpha, beta)
+            best_move, best_score = search(
+                current_board, depth, current_score, player_is_white, alpha, beta
+            )
             # the transposition table write is inside the try: to ensure it is only written when the search completes
-            transpositionTable[current_board.tobytes()] = best_score, 'exact', depth
+            transpositionTable[current_board.tobytes()] = best_score, "exact", depth
         except TimeoutError:
-            print('internal timeout')
+            print("internal timeout")
             break
         search_run_time = now() - search_start_time
         # print(f'{depth}  {search_run_time:.3f}')
@@ -479,11 +570,14 @@ def main(given_history, white_time, black_time):
         if abs(best_score) > 10000:
             # print('check mate is expected')
             break
-    print(f'search depth: {depth}-{depth+1}')
-    print(f'expected score: {best_score:.1f}')
+    print(f"search depth: {depth}-{depth + 1}")
+    print(f"expected score: {best_score:.1f}")
     # if I am losing badly and in a loop then call a draw
-    if (((best_score < -contempt) if player_is_white else (best_score > contempt)) and
-            len(history) > 9 and history[-1] == history[-5] == history[-9]):
+    if (
+        ((best_score < -contempt) if player_is_white else (best_score > contempt))
+        and len(history) > 9
+        and history[-1] == history[-5] == history[-9]
+    ):
         raise ThreeFoldRepetition
     assert len(best_move) == 128
     return from_array(best_move)
@@ -493,27 +587,27 @@ def to_array(given_history: [[str]] or [[[str]]]) -> array or [array]:
     """Converts boards from a list of lists to arrays"""
     # shortcut the method if only given a single board
     if type(given_history[0][0]) == str:
-        return array('u', ''.join(''.join(row) + '_' * 8 for row in given_history))
+        return array("u", "".join("".join(row) + "_" * 8 for row in given_history))
     assert len(given_history[0]) == 8
     assert len(given_history[0][0]) == 8
     _history = []
     # at the beginning of a game all castling options are possible
-    castling_rights = array('u', '____')
+    castling_rights = array("u", "____")
     # incrementally update the castling rights
     for given_board in given_history:
-        board = array('u', ''.join(''.join(row) + '_' * 8 for row in given_board))
-        if board[0] != 'R':
-            castling_rights[0] = '\0'
-        if board[4] != 'K':
-            castling_rights[0] = castling_rights[1] = '\0'
-        if board[7] != 'R':
-            castling_rights[1] = '\0'
-        if board[0 + 7 * 16] != 'r':
-            castling_rights[2] = '\0'
-        if board[4 + 7 * 16] != 'k':
-            castling_rights[2] = castling_rights[3] = '\0'
-        if board[7 + 7 * 16] != 'r':
-            castling_rights[3] = '\0'
+        board = array("u", "".join("".join(row) + "_" * 8 for row in given_board))
+        if board[0] != "R":
+            castling_rights[0] = "\0"
+        if board[4] != "K":
+            castling_rights[0] = castling_rights[1] = "\0"
+        if board[7] != "R":
+            castling_rights[1] = "\0"
+        if board[0 + 7 * 16] != "r":
+            castling_rights[2] = "\0"
+        if board[4 + 7 * 16] != "k":
+            castling_rights[2] = castling_rights[3] = "\0"
+        if board[7 + 7 * 16] != "r":
+            castling_rights[3] = "\0"
         board[-4:] = castling_rights
         _history.append(board)
     return _history
@@ -527,16 +621,17 @@ def from_array(given_history: array or [array]) -> [[str]] or [[[str]]]:
         assert type(list_of_lists) == list
         assert type(list_of_lists[0]) == list
         return list_of_lists
-    _history = [[[
-        array_board[x + 16 * y] for x in range(8)] for y in range(8)]
-        for array_board in given_history]
+    _history = [
+        [[array_board[x + 16 * y] for x in range(8)] for y in range(8)]
+        for array_board in given_history
+    ]
     assert type(_history) == list
     assert type(_history[0]) == list
     assert type(_history[0][0]) == list
     return _history
 
 
-'''
+"""
 At this point David_AI_v4 wins 16/16 games
 changed position scoring to make David_AI_v5
 this also causes the search of more moves for the benchmark position
@@ -727,4 +822,4 @@ waited roughly a year
 25431			4		0.040	2098
 232735			5		0.573	15892
 363754 moves made per second
-'''
+"""

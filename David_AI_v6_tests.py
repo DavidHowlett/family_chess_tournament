@@ -1,7 +1,8 @@
-import David_AI_v6 as ai
 from time import perf_counter as now
 
-initialPosition = '''
+import David_AI_v6 as ai
+
+initialPosition = """
 r n b q k b n r
 p p p p p p p p
 . . . . . . . .
@@ -9,11 +10,11 @@ p p p p p p p p
 . . . . . . . .
 . . . . . . . .
 P P P P P P P P
-R N B Q K B N R'''
-initialPosition = initialPosition.replace(' ', '').split()
+R N B Q K B N R"""
+initialPosition = initialPosition.replace(" ", "").split()
 initialPosition.reverse()
 
-difficultPosition = '''
+difficultPosition = """
 r . b q . . . r
 p p p p n k p p
 . . n b . p . .
@@ -21,11 +22,11 @@ p p p p n k p p
 . . P . N . . .
 P . . P B N . .
 . P . . P P P P
-R . . Q K B . R'''
-difficultPosition = difficultPosition.replace(' ', '').split()
+R . . Q K B . R"""
+difficultPosition = difficultPosition.replace(" ", "").split()
 difficultPosition.reverse()
 
-promotionPosition = '''
+promotionPosition = """
 r . . . . . . .
 . P . P . . . .
 . . . . . . . .
@@ -33,11 +34,11 @@ r . . . . . . .
 . . . . . . . .
 . . . . . . . .
 . . . . p . p .
-. . . . . . . R'''
-promotionPosition = promotionPosition.replace(' ', '').split()
+. . . . . . . R"""
+promotionPosition = promotionPosition.replace(" ", "").split()
 promotionPosition.reverse()
 
-pawnTakePosition1 = '''
+pawnTakePosition1 = """
 . . . . . . . .
 . . . p . . . .
 . . . . P . . .
@@ -45,11 +46,11 @@ pawnTakePosition1 = '''
 . . . . . . . .
 . . . . . . . .
 . . . . . . . .
-. . . . . . . .'''
-pawnTakePosition1 = pawnTakePosition1.replace(' ', '').split()
+. . . . . . . ."""
+pawnTakePosition1 = pawnTakePosition1.replace(" ", "").split()
 pawnTakePosition1.reverse()
 
-pawnTakePosition2 = '''
+pawnTakePosition2 = """
 . . . . . . . .
 . . . . . . . .
 . . . . . . . .
@@ -57,11 +58,11 @@ pawnTakePosition2 = '''
 . . . . . . . .
 . . . p . . . .
 . . . . P . . .
-. . . . . . . .'''
-pawnTakePosition2 = pawnTakePosition2.replace(' ', '').split()
+. . . . . . . ."""
+pawnTakePosition2 = pawnTakePosition2.replace(" ", "").split()
 pawnTakePosition2.reverse()
 
-kingSavePosition = '''
+kingSavePosition = """
 r . . . . . . .
 p . . . . . . .
 P . . k p . . .
@@ -69,12 +70,12 @@ P . . k p . . .
 . . . . Q . . .
 . . . p . . P .
 . . . . . . . P
-. . . . K . N R'''
-kingSavePosition = kingSavePosition.replace(' ', '').split()
+. . . . K . N R"""
+kingSavePosition = kingSavePosition.replace(" ", "").split()
 kingSavePosition.reverse()
 
 ps = ai.position_score
-'''
+"""
 assert ps('R', 0, 0) == ps('R', 7, 7)
 assert ps('R', 0, 0) == -ps('r', 7, 7)
 assert ps('R', 1, 0) > ps('R', 0, 0)
@@ -92,7 +93,7 @@ assert ps('P', 3, 4) == -ps('p', 3, 3)
 assert ps('P', 3, 4) == -ps('p', 3, 3)
 assert ps('K', 3, 0) == -ps('k', 3, 7)
 assert ps('K', 4, 0) == -ps('k', 4, 7)
-'''
+"""
 
 print(ai.evaluate(initialPosition))
 assert abs(ai.evaluate(initialPosition)) < 0.000001
@@ -111,12 +112,22 @@ def performance_test():
         start_time = now()
         _possible_moves = list(ai.moves(difficultPosition, True))
         _possible_moves.sort(key=lambda x: x[1], reverse=True)
-        best_move, _ = ai.search(_possible_moves, depth, ai.get_cscore(difficultPosition), True, -99999, 99999)
-        print('{}\t\t\t{}\t\t{:.3f}'.format(ai.total_leaves, depth, now() - start_time))
+        best_move, _ = ai.search(
+            _possible_moves,
+            depth,
+            ai.get_cscore(difficultPosition),
+            True,
+            -99999,
+            99999,
+        )
+        print("{}\t\t\t{}\t\t{:.3f}".format(ai.total_leaves, depth, now() - start_time))
         # print('\n'.join(' '.join(piece for piece in row) for row in best_move.__reversed__()) + '\n')
-    print('{} leaves searched per second'.format(int(ai.total_leaves/(now()-test_start_time))))
+    print(
+        "{} leaves searched per second".format(
+            int(ai.total_leaves / (now() - test_start_time))
+        )
+    )
 
 
 ai.transpositionTable = dict()
 performance_test()
-

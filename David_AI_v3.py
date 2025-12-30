@@ -15,52 +15,70 @@ Not implemented yet:
     - avoiding trading our king now for their king later
 
 """
+
 from time import perf_counter as now
+
 from shared import ThreeFoldRepetition
 
 PIECE_MOVE_DIRECTION = {
-    'K': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
-    'k': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'Q': ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
-    'q': ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'R': ((1, 0), (0, 1), (-1, 0), (0, -1)),
-    'r': ((1, 0), (0, 1), (-1, 0), (0, -1)),
-    'B': ((1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'b': ((1, 1), (1, -1), (-1, 1), (-1, -1)),
-    'N': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
-    'n': ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
+    "K": ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
+    "k": ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "Q": ((1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1)),
+    "q": ((1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "R": ((1, 0), (0, 1), (-1, 0), (0, -1)),
+    "r": ((1, 0), (0, 1), (-1, 0), (0, -1)),
+    "B": ((1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "b": ((1, 1), (1, -1), (-1, 1), (-1, -1)),
+    "N": ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
+    "n": ((1, 2), (2, 1), (2, -1), (1, -2), (-1, -2), (-2, -1), (-2, 1), (-1, 2)),
 }
 PIECE_VALUE = {
-    '.': 0,
-    'K': 1000, 'Q': 9, 'R': 5, 'B': 3, 'N': 3, 'P': 0.7,
-    'k': -1000, 'q': -9, 'r': -5, 'b': -3, 'n': -3, 'p': -0.7}
+    ".": 0,
+    "K": 1000,
+    "Q": 9,
+    "R": 5,
+    "B": 3,
+    "N": 3,
+    "P": 0.7,
+    "k": -1000,
+    "q": -9,
+    "r": -5,
+    "b": -3,
+    "n": -3,
+    "p": -0.7,
+}
 
 
 # for most pieces there is a small advantage to being in the centre
-POSITION_VALUE = [[0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)] for y in range(8)]
+POSITION_VALUE = [
+    [0.02 * (3 + x - x * x / 7) * (1 + y - y * y / 7) for x in range(8)]
+    for y in range(8)
+]
 #  print('\n'.join(' '.join('{:.2f}'.format(POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 # pawns are more valuable in the centre but more importantly they become much more valuable when they are close to being
 # turned into queens
 # calculating the below formula takes 861 ns but lookup in a 2D table only takes 73 ns.
 # This is the reason for pre-calculation
-PAWN_POSITION_VALUE = [[0.006 * (10 + x - x * x / 7) * (y+2) ** 2 for x in range(8)] for y in range(8)]
+PAWN_POSITION_VALUE = [
+    [0.006 * (10 + x - x * x / 7) * (y + 2) ** 2 for x in range(8)] for y in range(8)
+]
 #  print('\n'.join(' '.join('{:.2f}'.format(PAWN_POSITION_VALUE[y][x])for x in range(8))for y in range(8))+'\n')
 total_moves = 0
 
 
-def move(board: [str], y1, x1, y2, x2)-> [str]:
+def move(board: [str], y1, x1, y2, x2) -> [str]:
     """returns a board with a move made"""
     board = board.copy()
     # add piece to destination
     line = board[y2]
-    board[y2] = line[:x2] + board[y1][x1] + line[x2 + 1:]
+    board[y2] = line[:x2] + board[y1][x1] + line[x2 + 1 :]
     # remove piece from source
     line = board[y1]
-    board[y1] = line[:x1] + '.' + line[x1 + 1:]
+    board[y1] = line[:x1] + "." + line[x1 + 1 :]
     return board
 
 
-def moves(board: [str], _player_is_white: bool)->[([str], float)]:
+def moves(board: [str], _player_is_white: bool) -> [([str], float)]:
     global total_moves
     """This generates a list of all possible game states after one move.
     Preferred moves should be later in the returned list."""
@@ -69,84 +87,142 @@ def moves(board: [str], _player_is_white: bool)->[([str], float)]:
     for x in range(8):
         for y in range(8):
             piece = board[y][x]
-            if piece in 'KQRBN' if _player_is_white else piece in 'kqrbn':
+            if piece in "KQRBN" if _player_is_white else piece in "kqrbn":
                 for xd, yd in PIECE_MOVE_DIRECTION[piece]:
                     for i in range(1, 100):
-                        x2 = x+i*xd
-                        y2 = y+i*yd
+                        x2 = x + i * xd
+                        y2 = y + i * yd
                         if not (0 <= x2 <= 7 and 0 <= y2 <= 7):
                             # then it is a move off the board
                             break
                         target_piece = board[y2][x2]
-                        if target_piece == '.':
+                        if target_piece == ".":
                             # then it is moving into an empty square
-                            _moves.append((move(board, y, x, y2, x2),
-                                           position_multipler * (POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x])))
-                        elif target_piece.islower() if _player_is_white else target_piece.isupper():
+                            _moves.append(
+                                (
+                                    move(board, y, x, y2, x2),
+                                    position_multipler
+                                    * (POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x]),
+                                )
+                            )
+                        elif (
+                            target_piece.islower()
+                            if _player_is_white
+                            else target_piece.isupper()
+                        ):
                             # then it is taking an opponent's piece
-                            _moves.append((move(board, y, x, y2, x2),
-                                           position_multipler * (2*POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x]) -
-                                           PIECE_VALUE[target_piece]))
+                            _moves.append(
+                                (
+                                    move(board, y, x, y2, x2),
+                                    position_multipler
+                                    * (
+                                        2 * POSITION_VALUE[y2][x2]
+                                        - POSITION_VALUE[y][x]
+                                    )
+                                    - PIECE_VALUE[target_piece],
+                                )
+                            )
                             break
                         else:
                             # then it is taking it's own piece
                             break
-                        if piece in 'KkNn':
+                        if piece in "KkNn":
                             # don't reward moving the king towards the centre
                             # _moves[-1] = _moves[-1][0], PIECE_VALUE[target_piece]
                             break
 
             # pawns are weird
-            if piece == 'P' if _player_is_white else piece == 'p':
-                y2 = y+1 if _player_is_white else y-1
+            if piece == "P" if _player_is_white else piece == "p":
+                y2 = y + 1 if _player_is_white else y - 1
                 # check if a take is possible
                 for x2 in (x - 1, x + 1):
                     if 0 <= x2 <= 7:
                         target_piece = board[y2][x2]
-                        if target_piece.islower() if _player_is_white else target_piece.isupper():
+                        if (
+                            target_piece.islower()
+                            if _player_is_white
+                            else target_piece.isupper()
+                        ):
                             # then a take is possible
                             after_pawn_move = move(board, y, x, y2, x2)
                             if y2 == 7 if _player_is_white else y2 == 0:
                                 # then the end of the board has been reached and promotion is needed
-                                for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
+                                for replacement_piece in (
+                                    "QRBN" if _player_is_white else "qrbn"
+                                ):
                                     after_pawn_replacement = after_pawn_move.copy()
                                     line = after_pawn_replacement[y2]
-                                    after_pawn_replacement[y2] = line[:x2] + replacement_piece + line[x2 + 1:]
+                                    after_pawn_replacement[y2] = (
+                                        line[:x2] + replacement_piece + line[x2 + 1 :]
+                                    )
                                     _moves.append(
-                                        (after_pawn_replacement, position_multipler *
-                                         (2 * POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x]) +
-                                         PIECE_VALUE[replacement_piece] - PIECE_VALUE[target_piece] -
-                                         PIECE_VALUE[piece]))
+                                        (
+                                            after_pawn_replacement,
+                                            position_multipler
+                                            * (
+                                                2 * POSITION_VALUE[y2][x2]
+                                                - POSITION_VALUE[y][x]
+                                            )
+                                            + PIECE_VALUE[replacement_piece]
+                                            - PIECE_VALUE[target_piece]
+                                            - PIECE_VALUE[piece],
+                                        )
+                                    )
                             else:
                                 _moves.append(
-                                    (after_pawn_move, position_multipler *
-                                     (2 * POSITION_VALUE[y2][x2] - POSITION_VALUE[y][x]) - PIECE_VALUE[target_piece]))
+                                    (
+                                        after_pawn_move,
+                                        position_multipler
+                                        * (
+                                            2 * POSITION_VALUE[y2][x2]
+                                            - POSITION_VALUE[y][x]
+                                        )
+                                        - PIECE_VALUE[target_piece],
+                                    )
+                                )
                 # check if pawn can move forwards 1
-                if board[y2][x] == '.':
+                if board[y2][x] == ".":
                     # check if pawn can be promoted
                     if y2 == 7 if _player_is_white else y2 == 0:
                         after_pawn_move = move(board, y, x, y2, x)
                         # add each possible promotion to _moves
-                        for replacement_piece in ('QRBN' if _player_is_white else 'qrbn'):
+                        for replacement_piece in "QRBN" if _player_is_white else "qrbn":
                             after_pawn_replacement = after_pawn_move.copy()
                             line = after_pawn_replacement[y2]
-                            after_pawn_replacement[y2] = line[:x] + replacement_piece + line[x + 1:]
-                            _moves.append((after_pawn_replacement,
-                                           position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
+                            after_pawn_replacement[y2] = (
+                                line[:x] + replacement_piece + line[x + 1 :]
+                            )
+                            _moves.append(
+                                (
+                                    after_pawn_replacement,
+                                    position_multipler
+                                    * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x]),
+                                )
+                            )
                     else:
-                        _moves.append((move(board, y, x, y2, x),
-                                       position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
+                        _moves.append(
+                            (
+                                move(board, y, x, y2, x),
+                                position_multipler
+                                * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x]),
+                            )
+                        )
                     # check if pawn can move forwards 2
                     if y == 1 if _player_is_white else y == 6:
                         y2 = y + 2 if _player_is_white else y - 2
-                        if board[y2][x] == '.':
-                            _moves.append((move(board, y, x, y2, x),
-                                           position_multipler * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x])))
+                        if board[y2][x] == ".":
+                            _moves.append(
+                                (
+                                    move(board, y, x, y2, x),
+                                    position_multipler
+                                    * (POSITION_VALUE[y2][x] - POSITION_VALUE[y][x]),
+                                )
+                            )
     total_moves += len(_moves)
     return _moves
 
 
-def simple_score(_board: [str])->float:
+def simple_score(_board: [str]) -> float:
     """This takes a board and returns the current score of white"""
     _score = 0.0
     for row in _board:
@@ -155,7 +231,7 @@ def simple_score(_board: [str])->float:
     return _score
 
 
-def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
+def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta) -> int:
     """Implements alpha beta scoring"""
     assert depth > 0
     possible_moves = moves(board, player_is_white)
@@ -163,19 +239,31 @@ def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
         # this correctly scores stalemates
         return 0
     if depth == 1:
-        return score_diff + (max if player_is_white else min)(m[1] for m in possible_moves)
+        return score_diff + (max if player_is_white else min)(
+            m[1] for m in possible_moves
+        )
     possible_moves.sort(key=lambda x: x[1], reverse=player_is_white)
     if player_is_white:
         v = -99999
         for possible_move, diff in possible_moves:
-            v = max(v, alpha_beta(possible_move, depth - 1, score_diff+diff, False, alpha, beta))
+            v = max(
+                v,
+                alpha_beta(
+                    possible_move, depth - 1, score_diff + diff, False, alpha, beta
+                ),
+            )
             alpha = max(alpha, v)
             if beta <= alpha:
                 break  # beta cut off
     else:
         v = 99999
         for possible_move, diff in possible_moves:
-            v = min(v, alpha_beta(possible_move, depth - 1, score_diff+diff, True, alpha, beta))
+            v = min(
+                v,
+                alpha_beta(
+                    possible_move, depth - 1, score_diff + diff, True, alpha, beta
+                ),
+            )
             beta = min(beta, v)
             if beta <= alpha:
                 break  # alpha cut off
@@ -183,26 +271,26 @@ def alpha_beta(board, depth, score_diff, player_is_white, alpha, beta)->int:
 
 
 def search(possible_moves, player_is_white, depth):
-        alpha = -99999
-        beta = 99999
-        if player_is_white:
-            for possible_move, diff in possible_moves:
-                move_score = alpha_beta(possible_move, depth - 1, diff, False, alpha, beta)
-                if move_score > alpha:
-                    alpha = move_score
-                    best_move = possible_move
-        else:
-            for possible_move, diff in possible_moves:
-                move_score = alpha_beta(possible_move, depth - 1, diff, True, alpha, beta)
-                if move_score < beta:
-                    beta = move_score
-                    best_move = possible_move
-        return best_move
+    alpha = -99999
+    beta = 99999
+    if player_is_white:
+        for possible_move, diff in possible_moves:
+            move_score = alpha_beta(possible_move, depth - 1, diff, False, alpha, beta)
+            if move_score > alpha:
+                alpha = move_score
+                best_move = possible_move
+    else:
+        for possible_move, diff in possible_moves:
+            move_score = alpha_beta(possible_move, depth - 1, diff, True, alpha, beta)
+            if move_score < beta:
+                beta = move_score
+                best_move = possible_move
+    return best_move
 
 
 def main(history, white_time, black_time):
     start_time = now()
-    history = [[''.join(row) for row in board] for board in history]
+    history = [["".join(row) for row in board] for board in history]
     player_is_white = len(history) % 2 == 1
     available_time = white_time if player_is_white else black_time
     score = simple_score(history[-1])
@@ -230,7 +318,7 @@ def main(history, white_time, black_time):
     return [[piece for piece in line] for line in best_move]
 
 
-'''
+"""
 I use the time to calculate and score the first moves as a benchmark for my algorithm.
 To get reliable figures wait for the CPU usage to fall below 10% before starting
 
@@ -276,10 +364,10 @@ switched to benchmarking search function
 False       incremental     3       0.035
 False       incremental     4       0.698
 False       incremental     5       2.558
-'''
+"""
 
-if __name__ == '__main__':
-    difficultPosition = '''
+if __name__ == "__main__":
+    difficultPosition = """
 r . b q . . . r
 p p p p n k p p
 . . n b . p . .
@@ -287,8 +375,8 @@ p p p p n k p p
 . . P . N . . .
 P . . P B N . .
 . P . . P P P P
-R . . Q K B . R'''
-    test_board = [line for line in difficultPosition.replace(' ', '').split()]
+R . . Q K B . R"""
+    test_board = [line for line in difficultPosition.replace(" ", "").split()]
     test_board.reverse()
     startTime = now()
     # main([test_board], 50, 0)
@@ -296,7 +384,9 @@ R . . Q K B . R'''
     _possible_moves = moves(test_board, True)
     _possible_moves.sort(key=lambda x: x[1], reverse=True)
     bestMove = search(_possible_moves, True, 2)
-    print('{:.3f}'.format(now()-startTime))
+    print("{:.3f}".format(now() - startTime))
     print(total_moves)
-    print('\n'.join(' '.join(piece for piece in row) for row in bestMove.__reversed__()) + '\n')
-
+    print(
+        "\n".join(" ".join(piece for piece in row) for row in bestMove.__reversed__())
+        + "\n"
+    )

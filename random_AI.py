@@ -1,6 +1,8 @@
 """This player makes a random legal move each turn"""
-import David_AI_v9 as ai
+
 import random
+
+import David_AI_v9 as ai
 
 
 def main(history, _, __):
